@@ -777,25 +777,23 @@
     openAddCharModal();
   });
 
-  $('btnLookup').addEventListener('click', async ()=>{
+  $('btnLookup').addEventListener('click', async () => {
     const name = $('charNameInput').value.trim();
     const statusEl = $('lookupStatus');
     if(!name){ statusEl.textContent = '캐릭터명을 입력하세요.'; statusEl.className='lookup-status err'; return; }
     if(!apiKey){ statusEl.textContent = 'API 키가 없어요. 상단 "API 키 설정"에서 등록해주세요.'; statusEl.className='lookup-status err'; return; }
-    statusEl.textContent = '조회 중…'; statusEl.className='lookup-status';
+    statusEl.textContent = '조회 중…'; statusEl.className = 'lookup-status';
     try{
-      const res = await fetch(`https://developer-lostark.game.onstove.com/armories/characters/${encodeURIComponent(name)}/profiles`, {
-        headers: { accept:'application/json', authorization:`bearer ${apiKey}` }
-      });
-      if(!res.ok) throw new Error('status '+res.status);
+      const firstName = name.split(',')[0].trim();
+      const res = await fetch(`/api/lookup?name=${encodeURIComponent(firstName)}&key=${encodeURIComponent(apiKey)}`);
       const data = await res.json();
-      if(!data || !data.CharacterClassName) throw new Error('not found');
+      if(!res.ok || !data || !data.CharacterClassName) throw new Error((data && data.error) || '캐릭터를 찾을 수 없어요.');
       $('classInput').value = data.CharacterClassName;
       $('levelInput').value = (data.ItemAvgLevel||'').toString().replace(/,/g,'');
-      statusEl.textContent = '불러왔어요! 직업/아이템레벨을 확인하세요.'; statusEl.className='lookup-status ok';
+      statusEl.textContent = '불러왔어요! 직업/아이템레벨을 확인하세요.'; statusEl.className = 'lookup-status ok';
     }catch(err){
-      statusEl.textContent = '자동조회 실패: 로스트아크 API가 브라우저 직접 호출을 막고 있어요(CORS). 키 문제가 아니에요 — 아래에 직업/아이템레벨을 직접 입력해주세요.';
-      statusEl.className='lookup-status err';
+      statusEl.textContent = '자동조회 실패: ' + (err.message || '알 수 없는 오류') + ' 아래에 직업/아이템레벨을 직접 입력해주세요.';
+      statusEl.className = 'lookup-status err';
     }
   });
 
