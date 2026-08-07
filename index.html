@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>로손실 · 공대 숙제 관리</title>
+<title>로손실 · 숙제 관리</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
@@ -47,6 +47,11 @@
   h1{font-size:28px;font-weight:900;margin:0;}
   .reset-line{font-size:12.5px;color:var(--text-dim);margin-top:6px;}
   .reset-line b{color:var(--rose);font-weight:700;}
+  .reset-line-btn{
+    background:none;border:none;color:var(--text-faint);font-size:11px;font-weight:600;
+    text-decoration:underline;text-underline-offset:2px;padding:0;margin-left:8px;cursor:pointer;
+  }
+  .reset-line-btn:hover{color:var(--rose);}
   header{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border);}
 
   .raid-summary{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
@@ -99,9 +104,11 @@
   .crow-name{font-weight:700;font-size:11.5px;color:var(--text);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;}
   .crow-meta{font-size:9.5px;color:var(--text-faint);margin-top:1px;}
   .crow-actions{display:flex;gap:1px;flex-shrink:0;}
-  .crow-edit, .crow-del{
+  .crow-refresh, .crow-edit, .crow-del{
     background:none;border:none;color:var(--text-faint);font-size:11px;padding:0 2px;flex-shrink:0;
   }
+  .crow-refresh:hover{color:var(--gold-bright);}
+  .crow-refresh:disabled{opacity:.4;cursor:default;}
   .crow-edit:hover{color:var(--violet);}
   .crow-del:hover{color:var(--rose);}
   .crow-tags{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px;}
@@ -173,9 +180,12 @@
 <div class="wrap">
 
   <header>
-    <p class="eyebrow">Guild Raid Ledger</p>
+    <p class="eyebrow">Raid Tracker</p>
     <h1>로손실</h1>
-    <div class="reset-line" id="resetLine">불러오는 중…</div>
+    <div class="reset-line">
+      <span id="resetLine">불러오는 중…</span>
+      <button class="reset-line-btn" id="btnManualReset">지금 초기화</button>
+    </div>
   </header>
 
   <div class="raid-summary" id="raidSummary"></div>
@@ -185,7 +195,6 @@
     <button class="btn-ghost" id="btnRaidCatalog">레이드 목록 관리</button>
     <button class="btn-ghost" id="btnOwnerName">내 이름 설정</button>
     <button class="btn-ghost" id="btnApiKey">API 키 설정</button>
-    <button class="btn-ghost" id="btnManualReset">지금 초기화</button>
     <input class="search" id="searchInput" placeholder="등록자 또는 캐릭터명 검색…" style="margin-left:auto;">
   </div>
   <div class="stat" id="statLine" style="margin-bottom:12px;"></div>
@@ -252,14 +261,14 @@
     <div class="field">
       <label>캐릭터명</label>
       <div class="field-row">
-        <input type="text" id="charNameInput" placeholder="예: 카노고" style="flex:1;">
+        <input type="text" id="charNameInput" placeholder="예: 차예서" style="flex:1;">
         <button class="btn-ghost" id="btnLookup" style="white-space:nowrap;">자동조회</button>
       </div>
       <div class="lookup-status" id="lookupStatus"></div>
     </div>
     <div class="field-row">
-      <div class="field"><label>직업</label><input type="text" id="classInput" placeholder="예: 브레이커"></div>
-      <div class="field"><label>아이템 레벨</label><input type="text" id="levelInput" placeholder="예: 1680"></div>
+      <div class="field"><label>직업</label><input type="text" id="classInput" placeholder="예: 배틀마스터"></div>
+      <div class="field"><label>아이템 레벨</label><input type="text" id="levelInput" placeholder="예: 1780"></div>
     </div>
     <p class="lookup-status" id="addCharError"></p>
     <div class="modal-actions">
@@ -419,6 +428,38 @@
     const el = $('currentOwnerLabel');
     if(el) el.textContent = ownerName || '(미설정)';
   }
+  async function refreshCharacter(id, btn){
+    const c = characters.find(x=>x.id===id);
+    if(!c) return;
+    const metaEl = btn.closest('.crow').querySelector('.crow-meta');
+    const originalMeta = metaEl.textContent;
+    if(!apiKey){
+      metaEl.textContent = 'API 키가 없어요 — "API 키 설정"에서 등록해주세요.';
+      metaEl.style.color = 'var(--rose)';
+      setTimeout(()=>{ metaEl.textContent = originalMeta; metaEl.style.color = ''; }, 2600);
+      return;
+    }
+    btn.disabled = true;
+    metaEl.textContent = '갱신 중…';
+    try{
+      const res = await fetch(`https://developer-lostark.game.onstove.com/armories/characters/${encodeURIComponent(c.name)}/profiles`, {
+        headers: { accept:'application/json', authorization:`bearer ${apiKey}` }
+      });
+      if(!res.ok) throw new Error('status '+res.status);
+      const data = await res.json();
+      if(!data || !data.CharacterClassName) throw new Error('not found');
+      c.className = data.CharacterClassName;
+      c.itemLevel = (data.ItemAvgLevel||'').toString().replace(/,/g,'');
+      await setShared('characters', characters);
+      renderRaidSummary();
+      render();
+    }catch(err){
+      metaEl.textContent = '자동갱신 실패(CORS) — ✎ 버튼으로 직접 수정해주세요.';
+      metaEl.style.color = 'var(--rose)';
+      btn.disabled = false;
+      setTimeout(()=>{ render(); }, 2800);
+    }
+  }
 
   // ---------- render ----------
   function tagsHtml(c){
@@ -482,6 +523,7 @@
               <div class="crow-top">
                 <div class="crow-name">${c.name}</div>
                 <div class="crow-actions">
+                  <button type="button" class="crow-refresh" data-refresh="${c.id}" title="레벨 갱신">⟳</button>
                   <button type="button" class="crow-edit" data-edit="${c.id}" title="수정">✎</button>
                   <button type="button" class="crow-del" data-delete="${c.id}" title="삭제">✕</button>
                 </div>
@@ -556,6 +598,11 @@
     if(editBtn){
       const c = characters.find(x=>x.id===editBtn.dataset.edit);
       if(c) openEditCharModal(c);
+      return;
+    }
+    const refreshBtn = e.target.closest('[data-refresh]');
+    if(refreshBtn){
+      refreshCharacter(refreshBtn.dataset.refresh, refreshBtn);
       return;
     }
     const del = e.target.closest('[data-delete]');
