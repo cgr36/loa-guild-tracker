@@ -344,21 +344,29 @@
   const $ = (id) => document.getElementById(id);
 
   // ---------- storage helpers ----------
-  async function getShared(key, fallback){
-    try{ const r = await window.storage.get(key, true); return r ? JSON.parse(r.value) : fallback; }
-    catch(e){ return fallback; }
+  async function getShared(key, fallback) {
+    try {
+      const r = await fetch(`/api/state?key=${encodeURIComponent(key)}`);
+      const data = await r.json();
+      return (data && data.value !== null && data.value !== undefined) ? data.value : fallback;
+    } catch(e) { return fallback; }
   }
-  async function setShared(key, value){
-    try{ await window.storage.set(key, JSON.stringify(value), true); }
-    catch(e){ console.error('shared save failed', key, e); }
+  async function setShared(key, value) {
+    try {
+      await fetch('/api/state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, value })
+      });
+    } catch(e) {}
   }
   async function getPersonal(key){
-    try{ const r = await window.storage.get(key, false); return r ? r.value : ''; }
+    try { const v = localStorage.getItem(key); return v !== null ? v : ''; }
     catch(e){ return ''; }
   }
   async function setPersonal(key, value){
-    try{ await window.storage.set(key, value, false); }
-    catch(e){ console.error('personal save failed', key, e); }
+    try { localStorage.setItem(key, value); }
+    catch(e){ console.error('personal save failed', e); }
   }
 
   // ---------- weekly reset (Wednesday 06:00 KST) ----------
