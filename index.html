@@ -713,11 +713,11 @@
       $('btnAddChar').click();
     }
   });
-  $('apiKeySkip').addEventListener('click', ()=>{
+  $('apiKeySkip').addEventListener('click', () => {
     $('apiKeyOverlay').classList.remove('open');
     if($('apiKeySave').dataset.thenAdd){
       delete $('apiKeySave').dataset.thenAdd;
-      $('btnAddChar').click();
+      openAddCharModal();
     }
   });
 
