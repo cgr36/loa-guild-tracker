@@ -266,9 +266,9 @@
       <input type="text" id="editOwnerInput" placeholder="등록자 이름">
     </div>
     <div class="field">
-      <label>캐릭터명</label>
+      <label>캐릭터명 (쉼표로 구분하면 여러 명 한번에 등록)</label>
       <div class="field-row">
-        <input type="text" id="charNameInput" placeholder="예: 차예서" style="flex:1;">
+        <input type="text" id="charNameInput" placeholder="예: 차예서, 차부기, 차오리" style="flex:1;">
         <button class="btn-ghost" id="btnLookup" style="white-space:nowrap;">자동조회</button>
       </div>
       <div class="lookup-status" id="lookupStatus"></div>
@@ -820,18 +820,23 @@
       }
       editingCharId = null;
     } else {
-      if(!ownerName || !name){
+      const names = name.split(',').map(s=>s.trim()).filter(Boolean);
+      if(!ownerName || names.length === 0){
         errEl.textContent = '캐릭터명을 입력해주세요.';
         errEl.className = 'lookup-status err';
         return;
       }
-      characters.push({
-        id: 'c_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),
-        owner: ownerName, name,
-        className: $('classInput').value.trim(),
-        itemLevel: $('levelInput').value.trim(),
-        enabledRaidIds: [...pickedRaidIds],
-        raids: {}
+      const cls = $('classInput').value.trim();
+      const lvl = $('levelInput').value.trim();
+      names.forEach((n, idx) => {
+        characters.push({
+          id: 'c_'+Date.now()+'_'+idx+'_'+Math.random().toString(36).slice(2,7),
+          owner: ownerName, name: n,
+          className: names.length === 1 ? cls : '',
+          itemLevel: names.length === 1 ? lvl : '',
+          enabledRaidIds: [...pickedRaidIds],
+          raids: {}
+        });
       });
     }
 
