@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>로손실 · 숙제 관리</title>
+<title>로손실 숙제관리</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
@@ -172,6 +172,13 @@
   .lookup-status.err{color:var(--rose);}
   .raid-catalog-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(60,53,90,0.4);font-size:13px;}
   .raid-catalog-row span{flex:1;}
+  .raid-pick-list{display:flex;flex-wrap:wrap;gap:6px;}
+  .raid-pick{
+    background:var(--surface);border:1px solid var(--border);color:var(--text-dim);
+    border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;
+  }
+  .raid-pick:hover{border-color:var(--text-faint);}
+  .raid-pick.on{background:rgba(228,182,90,0.14);border-color:var(--gold);color:var(--gold-bright);}
   footer{text-align:center;color:var(--text-faint);font-size:11.5px;margin-top:50px;line-height:1.7;}
   @media (max-width:520px){header{flex-direction:column;align-items:flex-start;}}
 </style>
@@ -270,6 +277,10 @@
       <div class="field"><label>직업</label><input type="text" id="classInput" placeholder="예: 배틀마스터"></div>
       <div class="field"><label>아이템 레벨</label><input type="text" id="levelInput" placeholder="예: 1780"></div>
     </div>
+    <div class="field">
+      <label>표시할 레이드 (이 캐릭터가 도는 레이드만 선택)</label>
+      <div class="raid-pick-list" id="raidPickList"></div>
+    </div>
     <p class="lookup-status" id="addCharError"></p>
     <div class="modal-actions">
       <button class="btn-ghost" data-close="addCharOverlay">취소</button>
@@ -328,6 +339,7 @@
   let ownerName = '';
   let currentFilter = '';
   let editingCharId = null;
+  let pickedRaidIds = [];
 
   const $ = (id) => document.getElementById(id);
 
@@ -463,7 +475,8 @@
 
   // ---------- render ----------
   function tagsHtml(c){
-    return raidCatalog.map(r=>{
+    const enabled = (c.enabledRaidIds && c.enabledRaidIds.length) ? c.enabledRaidIds : raidCatalog.map(r=>r.id);
+    return raidCatalog.filter(r=>enabled.includes(r.id)).map(r=>{
       const st = c.raids && c.raids[r.id];
       if(!st){
         return `<button type="button" class="tag placeholder" data-open-tier data-cid="${c.id}" data-raid="${r.id}">${r.group}</button>`;
@@ -605,6 +618,14 @@
       refreshCharacter(refreshBtn.dataset.refresh, refreshBtn);
       return;
     }
+    const raidPick = e.target.closest('[data-raid-pick]');
+    if(raidPick){
+      const id = raidPick.dataset.raidPick;
+      const idx = pickedRaidIds.indexOf(id);
+      if(idx>=0) pickedRaidIds.splice(idx,1); else pickedRaidIds.push(id);
+      raidPick.classList.toggle('on');
+      return;
+    }
     const del = e.target.closest('[data-delete]');
     if(del){
       if(await askConfirm('이 캐릭터를 삭제할까요?')){
@@ -693,6 +714,11 @@
   });
 
   // add / edit character modal
+  function renderRaidPickList(){
+    $('raidPickList').innerHTML = raidCatalog.map(r=>`
+      <button type="button" class="raid-pick ${pickedRaidIds.includes(r.id)?'on':''}" data-raid-pick="${r.id}">${r.name}</button>
+    `).join('');
+  }
   function openAddCharModal(){
     editingCharId = null;
     $('charModalTitle').textContent = '캐릭터 등록';
@@ -705,6 +731,8 @@
     $('lookupStatus').textContent = '';
     $('lookupStatus').className = 'lookup-status';
     $('addCharError').textContent = '';
+    pickedRaidIds = raidCatalog.map(r=>r.id);
+    renderRaidPickList();
     refreshOwnerLabel();
     $('addCharOverlay').classList.add('open');
   }
@@ -721,6 +749,8 @@
     $('lookupStatus').textContent = '';
     $('lookupStatus').className = 'lookup-status';
     $('addCharError').textContent = '';
+    pickedRaidIds = (char.enabledRaidIds && char.enabledRaidIds.length) ? [...char.enabledRaidIds] : raidCatalog.map(r=>r.id);
+    renderRaidPickList();
     $('addCharOverlay').classList.add('open');
   }
   $('btnAddChar').addEventListener('click', ()=>{
@@ -778,6 +808,7 @@
         c.name = name;
         c.className = $('classInput').value.trim();
         c.itemLevel = $('levelInput').value.trim();
+        c.enabledRaidIds = [...pickedRaidIds];
       }
       editingCharId = null;
     } else {
@@ -791,6 +822,7 @@
         owner: ownerName, name,
         className: $('classInput').value.trim(),
         itemLevel: $('levelInput').value.trim(),
+        enabledRaidIds: [...pickedRaidIds],
         raids: {}
       });
     }
