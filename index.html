@@ -72,6 +72,10 @@
   }
   .reset-line-btn:hover{color:var(--rose);}
   header{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border);}
+  header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;}
+  .site-links{display:flex;gap:14px;flex-wrap:wrap;margin-top:2px;}
+  .site-links a{color:var(--text-dim);font-size:12.5px;font-weight:700;text-decoration:none;white-space:nowrap;}
+  .site-links a:hover{color:var(--violet);}
 
   .raid-summary{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
   .raid-stat{
@@ -220,12 +224,20 @@
 <div class="wrap">
 
   <header>
-    <p class="eyebrow">Raid Tracker</p>
+<div class="header-title">
+  <p class="eyebrow">Raid Tracker</p>
     <h1>로손실</h1>
     <div class="reset-line">
       <span id="resetLine">불러오는 중…</span>
       <button class="reset-line-btn" id="btnManualReset">지금 초기화</button>
     </div>
+</div>
+    <nav class="site-links">
+      <a href="https://lopec.kr/" target="_blank" rel="noopener noreferrer">로펙</a>
+      <a href="https://loawa.com/" target="_blank" rel="noopener noreferrer">로아와</a>
+      <a href="https://loaguard.com/" target="_blank" rel="noopener noreferrer">로아가드</a>
+      <a href="https://lostark.inven.co.kr/" target="_blank" rel="noopener noreferrer">로아인벤</a>
+    </nav>
   </header>
 
   <div class="raid-summary" id="raidSummary"></div>
