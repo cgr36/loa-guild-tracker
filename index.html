@@ -116,6 +116,8 @@
     display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;
   }
   .owner-add-btn:hover{background:var(--violet);color:#1a1626;}
+  .owner-rename-btn{background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);border-radius:6px;width:18px;height:18px;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;}
+  .owner-rename-btn:hover{color:var(--violet);border-color:var(--violet);}
   .owner-gold{font-size:13px;font-weight:700;color:var(--gold-bright);white-space:nowrap;}
   .owner-gold .sub{color:var(--text-faint);font-weight:600;font-size:10px;}
 
@@ -188,6 +190,7 @@
   .field input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 12px;font-size:14px;font-family:inherit;}
   .field-row{display:flex;gap:8px;}
   .field-row .field{flex:1;}
+  #ownerSelect, #newOwnerInput{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:6px 10px;font-size:13px;font-family:inherit;}
   .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;}
   .hint{font-size:11.5px;color:var(--text-faint);margin-top:6px;line-height:1.5;}
   .hint a{color:var(--violet);}
@@ -224,7 +227,6 @@
   <div class="toolbar">
     <button class="btn-primary" id="btnAddChar">+ 캐릭터 등록</button>
     <button class="btn-ghost" id="btnRaidCatalog">레이드 목록 관리</button>
-    <button class="btn-ghost" id="btnOwnerName">내 이름 설정</button>
     <button class="btn-ghost" id="btnApiKey">API 키 설정</button>
     <button class="btn-ghost" id="btnThemeToggle">🌙 화이트 모드</button>
     <input class="search" id="searchInput" placeholder="등록자 또는 캐릭터명 검색…" style="margin-left:auto;">
@@ -245,10 +247,10 @@
 <!-- Owner Name Modal -->
 <div class="overlay" id="ownerNameOverlay">
   <div class="modal">
-    <h3>내 이름 설정</h3>
-    <p class="desc">공대원 구분을 위해 이름을 한 번만 입력해주세요. 이후 캐릭터를 등록할 때 자동으로 이 이름으로 묶여요. (이 브라우저에만 저장돼요)</p>
+    <h3>등록자 이름 수정</h3>
+    <p class="desc">등록자 이름을 수정하면 해당 등록자의 캐릭터들도 함께 이름이 변경돼요.</p>
     <div class="field">
-      <label>내 이름 (닉네임)</label>
+      <label>등록자 이름</label>
       <input type="text" id="ownerNameInput" placeholder="예: 주아">
     </div>
     <div class="modal-actions">
@@ -282,8 +284,9 @@
   <div class="modal">
     <h3 id="charModalTitle">캐릭터 등록</h3>
     <p class="desc" id="ownerDisplayRow">
-      등록자: <b id="currentOwnerLabel" style="color:var(--text);">-</b>
-      <button type="button" class="btn-ghost" id="btnChangeOwner" style="font-size:11px;padding:3px 8px;margin-left:6px;">변경</button>
+      등록자:
+      <select id="ownerSelect"></select>
+      <input type="text" id="newOwnerInput" placeholder="새 등록자 이름" style="display:none;">
       <br>캐릭터명만 입력하세요. API 키가 있으면 직업/아이템레벨이 자동으로 채워져요.
     </p>
     <div class="field" id="editOwnerField" style="display:none;">
@@ -367,6 +370,7 @@
   let draggedCharId = null;
   let draggedOwner = null;
   let ownerOrder = [];
+  let addTargetOwner = '';
   let pickedRaidIds = [];
 
   const $ = (id) => document.getElementById(id);
@@ -473,9 +477,16 @@
     });
     return sum;
   }
-  function refreshOwnerLabel(){
-    const el = $('currentOwnerLabel');
-    if(el) el.textContent = ownerName || '(미설정)';
+  function renderOwnerSelect(){
+    const sel = $('ownerSelect');
+    if(!sel) return;
+    const owners = ownerOrder.length ? ownerOrder.slice() : [...new Set(characters.map(c=>c.owner))];
+    sel.innerHTML = owners.map(o=>`<option value="${o}">${o}</option>`).join('') + `<option value="__new__">+ 새 등록자 추가</option>`;
+    const pick = (addTargetOwner && owners.includes(addTargetOwner)) ? addTargetOwner : (owners.includes(ownerName) ? ownerName : (owners[0] || '__new__'));
+    sel.value = pick;
+    const isNew = sel.value === '__new__';
+    $('newOwnerInput').style.display = isNew ? 'inline-block' : 'none';
+    if(isNew) $('newOwnerInput').value = '';
   }
   async function refreshCharacter(id, btn){
     const c = characters.find(x=>x.id===id);
@@ -563,13 +574,13 @@
       if(!list.length) return '';
       shownOwners++; shownChars += list.length;
       const ownerTotal = list.reduce((sum,c)=>sum+charGold(c), 0);
-      const canAdd = owner === ownerName;
       return `
         <div class="owner-panel" draggable="true" data-owner="${owner}">
           <div class="owner-panel-head">
             <span class="owner-name-row">
               <span class="owner-name">${owner}</span>
-              ${canAdd ? `<button type="button" class="owner-add-btn" data-quick-add="${owner}" title="캐릭터 추가">+</button>` : ''}
+              <button type="button" class="owner-rename-btn" data-rename-owner="${owner}" title="이름 수정">✎</button>
+              <button type="button" class="owner-add-btn" data-quick-add="${owner}" title="캐릭터 추가">+</button>
             </span>
             <span class="owner-gold">${fmtGold(ownerTotal)}G <span class="sub">· ${list.length}캐릭</span></span>
           </div>
@@ -646,8 +657,17 @@
     }
     if(!e.target.closest('#tierDropdown')) closeDropdown();
 
+    const renameBtn = e.target.closest('[data-rename-owner]');
+    if(renameBtn){
+      const oldName = renameBtn.dataset.renameOwner;
+      $('ownerNameInput').value = oldName;
+      $('ownerNameOverlay').dataset.oldName = oldName;
+      $('ownerNameOverlay').classList.add('open');
+      return;
+    }
+
     const quickAdd = e.target.closest('[data-quick-add]');
-    if(quickAdd){ openAddCharModal(); return; }
+    if(quickAdd){ openAddCharModal(quickAdd.dataset.quickAdd); return; }
 
     const editBtn = e.target.closest('[data-edit]');
     if(editBtn){
@@ -810,33 +830,23 @@
     render();
   });
 
-  // owner name modal
-  $('btnOwnerName').addEventListener('click', ()=>{
-    $('ownerNameInput').value = ownerName;
-    $('ownerNameOverlay').classList.add('open');
-  });
-  $('btnChangeOwner').addEventListener('click', () =>{
-    $('ownerNameInput').value = ownerName;
-    $('addCharOverlay').classList.remove('open');
-    $('ownerNameOverlay').classList.add('open');
-    $('ownerNameSave').dataset.reopenAddChar = '1';
-  });
+  // owner name modal (rename existing owner)
   $('ownerNameSave').addEventListener('click', async ()=>{
     const val = $('ownerNameInput').value.trim();
     if(!val) return;
-    ownerName = val;
-    await setPersonal('la-owner-name', ownerName);
-    refreshOwnerLabel();
+    const oldName = $('ownerNameOverlay').dataset.oldName || '';
+    if(oldName && oldName !== val){
+      characters.forEach(c=>{ if(c.owner === oldName) c.owner = val; });
+      const idx2 = ownerOrder.indexOf(oldName);
+      if(idx2 > -1) ownerOrder[idx2] = val;
+      if(ownerName === oldName) ownerName = val;
+      await setShared('characters', characters);
+      await setShared('ownerOrder', ownerOrder);
+      await setPersonal('la-owner-name', ownerName);
+    }
+    delete $('ownerNameOverlay').dataset.oldName;
     $('ownerNameOverlay').classList.remove('open');
     render();
-    if($('ownerNameSave').dataset.thenAdd){
-      delete $('ownerNameSave').dataset.thenAdd;
-      $('btnAddChar').click();
-    }
-    if($('ownerNameSave').dataset.reopenAddChar){
-      delete $('ownerNameSave').dataset.reopenAddChar;
-      $('addCharOverlay').classList.add('open');
-    }
   });
 
   // api key modal
@@ -867,8 +877,9 @@
       <button type="button" class="raid-pick ${pickedRaidIds.includes(r.id)?'on':''}" data-raid-pick="${r.id}">${r.name}</button>
     `).join('');
   }
-  function openAddCharModal(){
+  function openAddCharModal(presetOwner){
     editingCharId = null;
+    addTargetOwner = presetOwner || ownerName || '';
     $('charModalTitle').textContent = '캐릭터 등록';
     $('btnSaveChar').textContent = '등록';
     $('ownerDisplayRow').style.display = 'block';
@@ -881,9 +892,14 @@
     $('addCharError').textContent = '';
     pickedRaidIds = raidCatalog.map(r=>r.id);
     renderRaidPickList();
-    refreshOwnerLabel();
+    renderOwnerSelect();
     $('addCharOverlay').classList.add('open');
   }
+  $('ownerSelect').addEventListener('change', ()=>{
+    const isNew = $('ownerSelect').value === '__new__';
+    $('newOwnerInput').style.display = isNew ? 'inline-block' : 'none';
+    if(isNew){ $('newOwnerInput').value=''; $('newOwnerInput').focus(); }
+  });
   function openEditCharModal(char){
     editingCharId = char.id;
     $('charModalTitle').textContent = '캐릭터 수정';
@@ -902,12 +918,6 @@
     $('addCharOverlay').classList.add('open');
   }
   $('btnAddChar').addEventListener('click', ()=>{
-    if(!ownerName){
-      $('ownerNameInput').value = '';
-      $('ownerNameOverlay').classList.add('open');
-      $('ownerNameSave').dataset.thenAdd = '1';
-      return;
-    }
     if(!apiKey){
       $('apiKeyInput').value = '';
       $('apiKeyOverlay').classList.add('open');
@@ -959,8 +969,10 @@
       editingCharId = null;
     } else {
       const names = name.split(',').map(s=>s.trim()).filter(Boolean);
-      if(!ownerName || names.length === 0){
-        errEl.textContent = '캐릭터명을 입력해주세요.';
+      const selVal = $('ownerSelect').value;
+      const finalOwner = selVal === '__new__' ? $('newOwnerInput').value.trim() : selVal;
+      if(!finalOwner || names.length === 0){
+        errEl.textContent = '등록자와 캐릭터명을 입력해주세요.';
         errEl.className = 'lookup-status err';
         return;
       }
@@ -968,12 +980,14 @@
       const lvl = $('levelInput').value.trim();
       const newChars = names.map((n, idx) => ({
         id: 'c_'+Date.now()+'_'+idx+'_'+Math.random().toString(36).slice(2,7),
-        owner: ownerName, name: n,
+        owner: finalOwner, name: n,
         className: names.length===1 ? cls : '',
         itemLevel: names.length===1 ? lvl : '',
         enabledRaidIds: [...pickedRaidIds],
         raids: {}
       }));
+      ownerName = finalOwner;
+      await setPersonal('la-owner-name', ownerName);
       newChars.forEach(nc => characters.push(nc));
       if(names.length > 1 && apiKey){
         errEl.textContent = '직업/아이템레벨 자동 조회 중…';
