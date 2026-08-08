@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>로손실 숙제관리</title>
+<title>로손실</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🔥%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
@@ -129,6 +130,10 @@
   .owner-rename-btn:hover{color:var(--violet);border-color:var(--violet);}
   .owner-gold{font-size:13px;font-weight:700;color:var(--gold-bright);white-space:nowrap;}
   .owner-gold .sub{color:var(--text-faint);font-weight:600;font-size:10px;}
+  .owner-memo{display:block;width:100%;background:transparent;border:none;border-bottom:1px dashed transparent;color:var(--text-dim);font-size:11.5px;font-family:inherit;padding:2px 0 6px;margin-top:2px;}
+  .owner-memo:hover{border-bottom-color:var(--border);}
+  .owner-memo:focus{outline:none;border-bottom-color:var(--violet);color:var(--text);}
+  .owner-memo::placeholder{color:var(--text-faint);}
 
   .crow{padding:9px 0;border-bottom:1px dashed rgba(60,53,90,0.35);}
   .crow:last-child{border-bottom:none;}
@@ -380,6 +385,7 @@
   let draggedCharId = null;
   let draggedOwner = null;
   let ownerOrder = [];
+  let ownerMemo = {};
   let addTargetOwner = '';
   let lookupData = {};
 
@@ -567,6 +573,9 @@
       </div>`).join('');
   }
 
+function escAttr(s){
+  return (s==null ? '' : String(s)).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
   function render(){
     const grid = $('ownerGrid');
     if(!characters.length){
@@ -605,6 +614,7 @@
             </span>
             <span class="owner-gold">${fmtGold(ownerTotal)}G <span class="sub">· ${list.length}캐릭</span></span>
           </div>
+          <input type="text" class="owner-memo" data-owner-memo="${owner}" placeholder="메모를 남겨보세요" maxlength="60" value="${escAttr(ownerMemo[owner]||'')}">
           ${list.map(c=>`
             <div class="crow" draggable="true" data-cid="${c.id}">
               <div class="crow-top">
@@ -638,7 +648,12 @@
     const lvl = parseFloat(char.itemLevel) || 0;
     const eligGolds = raid.tiers.filter(t=>t.levelReq==null || lvl>=t.levelReq).map(t=>t.gold);
     const maxEligGold = eligGolds.length ? Math.max(...eligGolds) : null;
-    const sortedTiers = [...raid.tiers].sort((a,b)=>b.gold-a.gold);
+    const sortedTiers = [...raid.tiers].sort((a,b)=>{
+      const aOk = a.levelReq==null || lvl>=a.levelReq;
+      const bOk = b.levelReq==null || lvl>=b.levelReq;
+      if(aOk !== bOk) return aOk ? -1 : 1;
+      return b.gold-a.gold;
+    });
     dd.innerHTML = sortedTiers.map(t=>{
         const ok = t.levelReq==null || lvl>=t.levelReq;
         const isBest = ok && maxEligGold!=null && t.gold===maxEligGold;
@@ -743,7 +758,16 @@
     }
   });
 
-    $('ownerGrid').addEventListener('dragstart', (e) => {
+$('ownerGrid').addEventListener('change', async (e) => {
+  const memoInput = e.target.closest('[data-owner-memo]');
+  if(memoInput){
+    const owner = memoInput.dataset.ownerMemo;
+    ownerMemo[owner] = memoInput.value;
+    await setShared('owner-memo', ownerMemo);
+  }
+});
+  
+  $('ownerGrid').addEventListener('dragstart', (e) => {
     const row = e.target.closest('.crow');
     if(row){
       draggedCharId = row.dataset.cid;
@@ -1074,6 +1098,7 @@
     guildMeta = await getShared('guild-meta', {resetWeekKey:''});
     characters = await getShared('characters', []);
     ownerOrder = await getShared('ownerOrder', []);
+    ownerMemo = await getShared('owner-memo', {});
 
     raidCatalog = await getShared('raid-catalog', null);
     const needsMigration = !raidCatalog || !raidCatalog.length || !raidCatalog[0].group;
