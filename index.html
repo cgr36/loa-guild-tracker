@@ -18,6 +18,7 @@
     --gold-bright:#f5d488;
     --violet:#9c89e8;
     --violet-dim:#6f5cc4;
+    --btn-primary-text:#1a1626;
     --rose:#e2637a;
     --text:#f1eef7;
     --text-dim:#a79fc0;
@@ -35,6 +36,7 @@
     --gold-bright:#9c6f0f;
     --violet:#6c4fd1;
     --violet-dim:#5439a8;
+    --btn-primary-text:#f5f1ff;
     --rose:#c0395a;
     --text:#221f2e;
     --text-dim:#5b5470;
@@ -86,7 +88,7 @@
 
   .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap;}
   button{font-family:inherit;cursor:pointer;border:none;border-radius:10px;font-weight:700;font-size:13.5px;}
-  .btn-primary{background:linear-gradient(135deg,var(--violet),var(--violet-dim));color:#1a1626;padding:11px 18px;}
+  .btn-primary{background:linear-gradient(135deg,var(--violet),var(--violet-dim));color:var(--btn-primary-text);padding:11px 18px;}
   .btn-primary:hover{filter:brightness(1.08);}
   .btn-ghost{background:var(--surface);color:var(--text-dim);border:1px solid var(--border);padding:10px 16px;}
   .btn-ghost:hover{color:var(--text);border-color:var(--text-faint);}
@@ -118,7 +120,7 @@
     border-radius:6px;height:20px;font-size:11px;line-height:1;font-weight:700;
     display:flex;align-items:center;justify-content:center;padding:0 8px;flex-shrink:0;white-space:nowrap;
   }
-  .owner-add-btn:hover{background:var(--violet);color:#1a1626;}
+  .owner-add-btn:hover{background:var(--violet);color:var(--btn-primary-text);}
   .owner-rename-btn{background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);border-radius:6px;width:18px;height:18px;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;}
   .owner-rename-btn:hover{color:var(--violet);border-color:var(--violet);}
   .owner-gold{font-size:13px;font-weight:700;color:var(--gold-bright);white-space:nowrap;}
@@ -152,8 +154,6 @@
   .tag.clear{background:rgba(156,137,232,0.16);border-color:var(--violet);color:#cdc3f7;}
   .tag.placeholder{background:transparent;border:1px dashed var(--border);color:var(--text-faint);}
   .tag.placeholder:hover{border-color:var(--violet);color:var(--violet);}
-  .tag.best{border-color:var(--gold-bright);box-shadow:0 0 0 1px var(--gold-bright);}
-  .tag-star{color:var(--gold-bright);margin-right:2px;}
 
   .tier-dropdown{
     position:fixed;z-index:100;background:var(--bg-elevated);border:1px solid var(--border);
@@ -170,6 +170,8 @@
   .td-pick:hover{background:var(--surface-2);}
   .td-pick.disabled{color:var(--text-faint);cursor:not-allowed;opacity:.55;}
   .td-pick.disabled:hover{background:none;}
+  .td-pick.best{background:rgba(228,182,90,0.14);}
+  .td-star{color:var(--gold-bright);margin-right:4px;}
   .td-pick .td-gold{color:var(--gold-bright);font-weight:700;font-size:10.5px;font-family:'Noto Sans KR',sans-serif;text-align:right;white-space:nowrap;}
   .td-nogold{
     background:transparent;border:1px solid var(--border);color:var(--text-faint);
@@ -519,21 +521,16 @@
   }
   function tagsHtml(c){
     const lvl = parseFloat(c.itemLevel) || 0;
-    const withMax = raidCatalog.map(r=>({r, elig:eligibleTiers(r, lvl)})).filter(x=>x.elig.length)
-      .map(x=>({r:x.r, maxGold:Math.max(...x.elig.map(t=>t.gold))}));
-    withMax.sort((a,b)=>b.maxGold-a.maxGold);
-    const bestId = withMax.length ? withMax[0].r.id : null;
-    return withMax.map(({r})=>{
+    const reachable = raidCatalog.filter(r=>eligibleTiers(r, lvl).length);
+    return reachable.map(r=>{
       const st = c.raids && c.raids[r.id];
-      const bestClass = r.id===bestId ? ' best' : '';
-      const star = r.id===bestId ? '<span class="tag-star">★</span>' : '';
       if(!st){
-        return `<button type="button" class="tag placeholder${bestClass}" data-open-tier data-cid="${c.id}" data-raid="${r.id}">${star}${r.group}</button>`;
+        return `<button type="button" class="tag placeholder" data-open-tier data-cid="${c.id}" data-raid="${r.id}">${r.group}</button>`;
       }
       const tier = tierByName(r, st.tier);
       const code = tier ? tier.code : st.tier;
       const titleAttr = tier ? ` title="${st.gold ? tierGoldLabel(tier) : '골드 없이 체크됨'}"` : '';
-      return `<button type="button" class="tag ${st.gold?'gold':'clear'}${bestClass}" data-open-tier data-cid="${c.id}" data-raid="${r.id}"${titleAttr}>${star}${code}</button>`;
+      return `<button type="button" class="tag ${st.gold?'gold':'clear'}" data-open-tier data-cid="${c.id}" data-raid="${r.id}"${titleAttr}>${code}</button>`;
     }).join('');
   }
 
@@ -616,8 +613,13 @@
     const dd = $('tierDropdown');
     const existing = char.raids && char.raids[raid.id];
     const lvl = parseFloat(char.itemLevel) || 0;
-    dd.innerHTML = raid.tiers.map(t=>{
+    const eligGolds = raid.tiers.filter(t=>t.levelReq==null || lvl>=t.levelReq).map(t=>t.gold);
+    const maxEligGold = eligGolds.length ? Math.max(...eligGolds) : null;
+    const sortedTiers = [...raid.tiers].sort((a,b)=>b.gold-a.gold);
+    dd.innerHTML = sortedTiers.map(t=>{
         const ok = t.levelReq==null || lvl>=t.levelReq;
+        const isBest = ok && maxEligGold!=null && t.gold===maxEligGold;
+        const star = isBest ? '<span class="td-star">★</span>' : '';
         if(!ok){
           return `<div class="td-row">
           <button type="button" class="td-pick disabled" disabled>
@@ -626,8 +628,8 @@
         </div>`;
         }
         return `<div class="td-row">
-          <button type="button" class="td-pick" data-tier="${t.name}" data-gold="1">
-            <span>${t.code}</span><span class="td-gold">${tierGoldLabel(t)}</span>
+          <button type="button" class="td-pick${isBest?' best':''}" data-tier="${t.name}" data-gold="1">
+            <span>${star}${t.code}</span><span class="td-gold">${tierGoldLabel(t)}</span>
           </button>
           <button type="button" class="td-nogold" data-tier="${t.name}" data-gold="0">골드 없음</button>
         </div>`;
