@@ -17,6 +17,7 @@
     --gold-dim:#8a6f35;
     --gold-bright:#f5d488;
     --violet:#9c89e8;
+    --violet-dim:#6f5cc4;
     --rose:#e2637a;
     --text:#f1eef7;
     --text-dim:#a79fc0;
@@ -33,6 +34,7 @@
     --gold-dim:#c9a227;
     --gold-bright:#9c6f0f;
     --violet:#6c4fd1;
+    --violet-dim:#5439a8;
     --rose:#c0395a;
     --text:#221f2e;
     --text-dim:#5b5470;
@@ -83,7 +85,7 @@
 
   .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap;}
   button{font-family:inherit;cursor:pointer;border:none;border-radius:10px;font-weight:700;font-size:13.5px;}
-  .btn-primary{background:linear-gradient(135deg,var(--gold),var(--gold-dim));color:#211804;padding:11px 18px;}
+  .btn-primary{background:linear-gradient(135deg,var(--violet),var(--violet-dim));color:#1a1626;padding:11px 18px;}
   .btn-primary:hover{filter:brightness(1.08);}
   .btn-ghost{background:var(--surface);color:var(--text-dim);border:1px solid var(--border);padding:10px 16px;}
   .btn-ghost:hover{color:var(--text);border-color:var(--text-faint);}
@@ -112,8 +114,8 @@
   .owner-name{font-weight:900;font-size:15px;color:var(--violet);white-space:nowrap;}
   .owner-add-btn{
     background:var(--surface-2);border:1px solid var(--border);color:var(--violet);
-    border-radius:6px;width:18px;height:18px;font-size:13px;line-height:1;font-weight:900;
-    display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;
+    border-radius:6px;height:20px;font-size:11px;line-height:1;font-weight:700;
+    display:flex;align-items:center;justify-content:center;padding:0 8px;flex-shrink:0;white-space:nowrap;
   }
   .owner-add-btn:hover{background:var(--violet);color:#1a1626;}
   .owner-rename-btn{background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);border-radius:6px;width:18px;height:18px;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;}
@@ -225,7 +227,7 @@
   <div class="raid-summary" id="raidSummary"></div>
 
   <div class="toolbar">
-    <button class="btn-primary" id="btnAddChar">+ 캐릭터 등록</button>
+    <button class="btn-primary" id="btnAddChar">+ 사용자 등록</button>
     <button class="btn-ghost" id="btnRaidCatalog">레이드 목록 관리</button>
     <button class="btn-ghost" id="btnApiKey">API 키 설정</button>
     <button class="btn-ghost" id="btnThemeToggle">🌙 화이트 모드</button>
@@ -546,7 +548,7 @@
   function render(){
     const grid = $('ownerGrid');
     if(!characters.length){
-      grid.innerHTML = `<div class="empty-state"><b>아직 등록된 캐릭터가 없어요.</b><br>위의 "+ 캐릭터 등록" 버튼으로 시작하세요.</div>`;
+      grid.innerHTML = `<div class="empty-state"><b>아직 등록된 캐릭터가 없어요.</b><br>위의 "+ 사용자 등록" 버튼으로 시작하세요.</div>`;
       $('statLine').textContent = '';
       return;
     }
@@ -577,7 +579,7 @@
             <span class="owner-name-row">
               <span class="owner-name">${owner}</span>
               <button type="button" class="owner-rename-btn" data-rename-owner="${owner}" title="이름 수정">✎</button>
-              <button type="button" class="owner-add-btn" data-quick-add="${owner}" title="캐릭터 추가">+</button>
+              <button type="button" class="owner-add-btn" data-quick-add="${owner}" title="캐릭터 추가">+캐릭터 추가</button>
             </span>
             <span class="owner-gold">${fmtGold(ownerTotal)}G <span class="sub">· ${list.length}캐릭</span></span>
           </div>
