@@ -82,6 +82,7 @@
     font-size:9.5px;color:var(--text-dim);padding:1.5px 0;white-space:nowrap;
   }
   .raid-stat .rtier .rt-gold{color:var(--text-faint);font-weight:600;}
+  .raid-stat .rtier .rt-level{color:var(--text-faint);font-size:8.5px;font-weight:600;margin-left:3px;}
 
   .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap;}
   button{font-family:inherit;cursor:pointer;border:none;border-radius:10px;font-weight:700;font-size:13.5px;}
@@ -151,6 +152,8 @@
   .tag.clear{background:rgba(156,137,232,0.16);border-color:var(--violet);color:#cdc3f7;}
   .tag.placeholder{background:transparent;border:1px dashed var(--border);color:var(--text-faint);}
   .tag.placeholder:hover{border-color:var(--violet);color:var(--violet);}
+  .tag.best{border-color:var(--gold-bright);box-shadow:0 0 0 1px var(--gold-bright);}
+  .tag-star{color:var(--gold-bright);margin-right:2px;}
 
   .tier-dropdown{
     position:fixed;z-index:100;background:var(--bg-elevated);border:1px solid var(--border);
@@ -165,6 +168,8 @@
     font-size:12px;font-weight:700;padding:7px 9px;border-radius:7px;cursor:pointer;text-align:left;
   }
   .td-pick:hover{background:var(--surface-2);}
+  .td-pick.disabled{color:var(--text-faint);cursor:not-allowed;opacity:.55;}
+  .td-pick.disabled:hover{background:none;}
   .td-pick .td-gold{color:var(--gold-bright);font-weight:700;font-size:10.5px;font-family:'Noto Sans KR',sans-serif;text-align:right;white-space:nowrap;}
   .td-nogold{
     background:transparent;border:1px solid var(--border);color:var(--text-faint);
@@ -201,13 +206,6 @@
   .lookup-status.err{color:var(--rose);}
   .raid-catalog-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(60,53,90,0.4);font-size:13px;}
   .raid-catalog-row span{flex:1;}
-  .raid-pick-list{display:flex;flex-wrap:wrap;gap:6px;}
-  .raid-pick{
-    background:var(--surface);border:1px solid var(--border);color:var(--text-dim);
-    border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;
-  }
-  .raid-pick:hover{border-color:var(--text-faint);}
-  .raid-pick.on{background:rgba(228,182,90,0.14);border-color:var(--gold);color:var(--gold-bright);}
   footer{text-align:center;color:var(--text-faint);font-size:11.5px;margin-top:50px;line-height:1.7;}
   @media (max-width:520px){header{flex-direction:column;align-items:flex-start;}}
 </style>
@@ -303,10 +301,6 @@
       </div>
       <div class="lookup-status" id="lookupStatus"></div>
     </div>
-    <div class="field">
-      <label>표시할 레이드 (이 캐릭터가 도는 레이드만 선택)</label>
-      <div class="raid-pick-list" id="raidPickList"></div>
-    </div>
     <p class="lookup-status" id="addCharError"></p>
     <div class="modal-actions">
       <button class="btn-ghost" data-close="addCharOverlay">취소</button>
@@ -370,7 +364,6 @@
   let ownerOrder = [];
   let addTargetOwner = '';
   let lookupData = {};
-  let pickedRaidIds = [];
 
   const $ = (id) => document.getElementById(id);
   applyTheme(localStorage.getItem('la-theme') || 'dark');
@@ -521,17 +514,26 @@
   }
 
   // ---------- render ----------
+  function eligibleTiers(raid, lvl){
+    return raid.tiers.filter(t=>t.levelReq==null || lvl>=t.levelReq);
+  }
   function tagsHtml(c){
-    const enabled = (c.enabledRaidIds && c.enabledRaidIds.length) ? c.enabledRaidIds : raidCatalog.map(r=>r.id);
-    return raidCatalog.filter(r=>enabled.includes(r.id)).map(r=>{
+    const lvl = parseFloat(c.itemLevel) || 0;
+    const withMax = raidCatalog.map(r=>({r, elig:eligibleTiers(r, lvl)})).filter(x=>x.elig.length)
+      .map(x=>({r:x.r, maxGold:Math.max(...x.elig.map(t=>t.gold))}));
+    withMax.sort((a,b)=>b.maxGold-a.maxGold);
+    const bestId = withMax.length ? withMax[0].r.id : null;
+    return withMax.map(({r})=>{
       const st = c.raids && c.raids[r.id];
+      const bestClass = r.id===bestId ? ' best' : '';
+      const star = r.id===bestId ? '<span class="tag-star">★</span>' : '';
       if(!st){
-        return `<button type="button" class="tag placeholder" data-open-tier data-cid="${c.id}" data-raid="${r.id}">${r.group}</button>`;
+        return `<button type="button" class="tag placeholder${bestClass}" data-open-tier data-cid="${c.id}" data-raid="${r.id}">${star}${r.group}</button>`;
       }
       const tier = tierByName(r, st.tier);
       const code = tier ? tier.code : st.tier;
       const titleAttr = tier ? ` title="${st.gold ? tierGoldLabel(tier) : '골드 없이 체크됨'}"` : '';
-      return `<button type="button" class="tag ${st.gold?'gold':'clear'}" data-open-tier data-cid="${c.id}" data-raid="${r.id}"${titleAttr}>${code}</button>`;
+      return `<button type="button" class="tag ${st.gold?'gold':'clear'}${bestClass}" data-open-tier data-cid="${c.id}" data-raid="${r.id}"${titleAttr}>${star}${code}</button>`;
     }).join('');
   }
 
@@ -541,7 +543,7 @@
     el.innerHTML = raidCatalog.map(r=>`
       <div class="raid-stat">
         <div class="rname">${r.name}</div>
-        ${r.tiers.map(t=>`<div class="rtier"><span>${t.name}</span><span class="rt-gold">${tierGoldLabel(t)}</span></div>`).join('')}
+        ${r.tiers.map(t=>`<div class="rtier"><span>${t.name}${t.levelReq?` <span class="rt-level">Lv.${t.levelReq}+</span>`:''}</span><span class="rt-gold">${tierGoldLabel(t)}</span></div>`).join('')}
       </div>`).join('');
   }
 
@@ -613,13 +615,23 @@
   function openDropdown(btn, char, raid){
     const dd = $('tierDropdown');
     const existing = char.raids && char.raids[raid.id];
-    dd.innerHTML = raid.tiers.map(t=>`
-        <div class="td-row">
+    const lvl = parseFloat(char.itemLevel) || 0;
+    dd.innerHTML = raid.tiers.map(t=>{
+        const ok = t.levelReq==null || lvl>=t.levelReq;
+        if(!ok){
+          return `<div class="td-row">
+          <button type="button" class="td-pick disabled" disabled>
+            <span>${t.code}</span><span class="td-gold">Lv.${t.levelReq}+ 필요</span>
+          </button>
+        </div>`;
+        }
+        return `<div class="td-row">
           <button type="button" class="td-pick" data-tier="${t.name}" data-gold="1">
             <span>${t.code}</span><span class="td-gold">${tierGoldLabel(t)}</span>
           </button>
           <button type="button" class="td-nogold" data-tier="${t.name}" data-gold="0">골드 없음</button>
-        </div>`).join('')
+        </div>`;
+      }).join('')
       + (existing ? `<div class="td-clear-row"><button type="button" class="td-clear" data-clear="1">체크 해제</button></div>` : '');
 
     dd.classList.add('open');
@@ -677,14 +689,6 @@
     const refreshBtn = e.target.closest('[data-refresh]');
     if(refreshBtn){
       refreshCharacter(refreshBtn.dataset.refresh, refreshBtn);
-      return;
-    }
-    const raidPick = e.target.closest('[data-raid-pick]');
-    if(raidPick){
-      const id = raidPick.dataset.raidPick;
-      const idx = pickedRaidIds.indexOf(id);
-      if(idx>=0) pickedRaidIds.splice(idx,1); else pickedRaidIds.push(id);
-      raidPick.classList.toggle('on');
       return;
     }
     const del = e.target.closest('[data-delete]');
@@ -871,11 +875,6 @@
   });
 
   // add / edit character modal
-  function renderRaidPickList(){
-    $('raidPickList').innerHTML = raidCatalog.map(r=>`
-      <button type="button" class="raid-pick ${pickedRaidIds.includes(r.id)?'on':''}" data-raid-pick="${r.id}">${r.name}</button>
-    `).join('');
-  }
   function openAddCharModal(presetOwner){
     editingCharId = null;
     addTargetOwner = presetOwner || ownerName || '';
@@ -888,8 +887,6 @@
     $('lookupStatus').textContent = '';
     $('lookupStatus').className = 'lookup-status';
     $('addCharError').textContent = '';
-    pickedRaidIds = raidCatalog.map(r=>r.id);
-    renderRaidPickList();
     renderOwnerSelect();
     $('addCharOverlay').classList.add('open');
   }
@@ -910,8 +907,6 @@
     $('lookupStatus').textContent = char.className ? `현재: ${char.className} · ${char.itemLevel || '-'}` : '';
     $('lookupStatus').className = 'lookup-status';
     $('addCharError').textContent = '';
-    pickedRaidIds = (char.enabledRaidIds && char.enabledRaidIds.length) ? [...char.enabledRaidIds] : raidCatalog.map(r=>r.id);
-    renderRaidPickList();
     $('addCharOverlay').classList.add('open');
   }
   $('btnAddChar').addEventListener('click', ()=>{
@@ -970,7 +965,6 @@
           c.className = lookupData[name].className;
           c.itemLevel = lookupData[name].itemLevel;
         }
-        c.enabledRaidIds = [...pickedRaidIds];
       }
       editingCharId = null;
     } else {
@@ -987,7 +981,6 @@
         owner: finalOwner, name: n,
         className: (lookupData[n] && lookupData[n].className) || '',
         itemLevel: (lookupData[n] && lookupData[n].itemLevel) || '',
-        enabledRaidIds: [...pickedRaidIds],
         raids: {}
       }));
       ownerName = finalOwner;
@@ -1057,31 +1050,59 @@
     if(needsMigration){
       raidCatalog = [
         {id:'r_armoche4', name:'4막 아르모체', group:'4막', tiers:[
-          {name:'하드', gold:38000, code:'4하'},
-          {name:'노말', gold:27000, code:'4노', splitBound:true}
+          {name:'노말', gold:27000, code:'4노', splitBound:true, levelReq:1700},
+          {name:'하드', gold:38000, code:'4하', levelReq:1720}
         ]},
         {id:'r_kazerosfinal', name:'종막 카제로스', group:'종막', tiers:[
-          {name:'하드', gold:48000, code:'종하'},
-          {name:'노말', gold:32000, code:'종노', splitBound:true}
+          {name:'노말', gold:32000, code:'종노', splitBound:true, levelReq:1710},
+          {name:'하드', gold:48000, code:'종하', levelReq:1730}
         ]},
         {id:'r_serka', name:'세르카', group:'세르카', tiers:[
-          {name:'노말', gold:32000, code:'세노', splitBound:true},
-          {name:'하드', gold:44000, code:'세하'},
-          {name:'나이트메어', gold:54000, code:'세나'}
+          {name:'노말', gold:32000, code:'세노', splitBound:true, levelReq:1710},
+          {name:'하드', gold:44000, code:'세하', levelReq:1730},
+          {name:'나이트메어', gold:54000, code:'세나', levelReq:1740}
         ]},
         {id:'r_horizon', name:'지평의 성당', group:'지평', tiers:[
-          {name:'1단계', gold:30000, code:'1성'},
-          {name:'2단계', gold:40000, code:'2성'},
-          {name:'3단계', gold:50000, code:'3성'}
+          {name:'1단계', gold:30000, code:'1성', levelReq:1700},
+          {name:'2단계', gold:40000, code:'2성', levelReq:1720},
+          {name:'3단계', gold:50000, code:'3성', levelReq:1750}
         ]},
         {id:'r_belgardin', name:'벨가르딘', group:'벨가', tiers:[
-          {name:'노말', gold:50000, code:'벨노'},
-          {name:'하드', gold:62000, code:'벨하'},
-          {name:'나이트메어', gold:75000, code:'벨나'}
+          {name:'노말', gold:50000, code:'벨노', levelReq:1750},
+          {name:'하드', gold:62000, code:'벨하', levelReq:1770},
+          {name:'나이트메어', gold:75000, code:'벨나', levelReq:1780}
         ]}
       ];
       await setShared('raid-catalog', raidCatalog);
     }
+
+    const LEVEL_REQS = {
+      r_armoche4: {'노말':1700, '하드':1720},
+      r_kazerosfinal: {'노말':1710, '하드':1730},
+      r_serka: {'노말':1710, '하드':1730, '나이트메어':1740},
+      r_horizon: {'1단계':1700, '2단계':1720, '3단계':1750},
+      r_belgardin: {'노말':1750, '하드':1770, '나이트메어':1780}
+    };
+    const TIER_ORDER = { r_armoche4:['노말','하드'], r_kazerosfinal:['노말','하드'] };
+    let catalogFixed = false;
+    raidCatalog.forEach(r=>{
+      const reqs = LEVEL_REQS[r.id];
+      if(reqs){
+        r.tiers.forEach(t=>{
+          if(reqs[t.name] !== undefined && t.levelReq !== reqs[t.name]){ t.levelReq = reqs[t.name]; catalogFixed = true; }
+        });
+      }
+      const order = TIER_ORDER[r.id];
+      if(order){
+        const wanted = order.join(',');
+        const current = r.tiers.map(t=>t.name).join(',');
+        if(wanted !== current){
+          r.tiers.sort((a,b)=>order.indexOf(a.name)-order.indexOf(b.name));
+          catalogFixed = true;
+        }
+      }
+    });
+    if(catalogFixed) await setShared('raid-catalog', raidCatalog);
 
     apiKey = await getPersonal('la-api-key');
     ownerName = await getPersonal('la-owner-name');
