@@ -116,7 +116,7 @@
   .owner-panel.drag-over{outline:2px dashed #8b7bf0;outline-offset:3px;border-radius:10px;}
   .owner-panel-head{
     display:flex;justify-content:space-between;align-items:baseline;
-    margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--border);gap:8px;
+    margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--border);gap:8px;flex-wrap:wrap;
   }
   .owner-name-row{display:flex;align-items:center;gap:6px;}
   .owner-name{font-weight:900;font-size:15px;color:var(--violet);white-space:nowrap;}
@@ -128,7 +128,7 @@
   .owner-add-btn:hover{background:var(--violet);color:var(--btn-primary-text);}
   .owner-rename-btn{background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);border-radius:6px;width:18px;height:18px;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;}
   .owner-rename-btn:hover{color:var(--violet);border-color:var(--violet);}
-  .owner-gold{font-size:13px;font-weight:700;color:var(--gold-bright);white-space:nowrap;}
+  .owner-gold{font-size:12.5px;font-weight:700;color:var(--gold-bright);text-align:right;}
   .owner-gold .sub{color:var(--text-faint);font-weight:600;font-size:10px;}
   .owner-memo{display:block;width:100%;background:rgba(228,182,90,0.12);border:1px solid rgba(228,182,90,0.4);border-radius:6px;color:var(--gold-bright);font-size:12.5px;font-weight:700;font-family:inherit;padding:5px 8px;margin-top:6px;}
   .owner-memo:hover{border-color:var(--gold);}
@@ -500,6 +500,7 @@
     });
     return sum;
   }
+  function charGoldSplit(c){let tradable=0,bound=0;raidCatalog.forEach(r=>{const st=c.raids&&c.raids[r.id];if(!st||!st.gold)return;const tier=tierByName(r,st.tier);if(!tier)return;if(tier.splitBound){const half=Math.round(tier.gold/2);tradable+=half;bound+=tier.gold-half;}else{tradable+=tier.gold;}});return{tradable,bound};}
   function renderOwnerSelect(){
     const sel = $('ownerSelect');
     if(!sel) return;
@@ -603,7 +604,7 @@ function escAttr(s){
       });
       if(!list.length) return '';
       shownOwners++; shownChars += list.length;
-      const ownerTotal = list.reduce((sum,c)=>sum+charGold(c), 0);
+      const ownerSplit = list.reduce((acc,c)=>{const g=charGoldSplit(c);acc.tradable+=g.tradable;acc.bound+=g.bound;return acc;}, {tradable:0,bound:0});
       return `
         <div class="owner-panel" draggable="true" data-owner="${owner}">
           <div class="owner-panel-head">
@@ -612,7 +613,7 @@ function escAttr(s){
               <button type="button" class="owner-rename-btn" data-rename-owner="${owner}" title="이름 수정">✎</button>
               <button type="button" class="owner-add-btn" data-quick-add="${owner}" title="캐릭터 추가">+캐릭터 추가</button>
             </span>
-            <span class="owner-gold">${fmtGold(ownerTotal)}G <span class="sub">· ${list.length}캐릭</span></span>
+            <span class="owner-gold">유통 ${fmtGold(ownerSplit.tradable)}G · 귀속 ${fmtGold(ownerSplit.bound)}G <span class="sub">· ${list.length}캐릭</span></span>
           </div>
           <input type="text" class="owner-memo" data-owner-memo="${owner}" placeholder="메모를 남겨보세요" maxlength="60" value="${escAttr(ownerMemo[owner]||'')}">
           ${list.map(c=>`
