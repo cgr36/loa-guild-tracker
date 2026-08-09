@@ -863,7 +863,7 @@ $('ownerGrid').addEventListener('change', async (e) => {
     }
   });
 
-  window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeDropdown(); });
+  window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeDropdown(); document.querySelectorAll('.overlay.open').forEach(o=>{ o.classList.remove('open'); if(o.id==='addCharOverlay') editingCharId=null; }); });
 
   $('searchInput').addEventListener('input', (e)=>{
     currentFilter = e.target.value.trim().toLowerCase();
