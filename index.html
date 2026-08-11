@@ -134,6 +134,7 @@
   .owner-memo:hover{border-color:var(--gold);}
   .owner-memo:focus{outline:none;border-color:var(--violet);color:var(--text);background:var(--surface-2);}
   .owner-memo::placeholder{color:var(--text-faint);font-weight:400;}
+  .owner-memo-time{font-size:10.5px;color:var(--text-faint);margin-top:3px;text-align:right;}
 
   .crow{padding:9px 0;border-bottom:1px dashed rgba(60,53,90,0.35);}
   .crow:last-child{border-bottom:none;}
@@ -386,6 +387,7 @@
   let draggedOwner = null;
   let ownerOrder = [];
   let ownerMemo = {};
+  let ownerMemoTime = {};
   let addTargetOwner = '';
   let lookupData = {};
 
@@ -475,6 +477,13 @@
 
   // ---------- helpers ----------
   function fmtGold(n){ return n.toLocaleString('ko-KR'); }
+  function fmtMemoTime(iso){
+    if(!iso) return '';
+    const d = new Date(iso);
+    if(isNaN(d.getTime())) return '';
+    const pad = n => String(n).padStart(2,'0');
+    return `${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
   function tierByName(raid, name){ return raid.tiers.find(t=>t.name===name); }
   function tierGoldLabel(tier){
     if(tier.splitBound){
@@ -616,6 +625,7 @@ function escAttr(s){
             <span class="owner-gold">유통 ${fmtGold(ownerSplit.tradable)}G · 귀속 ${fmtGold(ownerSplit.bound)}G <span class="sub">· ${list.length}캐릭</span></span>
           </div>
           <input type="text" class="owner-memo" data-owner-memo="${owner}" placeholder="메모를 남겨보세요" maxlength="60" value="${escAttr(ownerMemo[owner]||'')}">
+          ${ownerMemoTime[owner] ? `<div class="owner-memo-time">${fmtMemoTime(ownerMemoTime[owner])}</div>` : ''}
           ${list.map(c=>`
             <div class="crow" draggable="true" data-cid="${c.id}">
               <div class="crow-top">
@@ -765,6 +775,9 @@ $('ownerGrid').addEventListener('change', async (e) => {
     const owner = memoInput.dataset.ownerMemo;
     ownerMemo[owner] = memoInput.value;
     await setShared('owner-memo', ownerMemo);
+    ownerMemoTime[owner] = new Date().toISOString();
+    await setShared('owner-memo-time', ownerMemoTime);
+    render();
   }
 });
   
@@ -1100,6 +1113,7 @@ $('ownerGrid').addEventListener('change', async (e) => {
     characters = await getShared('characters', []);
     ownerOrder = await getShared('ownerOrder', []);
     ownerMemo = await getShared('owner-memo', {});
+    ownerMemoTime = await getShared('owner-memo-time', {});
 
     raidCatalog = await getShared('raid-catalog', null);
     const needsMigration = !raidCatalog || !raidCatalog.length || !raidCatalog[0].group;
