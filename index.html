@@ -522,6 +522,9 @@
   }
   function tierByName(raid, name){ return raid.tiers.find(t=>t.name===name); }
   function tierGoldLabel(tier){
+    if(tier.fullBound){
+      return `<span class="gold-bound">${fmtGold(tier.gold)}G</span>`;
+    }
     if(tier.splitBound){
       const half = Math.round(tier.gold/2);
       return `${fmtGold(half)}G + <span class="gold-bound">${fmtGold(half)}G</span>`;
@@ -529,6 +532,9 @@
     return `${fmtGold(tier.gold)}G`;
   }
   function tierGoldPlain(tier){
+    if(tier.fullBound){
+      return `${fmtGold(tier.gold)}G`;
+    }
     if(tier.splitBound){
       const half = Math.round(tier.gold/2);
       return `${fmtGold(half)}G + ${fmtGold(half)}G`;
@@ -536,9 +542,11 @@
     return `${fmtGold(tier.gold)}G`;
   }
   function tierTradableAmt(tier){
+if(tier.fullBound) return 0;
 return tier.splitBound ? Math.round(tier.gold/2) : tier.gold;
 }
 function tierBoundAmt(tier){
+if(tier.fullBound) return tier.gold;
 return tier.splitBound ? (tier.gold - Math.round(tier.gold/2)) : 0;
 }
 function fixedRaidIds(lvl){
@@ -1344,9 +1352,9 @@ draggedChar.owner = targetChar.owner;
           {name:'나이트메어', gold:54000, code:'세나', levelReq:1740}
         ]},
         {id:'r_horizon', name:'지평의 성당', group:'지평', tiers:[
-          {name:'1단계', gold:30000, code:'1성', levelReq:1700},
-          {name:'2단계', gold:40000, code:'2성', levelReq:1720},
-          {name:'3단계', gold:50000, code:'3성', levelReq:1750}
+          {name:'1단계', gold:30000, code:'1성', levelReq:1700, fullBound:true},
+          {name:'2단계', gold:40000, code:'2성', levelReq:1720, fullBound:true},
+          {name:'3단계', gold:50000, code:'3성', levelReq:1750, fullBound:true}
         ]},
         {id:'r_belgardin', name:'벨가르딘', group:'벨가', tiers:[
           {name:'노말', gold:50000, code:'벨노', levelReq:1750},
