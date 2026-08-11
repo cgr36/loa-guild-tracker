@@ -156,6 +156,9 @@
   .crow-edit:hover{color:var(--violet);}
   .crow-del:hover{color:var(--rose);}
   .crow-tags{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px;}
+  .crow-gold{color:var(--gold-bright);font-weight:700;}
+  .crow-dropzone{height:10px;margin:2px 0;border-radius:4px;}
+  .crow-dropzone.drag-target{background:#8b7bf0;box-shadow:0 0 8px 1px rgba(139,123,240,0.8);}
 
   .tag{
     background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);
@@ -510,6 +513,7 @@
     return sum;
   }
   function charGoldSplit(c){let tradable=0,bound=0;raidCatalog.forEach(r=>{const st=c.raids&&c.raids[r.id];if(!st||!st.gold)return;const tier=tierByName(r,st.tier);if(!tier)return;if(tier.splitBound){const half=Math.round(tier.gold/2);tradable+=half;bound+=tier.gold-half;}else{tradable+=tier.gold;}});return{tradable,bound};}
+function charGoldMetaHtml(c){const g=charGoldSplit(c);let s=`유통 ${fmtGold(g.tradable)}G`;if(g.bound) s+=` · 귀속 ${fmtGold(g.bound)}G`;return `<span class="crow-gold">${s}</span>`;}
   function renderOwnerSelect(){
     const sel = $('ownerSelect');
     if(!sel) return;
@@ -636,10 +640,11 @@ function escAttr(s){
                   <button type="button" class="crow-del" data-delete="${c.id}" title="삭제">✕</button>
                 </div>
               </div>
-              <div class="crow-meta">${c.className || '?'} · ${c.itemLevel || '?'}</div>
+              <div class="crow-meta">${c.className || '?'} · ${c.itemLevel || '?'} · ${charGoldMetaHtml(c)}</div>
               <div class="crow-tags">${tagsHtml(c)}</div>
             </div>
           `).join('')}
+        <div class="crow-dropzone" data-owner-dropzone="${owner}"></div>
         </div>`;
     }).filter(Boolean);
 
@@ -806,9 +811,16 @@ $('ownerGrid').addEventListener('change', async (e) => {
     draggedCharId = null;
     draggedOwner = null;
     document.querySelectorAll('.crow.drag-over-top, .crow.drag-over-bottom, .owner-panel.drag-over').forEach(el => el.classList.remove('drag-over-top','drag-over-bottom','drag-over'));
+document.querySelectorAll('.crow-dropzone.drag-target').forEach(el => el.classList.remove('drag-target'));
   });
 
   $('ownerGrid').addEventListener('dragover', (e) => {
+const dropzone = e.target.closest('[data-owner-dropzone]');
+if(dropzone && draggedCharId){
+e.preventDefault();
+dropzone.classList.add('drag-target');
+return;
+}
     const row = e.target.closest('.crow');
     if(row && draggedCharId){
       e.preventDefault();
@@ -828,6 +840,8 @@ $('ownerGrid').addEventListener('change', async (e) => {
   });
 
   $('ownerGrid').addEventListener('dragleave', (e) => {
+const dropzoneLeave = e.target.closest('[data-owner-dropzone]');
+if(dropzoneLeave) dropzoneLeave.classList.remove('drag-target');
     const row = e.target.closest('.crow');
     if(row) row.classList.remove('drag-over-top','drag-over-bottom');
     const panel = e.target.closest('.owner-panel');
@@ -835,6 +849,23 @@ $('ownerGrid').addEventListener('change', async (e) => {
   });
 
   $('ownerGrid').addEventListener('drop', async (e) => {
+const dropzoneDrop = e.target.closest('[data-owner-dropzone]');
+if(dropzoneDrop && draggedCharId){
+e.preventDefault();
+dropzoneDrop.classList.remove('drag-target');
+const targetOwner = dropzoneDrop.dataset.ownerDropzone;
+const dragId = draggedCharId;
+draggedCharId = null;
+const draggedChar = characters.find(c => c.id === dragId);
+if(!draggedChar) return;
+const fromIdx = characters.indexOf(draggedChar);
+characters.splice(fromIdx, 1);
+draggedChar.owner = targetOwner;
+characters.push(draggedChar);
+await setShared('characters', characters);
+render();
+return;
+}
     const row = e.target.closest('.crow');
     if(row && draggedCharId){
       document.querySelectorAll('.crow.drag-over-top, .crow.drag-over-bottom').forEach(el => el.classList.remove('drag-over-top','drag-over-bottom'));
@@ -845,7 +876,8 @@ $('ownerGrid').addEventListener('change', async (e) => {
       if(targetId === dragId) return;
       const draggedChar = characters.find(c => c.id === dragId);
       const targetChar = characters.find(c => c.id === targetId);
-      if(!draggedChar || !targetChar || draggedChar.owner !== targetChar.owner) return;
+      if(!draggedChar || !targetChar) return;
+draggedChar.owner = targetChar.owner;
       const fromIdx = characters.indexOf(draggedChar);
       characters.splice(fromIdx, 1);
       const toIdx = characters.indexOf(targetChar);
