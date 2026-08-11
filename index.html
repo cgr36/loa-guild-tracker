@@ -228,6 +228,16 @@
   .raid-catalog-row span{flex:1;}
   footer{text-align:center;color:var(--text-faint);font-size:11.5px;margin-top:50px;line-height:1.7;}
   @media (max-width:520px){header{flex-direction:column;align-items:flex-start;}}
+  .owner-order-list{margin-bottom:16px;max-height:52vh;overflow-y:auto;}
+  .owner-order-card{position:relative;display:flex;align-items:center;gap:10px;padding:12px 14px;margin-bottom:8px;background:var(--surface);border:1px solid var(--border);border-radius:8px;cursor:grab;}
+  .owner-order-card:last-child{margin-bottom:0;}
+  .owner-order-card.dragging{opacity:.4;}
+  .owner-order-card.drag-over-top::before,.owner-order-card.drag-over-bottom::after{content:'';position:absolute;left:2px;right:2px;height:3px;background:#8b7bf0;border-radius:2px;box-shadow:0 0 8px 1px rgba(139,123,240,0.8);z-index:2;}
+  .owner-order-card.drag-over-top::before{top:-5px;}
+  .owner-order-card.drag-over-bottom::after{bottom:-5px;}
+  .owner-order-card .oo-handle{color:var(--text-faint);font-size:15px;line-height:1;}
+  .owner-order-card .oo-name{flex:1;font-weight:700;font-size:14px;color:var(--text);}
+  .owner-order-card .oo-count{font-size:11px;color:var(--text-faint);}
 </style>
 </head>
 <body>
@@ -257,6 +267,7 @@
     <button class="btn-ghost" id="btnRaidCatalog">레이드 목록 관리</button>
     <button class="btn-ghost" id="btnApiKey">API 키 설정</button>
     <button class="btn-ghost" id="btnThemeToggle">🌙 화이트 모드</button>
+    <button class="btn-ghost" id="btnOwnerOrder">↕ 순서 변경</button>
     <input class="search" id="searchInput" placeholder="등록자 또는 캐릭터명 검색…" style="margin-left:auto;">
   </div>
   <div class="stat" id="statLine" style="margin-bottom:12px;"></div>
@@ -283,6 +294,19 @@
     </div>
     <div class="modal-actions">
       <button class="btn-primary" id="ownerNameSave">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Owner Order Modal -->
+<div class="overlay" id="ownerOrderOverlay">
+  <div class="modal" style="max-width:420px;">
+    <h3>사용자 순서 변경</h3>
+    <p class="desc">카드를 드래그해서 순서를 바꿀 수 있어요. 이 순서는 지금 이 브라우저에만 저장되고, 다른 공대원에게는 영향을 주지 않아요.</p>
+    <div id="ownerOrderList" class="owner-order-list"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="ownerOrderResetBtn">기본 순서로</button>
+      <button class="btn-primary" data-close="ownerOrderOverlay">완료</button>
     </div>
   </div>
 </div>
@@ -390,6 +414,14 @@
   let draggedCharId = null;
   let draggedOwner = null;
   let ownerOrder = [];
+  let localOwnerOrder = (function(){
+    try {
+      const raw = localStorage.getItem('la-owner-order-local');
+      const arr = raw ? JSON.parse(raw) : null;
+      return Array.isArray(arr) ? arr : null;
+    } catch(e) { return null; }
+  })();
+  let draggedOwnerCard = null;
   let ownerMemo = {};
   let ownerMemoTime = {};
   let addTargetOwner = '';
@@ -664,7 +696,8 @@ function escAttr(s){
     if(orderChanged) setShared('ownerOrder', ownerOrder);
 
     let shownChars = 0, shownOwners = 0;
-    const panels = ownerOrder.map(owner=>{
+    const displayOrder = getEffectiveOwnerOrder(allOwners);
+    const panels = displayOrder.map(owner=>{
       const list = grouped[owner].filter(c=>{
         if(!currentFilter) return true;
         return owner.toLowerCase().includes(currentFilter) || c.name.toLowerCase().includes(currentFilter);
@@ -977,6 +1010,98 @@ draggedChar.owner = targetChar.owner;
     const next = document.body.dataset.theme === 'light' ? 'dark' : 'light';
     applyTheme(next);
     localStorage.setItem('la-theme', next);
+  });
+
+  function getEffectiveOwnerOrder(allOwners){
+    if(localOwnerOrder && localOwnerOrder.length){
+      const filtered = localOwnerOrder.filter(o=>allOwners.includes(o));
+      allOwners.forEach(o=>{ if(!filtered.includes(o)) filtered.push(o); });
+      return filtered;
+    }
+    return allOwners;
+  }
+  function saveLocalOwnerOrder(order){
+    localOwnerOrder = order;
+    try { localStorage.setItem('la-owner-order-local', JSON.stringify(order)); } catch(e){}
+  }
+  function renderOwnerOrderModal(){
+    const list = $('ownerOrderList');
+    if(!list) return;
+    const allOwners = ownerOrder.filter(o=>characters.some(c=>c.owner===o));
+    const order = getEffectiveOwnerOrder(allOwners);
+    list.innerHTML = order.map(function(owner){
+      const cnt = characters.filter(function(c){ return c.owner===owner; }).length;
+      return '<div class="owner-order-card" draggable="true" data-owner-card="'+escAttr(owner)+'">'
+        + '<span class="oo-handle">⠿</span>'
+        + '<span class="oo-name">'+escAttr(owner)+'</span>'
+        + '<span class="oo-count">'+cnt+'개 캐릭터</span>'
+        + '</div>';
+    }).join('');
+  }
+
+  $('btnOwnerOrder').addEventListener('click', ()=>{
+    renderOwnerOrderModal();
+    $('ownerOrderOverlay').classList.add('open');
+  });
+
+  $('ownerOrderResetBtn').addEventListener('click', ()=>{
+    try { localStorage.removeItem('la-owner-order-local'); } catch(e){}
+    localOwnerOrder = null;
+    renderOwnerOrderModal();
+    render();
+  });
+
+  $('ownerOrderList').addEventListener('dragstart', (e)=>{
+    const card = e.target.closest('.owner-order-card');
+    if(!card) return;
+    draggedOwnerCard = card.dataset.ownerCard;
+    card.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+
+  $('ownerOrderList').addEventListener('dragend', (e)=>{
+    const card = e.target.closest('.owner-order-card');
+    if(card) card.classList.remove('dragging');
+    $('ownerOrderList').querySelectorAll('.drag-over-top,.drag-over-bottom').forEach(el=>el.classList.remove('drag-over-top','drag-over-bottom'));
+  });
+
+  $('ownerOrderList').addEventListener('dragover', (e)=>{
+    const card = e.target.closest('.owner-order-card');
+    if(!card || !draggedOwnerCard) return;
+    e.preventDefault();
+    if(card.dataset.ownerCard === draggedOwnerCard) return;
+    const rect = card.getBoundingClientRect();
+    const before = (e.clientY - rect.top) < rect.height / 2;
+    card.classList.toggle('drag-over-top', before);
+    card.classList.toggle('drag-over-bottom', !before);
+  });
+
+  $('ownerOrderList').addEventListener('dragleave', (e)=>{
+    const card = e.target.closest('.owner-order-card');
+    if(card) card.classList.remove('drag-over-top','drag-over-bottom');
+  });
+
+  $('ownerOrderList').addEventListener('drop', (e)=>{
+    const card = e.target.closest('.owner-order-card');
+    if(!card || !draggedOwnerCard) return;
+    e.preventDefault();
+    const dragOwner = draggedOwnerCard;
+    draggedOwnerCard = null;
+    const targetOwner = card.dataset.ownerCard;
+    card.classList.remove('drag-over-top','drag-over-bottom');
+    if(dragOwner === targetOwner) return;
+    const allOwners = ownerOrder.filter(o=>characters.some(c=>c.owner===o));
+    const current = getEffectiveOwnerOrder(allOwners);
+    const fromIdx = current.indexOf(dragOwner);
+    if(fromIdx === -1) return;
+    current.splice(fromIdx, 1);
+    const toIdx = current.indexOf(targetOwner);
+    const rect = card.getBoundingClientRect();
+    const after = (e.clientY - rect.top) > rect.height / 2;
+    current.splice(after ? toIdx + 1 : toIdx, 0, dragOwner);
+    saveLocalOwnerOrder(current);
+    renderOwnerOrderModal();
+    render();
   });
 
   $('btnManualReset').addEventListener('click', async ()=>{
