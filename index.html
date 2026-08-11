@@ -110,7 +110,7 @@
   @media (max-width: 1100px){ .owner-grid{grid-template-columns:repeat(3, minmax(0, 1fr));} }
   @media (max-width: 800px){ .owner-grid{grid-template-columns:repeat(2, minmax(0, 1fr));} }
   @media (max-width: 520px){ .owner-grid{grid-template-columns:repeat(1, minmax(0, 1fr));} }
-  .owner-panel{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px 10px;}
+  .owner-panel{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px 10px;position:relative;}
   .owner-panel{cursor:grab;}
   .owner-panel.dragging{opacity:.4;}
   .owner-panel.drag-over{outline:2px dashed #8b7bf0;outline-offset:3px;border-radius:10px;}
@@ -239,9 +239,9 @@
   .owner-order-card .oo-name{flex:1;font-weight:700;font-size:14px;color:var(--text);}
   .owner-order-card .oo-count{font-size:11px;color:var(--text-faint);}
   .owner-right{display:flex;align-items:center;gap:8px;justify-content:flex-end;}
-  .owner-refresh-btn{background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);border-radius:6px;width:20px;height:20px;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;cursor:pointer;white-space:nowrap;}
-  .owner-refresh-btn:hover{color:var(--violet);border-color:var(--violet);}
-  .owner-refresh-btn:disabled{opacity:.6;cursor:default;width:auto;padding:0 6px;font-size:10.5px;}
+  .owner-refresh-btn{position:absolute;top:10px;right:12px;background:none;border:none;color:var(--text-faint);font-size:14px;line-height:1;padding:0;flex-shrink:0;cursor:pointer;white-space:nowrap;}
+  .owner-refresh-btn:hover{color:var(--gold-bright);}
+  .owner-refresh-btn:disabled{opacity:.5;cursor:default;font-size:10.5px;}
 </style>
 </head>
 <body>
@@ -790,6 +790,7 @@ function escAttr(s){
       const ownerSplit = list.reduce((acc,c)=>{const g=charGoldSplit(c);acc.tradable+=g.tradable;acc.bound+=g.bound;return acc;}, {tradable:0,bound:0});
       return `
         <div class="owner-panel" draggable="true" data-owner="${owner}">
+          <button type="button" class="owner-refresh-btn" data-refresh-owner="${owner}" title="이 사용자 캐릭터 레벨/직업 갱신">⟳</button>
           <div class="owner-panel-head">
             <span class="owner-name-row">
               <span class="owner-name">${owner}</span>
@@ -797,7 +798,6 @@ function escAttr(s){
               <button type="button" class="owner-add-btn" data-quick-add="${owner}" title="캐릭터 추가">+캐릭터 추가</button>
             </span>
             <span class="owner-right">
-              <button type="button" class="owner-refresh-btn" data-refresh-owner="${owner}" title="이 사용자 캐릭터 레벨/직업 갱신">🔄</button>
               <span class="owner-gold">유통 ${fmtGold(ownerSplit.tradable)}G · 귀속 ${fmtGold(ownerSplit.bound)}G <span class="sub">· ${list.length}캐릭</span></span>
             </span>
           </div>
