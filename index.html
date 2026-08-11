@@ -146,7 +146,7 @@
   .crow.drag-over-bottom::after{bottom:-2px;}
   .crow-top{display:flex;justify-content:space-between;align-items:center;gap:6px;}
   .crow-name{font-weight:700;font-size:13.5px;color:var(--text);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;}
-  .crow-meta{font-size:11px;color:var(--text-faint);margin-top:1px;}
+  .crow-meta{font-size:11px;color:var(--text-faint);margin-top:1px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
   .crow-actions{display:flex;gap:1px;flex-shrink:0;}
   .crow-refresh, .crow-edit, .crow-del{
     background:none;border:none;color:var(--text-faint);font-size:11px;padding:0 2px;flex-shrink:0;
@@ -156,7 +156,7 @@
   .crow-edit:hover{color:var(--violet);}
   .crow-del:hover{color:var(--rose);}
   .crow-tags{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px;}
-  .crow-gold{color:var(--gold-bright);font-weight:700;}
+  .crow-gold{color:var(--gold-bright);font-weight:400;}
   .crow-dropzone{height:10px;margin:2px 0;border-radius:4px;}
   .crow-dropzone.drag-target{background:#8b7bf0;box-shadow:0 0 8px 1px rgba(139,123,240,0.8);}
 
@@ -503,17 +503,18 @@
     return `${fmtGold(tier.gold)}G`;
   }
   function charGold(c){
-    let sum = 0;
-    raidCatalog.forEach(r=>{
-      const st = c.raids && c.raids[r.id];
-      if(!st || !st.gold) return;
-      const tier = tierByName(r, st.tier);
-      if(tier) sum += tier.gold;
-    });
-    return sum;
-  }
-  function charGoldSplit(c){let tradable=0,bound=0;raidCatalog.forEach(r=>{const st=c.raids&&c.raids[r.id];if(!st||!st.gold)return;const tier=tierByName(r,st.tier);if(!tier)return;if(tier.splitBound){const half=Math.round(tier.gold/2);tradable+=half;bound+=tier.gold-half;}else{tradable+=tier.gold;}});return{tradable,bound};}
-function maxPossibleGold(c){const lvl=parseFloat(c.itemLevel)||0;let sum=0;raidCatalog.forEach(r=>{const elig=eligibleTiers(r,lvl);if(elig.length) sum+=Math.max(...elig.map(t=>t.gold));});return sum;}
+const vals = [];
+raidCatalog.forEach(r=>{
+const st = c.raids && c.raids[r.id];
+if(!st || !st.gold) return;
+const tier = tierByName(r, st.tier);
+if(tier) vals.push(tier.gold);
+});
+vals.sort((a,b)=>b-a);
+return vals.slice(0,3).reduce((a,b)=>a+b,0);
+}
+  function charGoldSplit(c){const items=[];raidCatalog.forEach(r=>{const st=c.raids&&c.raids[r.id];if(!st||!st.gold)return;const tier=tierByName(r,st.tier);if(tier) items.push(tier);});items.sort((a,b)=>b.gold-a.gold);const top3=items.slice(0,3);let tradable=0,bound=0;top3.forEach(tier=>{if(tier.splitBound){const half=Math.round(tier.gold/2);tradable+=half;bound+=tier.gold-half;}else{tradable+=tier.gold;}});return{tradable,bound};}
+function maxPossibleGold(c){const lvl=parseFloat(c.itemLevel)||0;const vals=[];raidCatalog.forEach(r=>{const elig=eligibleTiers(r,lvl);if(elig.length) vals.push(Math.max(...elig.map(t=>t.gold)));});vals.sort((a,b)=>b-a);return vals.slice(0,3).reduce((a,b)=>a+b,0);}
 function charGoldMetaHtml(c){const earned=charGold(c);const max=maxPossibleGold(c);return `<span class="crow-gold">${fmtGold(earned)} / ${fmtGold(max)} G</span>`;}
   function renderOwnerSelect(){
     const sel = $('ownerSelect');
@@ -641,7 +642,7 @@ function escAttr(s){
                   <button type="button" class="crow-del" data-delete="${c.id}" title="삭제">✕</button>
                 </div>
               </div>
-              <div class="crow-meta">${c.className || '?'} · ${c.itemLevel || '?'} · ${charGoldMetaHtml(c)}</div>
+              <div class="crow-meta"><span>${c.className || '?'} · ${c.itemLevel || '?'}</span>${charGoldMetaHtml(c)}</div>
               <div class="crow-tags">${tagsHtml(c)}</div>
             </div>
           `).join('')}
