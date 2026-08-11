@@ -513,7 +513,8 @@
     return sum;
   }
   function charGoldSplit(c){let tradable=0,bound=0;raidCatalog.forEach(r=>{const st=c.raids&&c.raids[r.id];if(!st||!st.gold)return;const tier=tierByName(r,st.tier);if(!tier)return;if(tier.splitBound){const half=Math.round(tier.gold/2);tradable+=half;bound+=tier.gold-half;}else{tradable+=tier.gold;}});return{tradable,bound};}
-function charGoldMetaHtml(c){const g=charGoldSplit(c);let s=`유통 ${fmtGold(g.tradable)}G`;if(g.bound) s+=` · 귀속 ${fmtGold(g.bound)}G`;return `<span class="crow-gold">${s}</span>`;}
+function maxPossibleGold(c){const lvl=parseFloat(c.itemLevel)||0;let sum=0;raidCatalog.forEach(r=>{const elig=eligibleTiers(r,lvl);if(elig.length) sum+=Math.max(...elig.map(t=>t.gold));});return sum;}
+function charGoldMetaHtml(c){const earned=charGold(c);const max=maxPossibleGold(c);return `<span class="crow-gold">${fmtGold(earned)} / ${fmtGold(max)} G</span>`;}
   function renderOwnerSelect(){
     const sel = $('ownerSelect');
     if(!sel) return;
