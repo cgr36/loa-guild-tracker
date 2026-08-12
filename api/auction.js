@@ -27,7 +27,7 @@ try {
       authorization: `bearer ${key}`,
     },
     body: JSON.stringify({
-      ItemName: name,
+      ItemName: name, CategoryCode: 210000,
       Sort: 'BUY_PRICE',
       SortCondition: 'ASC',
       PageNo: 1,
