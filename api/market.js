@@ -54,7 +54,7 @@ accept: 'application/json',
 authorization: `bearer ${key}`,
 },
 body: JSON.stringify({
-ItemName: name,
+ItemName: name, CategoryCode: 50000,
 Sort: 'CURRENT_MIN_PRICE',
 SortCondition: 'ASC',
 PageNo: 1,
