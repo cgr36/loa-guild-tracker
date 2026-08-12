@@ -79,7 +79,7 @@ const searchRes = await fetch('https://developer-lostark.game.onstove.com/market
     'content-type': 'application/json',
     authorization: `bearer ${LOSTARK_KEY}`,
     },
-    body: JSON.stringify({ ItemName: name, Sort: 'CURRENT_MIN_PRICE', SortCondition: 'ASC', PageNo: 1 }),
+    body: JSON.stringify({ ItemName: name, CategoryCode: 50000, Sort: 'CURRENT_MIN_PRICE', SortCondition: 'ASC', PageNo: 1 }),
     });
 const searchData = await searchRes.json();
 const items = (searchData && searchData.Items) || [];
@@ -106,7 +106,7 @@ accept: 'application/json',
 'content-type': 'application/json',
 authorization: `bearer ${LOSTARK_KEY}`,
 },
-body: JSON.stringify({ ItemName: name, Sort: 'BUY_PRICE', SortCondition: 'ASC', PageNo: 1 }),
+body: JSON.stringify({ ItemName: name, CategoryCode: 210000, Sort: 'BUY_PRICE', SortCondition: 'ASC', PageNo: 1 }),
 });
 const data = await r.json();
 const items = (data && data.Items) || [];
