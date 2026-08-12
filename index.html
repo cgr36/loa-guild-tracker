@@ -291,7 +291,7 @@
 
 <div class="tabs">
   <button type="button" class="tab-btn active" data-tab="raid">레이드 체크</button>
-  <button type="button" class="tab-btn" data-tab="market">거래소 확인</button>
+  <button type="button" class="tab-btn" data-tab="market">거래소 시세</button>
 </div>
   
   <div class="tab-panel active" id="tabRaid">
@@ -315,6 +315,10 @@
   </div>
 
   <div class="tab-panel" id="tabMarket">
+    <div class="toolbar">
+      <button class="btn-ghost" id="btnApiKeyMarket">API 키 설정</button>
+      <button class="btn-ghost" id="btnMarketRefresh">🔄 갱신하기</button>
+    </div>
     <div class="market-status" id="marketStatus">불러오는 중…</div>
     <div id="marketGroups"></div>
   </div>
@@ -521,7 +525,7 @@
     { title: '재련 재료', names: ['운명의 파괴석','운명의 파괴석 결정','운명의 수호석','운명의 수호석 결정','운명의 돌파석','위대한 운명의 돌파석','아비도스 융화 재료','상급 아비도스 융화 재료'] },
     { title: '파편 주머니', names: ['명예의 파편 주머니(소)','명예의 파편 주머니(중)','명예의 파편 주머니(대)','운명의 파편 주머니(소)','운명의 파편 주머니(중)','운명의 파편 주머니(대)'] },
     { title: '숨결/기운', names: ['용암의 숨결','빙하의 숨결','에스더의 기운'] },
-    { title: '보석 (경매장 최소 즉시구매가)', names: ['10레벨 겁화의 보석','10레벨 작열의 보석','9레벨 겁화의 보석','9레벨 작열의 보석','8레벨 겁화의 보석','8레벨 작열의 보석','7레벨 겁화의 보석','7레벨 작열의 보석'] },
+    { title: '보석', names: ['10레벨 겁화의 보석','10레벨 작열의 보석','9레벨 겁화의 보석','9레벨 작열의 보석','8레벨 겁화의 보석','8레벨 작열의 보석','7레벨 겁화의 보석','7레벨 작열의 보석'] },
     ];
   let marketHistory = {};
   let marketLive = {};
@@ -557,8 +561,9 @@
     const cat = findMarketCatalog(name);
     const hist = marketHistory[name] || [];
     const live = marketLive[name];
+    const isMarketType = cat && cat.type === 'market';
     let todayVal = null, prevVal = null, sub = '';
-    if(cat && cat.type === 'market'){
+    if(isMarketType){
       if(live && live.recentPrice != null){
         todayVal = live.recentPrice;
         prevVal = live.ydayAvgPrice != null ? live.ydayAvgPrice : null;
@@ -580,12 +585,15 @@
       }
       sub = '경매장 최소 즉시구매가';
     }
-    let diffHtml = '<span class="mc-diff flat">전일 데이터 없음</span>';
+    let diffHtml = '';
+    if(isMarketType){
+    diffHtml = '<span class="mc-diff flat">전일 데이터 없음</span>';
     if(todayVal != null && prevVal != null){
       const diff = todayVal - prevVal;
       const cls = diff > 0 ? 'up' : (diff < 0 ? 'down' : 'flat');
       const sign = diff > 0 ? '+' : '';
       diffHtml = '<span class="mc-diff ' + cls + '">' + sign + fmtGold(diff) + 'G</span>';
+    }
     }
     const priceText = todayVal != null ? (fmtGold(todayVal) + 'G') : '데이터 없음';
     return '<div class="market-card" data-market-card="' + escAttr(name) + '">'
@@ -1486,6 +1494,13 @@ draggedChar.owner = targetChar.owner;
   });
 
   // api key modal
+$('btnApiKeyMarket').addEventListener('click', ()=>{
+  $('apiKeyInput').value = apiKey;
+  $('apiKeyOverlay').classList.add('open');
+});
+$('btnMarketRefresh').addEventListener('click', ()=>{
+  loadMarketTab();
+});
   $('btnApiKey').addEventListener('click', ()=>{
     $('apiKeyInput').value = apiKey;
     $('apiKeyOverlay').classList.add('open');
