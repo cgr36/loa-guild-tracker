@@ -242,6 +242,31 @@
   .owner-refresh-btn{position:absolute;top:10px;right:12px;background:none;border:none;color:var(--text-faint);font-size:14px;line-height:1;padding:0;flex-shrink:0;cursor:pointer;white-space:nowrap;}
   .owner-refresh-btn:hover{color:var(--gold-bright);}
   .owner-refresh-btn:disabled{opacity:.5;cursor:default;font-size:10.5px;}
+  .tabs{display:flex;gap:8px;margin-bottom:18px;border-bottom:1px solid var(--border);}
+  .tab-btn{background:none;border:none;color:var(--text-dim);font-size:14px;font-weight:700;padding:10px 4px;margin-right:14px;border-bottom:2px solid transparent;border-radius:0;}
+  .tab-btn:hover{color:var(--text);}
+  .tab-btn.active{color:var(--violet);border-bottom-color:var(--violet);}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+  .market-status{font-size:12.5px;color:var(--text-faint);margin-bottom:14px;}
+  .market-group{margin-bottom:22px;}
+  .market-group-title{font-size:13.5px;font-weight:900;color:var(--gold-bright);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+  .market-grid{display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:12px;}
+  @media (max-width: 1100px){ .market-grid{grid-template-columns:repeat(3, minmax(0, 1fr));} }
+  @media (max-width: 800px){ .market-grid{grid-template-columns:repeat(2, minmax(0, 1fr));} }
+  @media (max-width: 520px){ .market-grid{grid-template-columns:repeat(1, minmax(0, 1fr));} }
+  .market-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;}
+  .market-card:hover{border-color:var(--violet);}
+  .mc-name{font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mc-price{font-size:16px;font-weight:900;color:var(--gold-bright);}
+  .mc-diff{font-size:11.5px;font-weight:700;margin-left:6px;}
+  .mc-diff.up{color:#e2637a;}
+  .mc-diff.down{color:#6fa8ff;}
+  .mc-diff.flat{color:var(--text-faint);}
+  .mc-sub{font-size:10.5px;color:var(--text-faint);margin-top:4px;}
+  .chart-modal{max-width:640px;}
+  .chart-wrap{position:relative;height:260px;margin-top:10px;}
+  .chart-legend{font-size:11.5px;color:var(--text-faint);margin-top:8px;text-align:center;}
 </style>
 </head>
 <body>
@@ -264,7 +289,13 @@
     </nav>
   </header>
 
-  <div class="raid-summary" id="raidSummary"></div>
+<div class="tabs">
+  <button type="button" class="tab-btn active" data-tab="raid">레이드 체크</button>
+  <button type="button" class="tab-btn" data-tab="market">거래소 확인</button>
+</div>
+  
+  <div class="tab-panel active" id="tabRaid">
+    <div class="raid-summary" id="raidSummary"></div>
 
   <div class="toolbar">
     <button class="btn-primary" id="btnAddChar">+ 사용자 등록</button>
@@ -280,6 +311,14 @@
   <div class="owner-grid" id="ownerGrid">
     <div class="empty-state">불러오는 중…</div>
   </div>
+
+  </div>
+
+  <div class="tab-panel" id="tabMarket">
+    <div class="market-status" id="marketStatus">불러오는 중…</div>
+    <div id="marketGroups"></div>
+  </div>
+  
 
   <footer>
     이 페이지는 링크로 들어온 모든 공대원이 같은 데이터를 봅니다 (로그인 없음, 서로 수정 가능) · API 키는 각자 브라우저에만 개인 저장됩니다
@@ -407,6 +446,21 @@
   </div>
 </div>
 
+
+  <!-- Market Chart Modal -->
+  <div class="overlay" id="marketChartOverlay">
+    <div class="modal chart-modal">
+      <h3 id="chartTitle">시세 그래프</h3>
+        <p class="desc" id="chartSub"></p>
+          <div class="chart-wrap"><canvas id="marketChartCanvas"></canvas></div>
+            <div class="chart-legend" id="chartLegend"></div>
+              <div class="modal-actions">
+                <button class="btn-primary" data-close="marketChartOverlay">닫기</button>
+                  </div>
+                  </div>
+                  </div>
+                  
+
 <script>
 (function(){
   let characters = [];
@@ -434,6 +488,215 @@
 
   const $ = (id) => document.getElementById(id);
   applyTheme(localStorage.getItem('la-theme') || 'light');
+
+  // ---------- market tab ----------
+  const MARKET_CATALOG = [
+    { name: '운명의 파괴석', type: 'market' },
+    { name: '운명의 파괴석 결정', type: 'market' },
+    { name: '운명의 수호석', type: 'market' },
+    { name: '운명의 수호석 결정', type: 'market' },
+    { name: '운명의 돌파석', type: 'market' },
+    { name: '위대한 운명의 돌파석', type: 'market' },
+    { name: '아비도스 융화 재료', type: 'market' },
+    { name: '상급 아비도스 융화 재료', type: 'market' },
+    { name: '명예의 파편 주머니(소)', type: 'market' },
+    { name: '명예의 파편 주머니(중)', type: 'market' },
+    { name: '명예의 파편 주머니(대)', type: 'market' },
+    { name: '운명의 파편 주머니(소)', type: 'market' },
+    { name: '운명의 파편 주머니(중)', type: 'market' },
+    { name: '운명의 파편 주머니(대)', type: 'market' },
+    { name: '용암의 숨결', type: 'market' },
+    { name: '빙하의 숨결', type: 'market' },
+    { name: '에스더의 기운', type: 'market' },
+    { name: '10레벨 겁화의 보석', type: 'auction' },
+    { name: '10레벨 작열의 보석', type: 'auction' },
+    { name: '9레벨 겁화의 보석', type: 'auction' },
+    { name: '9레벨 작열의 보석', type: 'auction' },
+    { name: '8레벨 겁화의 보석', type: 'auction' },
+    { name: '8레벨 작열의 보석', type: 'auction' },
+    { name: '7레벨 겁화의 보석', type: 'auction' },
+    { name: '7레벨 작열의 보석', type: 'auction' },
+    ];
+  const MARKET_GROUPS = [
+    { title: '재련 재료', names: ['운명의 파괴석','운명의 파괴석 결정','운명의 수호석','운명의 수호석 결정','운명의 돌파석','위대한 운명의 돌파석','아비도스 융화 재료','상급 아비도스 융화 재료'] },
+    { title: '파편 주머니', names: ['명예의 파편 주머니(소)','명예의 파편 주머니(중)','명예의 파편 주머니(대)','운명의 파편 주머니(소)','운명의 파편 주머니(중)','운명의 파편 주머니(대)'] },
+    { title: '숨결/기운', names: ['용암의 숨결','빙하의 숨결','에스더의 기운'] },
+    { title: '보석 (경매장 최소 즉시구매가)', names: ['10레벨 겁화의 보석','10레벨 작열의 보석','9레벨 겁화의 보석','9레벨 작열의 보석','8레벨 겁화의 보석','8레벨 작열의 보석','7레벨 겁화의 보석','7레벨 작열의 보석'] },
+    ];
+  let marketHistory = {};
+  let marketLive = {};
+  let marketTabLoaded = false;
+  function findMarketCatalog(name){ return MARKET_CATALOG.find(function(m){ return m.name===name; }); }
+
+  async function fetchMarketLive(name){
+    if(!apiKey) return null;
+    try{
+      const searchRes = await fetch(`/api/market?mode=search&name=${encodeURIComponent(name)}&key=${encodeURIComponent(apiKey)}`);
+      const searchData = await searchRes.json();
+      const items = (searchData && searchData.Items) || [];
+      const found = items.find(function(it){ return it.Name===name; }) || items[0];
+      if(!found) return null;
+      const statsRes = await fetch(`/api/market?mode=stats&id=${encodeURIComponent(found.Id)}&key=${encodeURIComponent(apiKey)}`);
+      const statsData = await statsRes.json();
+      const statsItem = Array.isArray(statsData) ? statsData[0] : statsData;
+      const stats = (statsItem && statsItem.Stats) || [];
+      return { name: name, stats: stats };
+    }catch(e){ return null; }
+  }
+
+  async function fetchAuctionLive(name){
+    if(!apiKey) return null;
+    try{
+      const res = await fetch(`/api/auction?name=${encodeURIComponent(name)}&key=${encodeURIComponent(apiKey)}`);
+      const data = await res.json();
+      return { name: name, minBuyPrice: data && data.minBuyPrice };
+    }catch(e){ return null; }
+  }
+
+  function marketCardHtml(name){
+    const cat = findMarketCatalog(name);
+    const hist = marketHistory[name] || [];
+    const live = marketLive[name];
+    let todayVal = null, prevVal = null, sub = '';
+    if(cat && cat.type === 'market'){
+      if(live && live.stats && live.stats.length){
+        const s = live.stats;
+        todayVal = s[s.length-1] ? s[s.length-1].AvgPrice : null;
+        prevVal = s.length>1 ? s[s.length-2].AvgPrice : null;
+      } else if(hist.length){
+        todayVal = hist[hist.length-1].avgPrice;
+        prevVal = hist.length>1 ? hist[hist.length-2].avgPrice : null;
+      }
+      sub = '오늘 평균 거래가';
+    } else {
+      if(live && live.minBuyPrice != null){
+        todayVal = live.minBuyPrice;
+      } else if(hist.length){
+        todayVal = hist[hist.length-1].minBuyPrice;
+      }
+      prevVal = hist.length ? hist[hist.length-1].minBuyPrice : null;
+      if(live && hist.length && live.minBuyPrice === hist[hist.length-1].minBuyPrice){
+        prevVal = hist.length>1 ? hist[hist.length-2].minBuyPrice : null;
+      }
+      sub = '경매장 최소 즉시구매가';
+    }
+    let diffHtml = '<span class="mc-diff flat">전일 데이터 없음</span>';
+    if(todayVal != null && prevVal != null){
+      const diff = todayVal - prevVal;
+      const cls = diff > 0 ? 'up' : (diff < 0 ? 'down' : 'flat');
+      const sign = diff > 0 ? '+' : '';
+      diffHtml = '<span class="mc-diff ' + cls + '">' + sign + fmtGold(diff) + 'G</span>';
+    }
+    const priceText = todayVal != null ? (fmtGold(todayVal) + 'G') : '데이터 없음';
+    return '<div class="market-card" data-market-card="' + escAttr(name) + '">'
+    + '<div class="mc-name">' + name + '</div>'
+    + '<div><span class="mc-price">' + priceText + '</span>' + (todayVal!=null?diffHtml:'') + '</div>'
+    + '<div class="mc-sub">' + sub + '</div>'
+    + '</div>';
+  }
+
+  function renderMarketGroups(){
+    const el = $('marketGroups');
+    if(!el) return;
+    el.innerHTML = MARKET_GROUPS.map(function(g){
+      return '<div class="market-group">'
+      + '<div class="market-group-title">' + g.title + '</div>'
+      + '<div class="market-grid">' + g.names.map(function(n){ return marketCardHtml(n); }).join('') + '</div>'
+      + '</div>';
+    }).join('');
+  }
+
+  async function loadMarketTab(){
+    $('marketStatus').textContent = '시세 불러오는 중…';
+    marketHistory = await getShared('market-history', {});
+    renderMarketGroups();
+    if(!apiKey){
+      $('marketStatus').textContent = '실시간 현재가를 보려면 상단 "API 키 설정"에서 API 키를 등록해주세요. (그래프는 API 키 없이도 볼 수 있어요)';
+      return;
+    }
+    const results = await Promise.all(MARKET_CATALOG.map(async function(m){
+      if(m.type === 'market') return await fetchMarketLive(m.name);
+      return await fetchAuctionLive(m.name);
+    }));
+    results.forEach(function(r){ if(r) marketLive[r.name] = r; });
+    renderMarketGroups();
+    $('marketStatus').textContent = '방금 불러온 실시간 시세예요 · 그래프는 매일 자동 수집되어 누적돼요.';
+  }
+
+  function switchTab(tab){
+    document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.tab===tab); });
+    $('tabRaid').classList.toggle('active', tab==='raid');
+    $('tabMarket').classList.toggle('active', tab==='market');
+    if(tab === 'market' && !marketTabLoaded){
+      marketTabLoaded = true;
+      loadMarketTab();
+    }
+  }
+  document.querySelectorAll('.tab-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){ switchTab(btn.dataset.tab); });
+  });
+
+  document.addEventListener('click', function(e){
+    const card = e.target.closest('[data-market-card]');
+    if(card) openMarketChart(card.dataset.marketCard);
+  });
+
+  function openMarketChart(name){
+    const hist = marketHistory[name] || [];
+    $('chartTitle').textContent = name;
+    const cat = findMarketCatalog(name);
+    $('chartSub').textContent = cat && cat.type === 'market' ? '일별 평균 거래가 (최근 수집분)' : '일별 경매장 최소 즉시구매가 (자체 수집분, 최대 90일)';
+    $('marketChartOverlay').classList.add('open');
+    drawMarketChart(hist, cat && cat.type === 'market' ? 'avgPrice' : 'minBuyPrice');
+  }
+
+  function drawMarketChart(hist, field){
+    const canvas = $('marketChartCanvas');
+    const wrap = canvas.parentElement;
+    const w = wrap.clientWidth, h = wrap.clientHeight;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    canvas.style.width = w+'px'; canvas.style.height = h+'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0,0,w,h);
+    const points = (hist||[]).filter(function(d){ return d[field]!=null; });
+    if(!points.length){
+      ctx.fillStyle = '#a79fc0';
+  ctx.font = '13px sans-serif';
+      ctx.fillText('아직 수집된 데이터가 없어요. 매일 자동 수집되니 며칠 후 다시 확인해주세요.', 10, h/2);
+      $('chartLegend').textContent = '';
+      return;
+    }
+    const values = points.map(function(p){ return p[field]; });
+    const min = Math.min.apply(null, values), max = Math.max.apply(null, values);
+    const pad = 30;
+    const range = (max - min) || 1;
+    ctx.strokeStyle = '#9c89e8';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    points.forEach(function(p, i){
+      const x = pad + (i/(points.length-1 || 1)) * (w - pad*2);
+      const y = h - pad - ((p[field]-min)/range) * (h - pad*2);
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+    ctx.fillStyle = '#e4b65a';
+    points.forEach(function(p, i){
+      const x = pad + (i/(points.length-1 || 1)) * (w - pad*2);
+      const y = h - pad - ((p[field]-min)/range) * (h - pad*2);
+      ctx.beginPath();
+      ctx.arc(x, y, 2.5, 0, Math.PI*2);
+      ctx.fill();
+    });
+    ctx.fillStyle = '#a79fc0';
+    ctx.font = '11px sans-serif';
+    ctx.fillText(points[0].date, pad, h-8);
+    ctx.fillText(points[points.length-1].date, w-pad-60, h-8);
+    ctx.fillText(fmtGold(max)+'G', 4, 14);
+    ctx.fillText(fmtGold(min)+'G', 4, h-pad+4);
+    $('chartLegend').textContent = points.length + '일치 데이터 · 최저 ' + fmtGold(min) + 'G · 최고 ' + fmtGold(max) + 'G';
+  }
 
   // ---------- storage helpers ----------
   async function getShared(key, fallback) {
