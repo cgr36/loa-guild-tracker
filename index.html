@@ -540,7 +540,7 @@
       const statsData = await statsRes.json();
       const statsItem = Array.isArray(statsData) ? statsData[0] : statsData;
       const stats = (statsItem && statsItem.Stats) || [];
-      return { name: name, stats: stats };
+      return { name: name, stats: stats, recentPrice: found.RecentPrice, ydayAvgPrice: found.YDayAvgPrice };
     }catch(e){ return null; }
   }
 
@@ -559,15 +559,15 @@
     const live = marketLive[name];
     let todayVal = null, prevVal = null, sub = '';
     if(cat && cat.type === 'market'){
-      if(live && live.stats && live.stats.length){
-        const s = live.stats;
-        todayVal = s[s.length-1] ? s[s.length-1].AvgPrice : null;
-        prevVal = s.length>1 ? s[s.length-2].AvgPrice : null;
+      if(live && live.recentPrice != null){
+        todayVal = live.recentPrice;
+        prevVal = live.ydayAvgPrice != null ? live.ydayAvgPrice : null;
+        
       } else if(hist.length){
         todayVal = hist[hist.length-1].avgPrice;
         prevVal = hist.length>1 ? hist[hist.length-2].avgPrice : null;
       }
-      sub = '오늘 평균 거래가';
+      sub = '최근 거래가 (전일 평균 거래가 대비)';
     } else {
       if(live && live.minBuyPrice != null){
         todayVal = live.minBuyPrice;
