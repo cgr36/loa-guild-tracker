@@ -791,17 +791,9 @@ return '<div class="market-card market-card-combo">'
     return `다음 초기화까지 ${days}일 ${hours}시간 ${mins}분`;
   }
   function clearProgress(){ characters.forEach(c=>{ c.raids = {}; }); }
-  async function checkWeeklyReset(){
-    const currentKey = getResetWeekKey(new Date());
-    if(guildMeta.resetWeekKey !== currentKey){
-      if(guildMeta.resetWeekKey) clearProgress();
-      guildMeta.resetWeekKey = currentKey;
-      await setShared('guild-meta', guildMeta);
-      await setShared('characters', characters);
-    }
-  }
+  
   function renderResetLine(){
-    $('resetLine').innerHTML = `<b>${formatCountdown(nextResetDate(new Date()))}</b> · 매주 수요일 오전 6시(KST) 자동 초기화`;
+    $('resetLine').innerHTML = `<b>${formatCountdown(nextResetDate(new Date()))}</b> · 매주 수요일 오전 6시(KST) 기준 · 자동 초기화 없음(수동)`;
   }
 
   // ---------- custom confirm (native confirm() is blocked in this sandbox) ----------
@@ -1824,7 +1816,6 @@ $('btnMarketRefresh').addEventListener('click', ()=>{
     apiKey = await getPersonal('la-api-key');
     ownerName = await getPersonal('la-owner-name');
 
-    await checkWeeklyReset();
     renderRaidSummary();
     render();
     renderResetLine();
