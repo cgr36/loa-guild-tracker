@@ -217,6 +217,11 @@
   .field{margin-bottom:14px;}
   .field label{display:block;font-size:12px;color:var(--text-dim);margin-bottom:6px;}
   .field input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 12px;font-size:14px;font-family:inherit;}
+  .field textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 12px;font-size:14px;font-family:inherit;resize:vertical;}
+  .notice-link{margin-left:8px;font-size:12px;color:var(--text-dim);cursor:pointer;text-decoration:underline;vertical-align:middle;}
+  .notice-link:hover{color:var(--violet);}
+  .notice-content{white-space:pre-wrap;font-size:14px;line-height:1.6;color:var(--text);max-height:50vh;overflow-y:auto;margin:12px 0;}
+  .notice-checkbox-row{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-dim);margin-top:8px;}
   .field-row{display:flex;gap:8px;}
   .field-row .field{flex:1;}
   #ownerSelect, #newOwnerInput{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:6px 10px;font-size:13px;font-family:inherit;}
@@ -283,6 +288,7 @@
 <div class="header-title">
   <p class="eyebrow">Raid Tracker</p>
     <h1>로손실</h1>
+    <span class="notice-link" id="noticeOpenBtn">공지사항</span>
     <div class="reset-line">
       <span id="resetLine">불러오는 중…</span>
       <button class="reset-line-btn" id="btnManualReset">지금 초기화</button>
@@ -349,6 +355,37 @@
     </div>
     <div class="modal-actions">
       <button class="btn-primary" id="ownerNameSave">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Notice Edit Modal -->
+<div class="overlay" id="noticeEditOverlay">
+  <div class="modal">
+    <h3>공지사항 작성</h3>
+    <p class="desc">내용을 작성하고 저장하면 그 시점 이후 접속하는 모든 사용자에게 공지사항 팝업이 표시돼요.</p>
+    <div class="field">
+      <label>공지 내용</label>
+      <textarea id="noticeEditContent" rows="8" placeholder="공지사항 및 업데이트 내용을 입력하세요"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" data-close="noticeEditOverlay">취소</button>
+      <button class="btn-primary" id="noticeEditSave">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Notice View Modal -->
+<div class="overlay" id="noticeViewOverlay">
+  <div class="modal">
+    <h3>공지사항</h3>
+    <div class="notice-content" id="noticeViewContent"></div>
+    <div class="notice-checkbox-row">
+      <input type="checkbox" id="noticeDontShowAgain">
+      <label for="noticeDontShowAgain">다시 열지 않음</label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary" id="noticeViewConfirm">확인</button>
     </div>
   </div>
 </div>
@@ -478,6 +515,7 @@
   let raidCatalog = [];
   let guildMeta = { resetWeekKey: '' };
   let apiKey = '';
+  let announcement = { content: '', updatedAt: 0 };
   let ownerName = '';
   let currentFilter = '';
   let editingCharId = null;
@@ -1554,6 +1592,32 @@ draggedChar.owner = targetChar.owner;
     render();
   });
 
+  // notice board
+  function checkNotice(){
+    if(!announcement || !announcement.content || !announcement.content.trim()) return;
+    const dismissedAt = Number(localStorage.getItem('la-notice-dismissed') || 0);
+    if(dismissedAt >= announcement.updatedAt) return;
+    $('noticeViewContent').textContent = announcement.content;
+    $('noticeDontShowAgain').checked = false;
+    $('noticeViewOverlay').classList.add('open');
+  }
+  $('noticeOpenBtn').addEventListener('click', ()=>{
+    $('noticeEditContent').value = announcement.content || '';
+    $('noticeEditOverlay').classList.add('open');
+  });
+  $('noticeEditSave').addEventListener('click', async ()=>{
+    const val = $('noticeEditContent').value.trim();
+    announcement = { content: val, updatedAt: Date.now() };
+    await setShared('notice', announcement);
+    $('noticeEditOverlay').classList.remove('open');
+  });
+  $('noticeViewConfirm').addEventListener('click', ()=>{
+    if($('noticeDontShowAgain').checked){
+      localStorage.setItem('la-notice-dismissed', String(announcement.updatedAt));
+    }
+    $('noticeViewOverlay').classList.remove('open');
+  });
+
   // api key modal
 $('btnApiKeyMarket').addEventListener('click', ()=>{
   $('apiKeyInput').value = apiKey;
@@ -1754,6 +1818,7 @@ $('btnMarketRefresh').addEventListener('click', ()=>{
 
   // ---------- init ----------
   async function init(){
+    announcement = await getShared('notice', { content: '', updatedAt: 0 });
     guildMeta = await getShared('guild-meta', {resetWeekKey:''});
     characters = await getShared('characters', []);
     ownerOrder = await getShared('ownerOrder', []);
@@ -1826,6 +1891,7 @@ $('btnMarketRefresh').addEventListener('click', ()=>{
     render();
     renderResetLine();
     setInterval(renderResetLine, 60000);
+    checkNotice();
   }
   init();
 })();
