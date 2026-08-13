@@ -223,6 +223,8 @@
   .notice-link:hover{color:var(--violet);}
   .notice-content{white-space:pre-wrap;font-size:14px;line-height:1.6;color:var(--text);max-height:50vh;overflow-y:auto;margin:12px 0;}
   .notice-checkbox-row{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-dim);margin-top:8px;}
+  .raid-visibility-list{display:flex;flex-wrap:wrap;gap:8px;}
+  .raid-visibility-item{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 10px;cursor:pointer;}
   .field-row{display:flex;gap:8px;}
   .field-row .field{flex:1;}
   #ownerSelect, #newOwnerInput{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:6px 10px;font-size:13px;font-family:inherit;}
@@ -447,6 +449,10 @@
         <button class="btn-ghost" id="btnLookup" style="white-space:nowrap;">자동조회</button>
       </div>
       <div class="lookup-status" id="lookupStatus"></div>
+    </div>
+    <div class="field" id="editRaidVisibilityField" style="display:none;">
+      <label>표시할 레이드 목록</label>
+      <div class="raid-visibility-list" id="raidVisibilityList"></div>
     </div>
     <p class="lookup-status" id="addCharError"></p>
     <div class="modal-actions">
@@ -1078,7 +1084,7 @@ return `<span class="crow-gold-wrap">${inner}</span>`;
   }
   function tagsHtml(c){
     const lvl = parseFloat(c.itemLevel) || 0;
-    const reachable = raidCatalog.filter(r=>eligibleTiers(r, lvl).length);
+    const reachable = raidCatalog.filter(r=>eligibleTiers(r, lvl).length).filter(r=>!c.visibleRaids || c.visibleRaids.includes(r.id));
     return reachable.map(r=>{
       const st = c.raids && c.raids[r.id];
       if(!st){
@@ -1655,6 +1661,13 @@ $('btnMarketRefresh').addEventListener('click', ()=>{
   });
 
   // add / edit character modal
+  function renderRaidVisibilityList(char){
+    const visible = char.visibleRaids;
+    $('raidVisibilityList').innerHTML = raidCatalog.map(r=>{
+      const checked = !visible || visible.includes(r.id);
+      return `<label class="raid-visibility-item"><input type="checkbox" data-raid-id="${r.id}" ${checked?'checked':''}> ${escAttr(r.name)}</label>`;
+    }).join('');
+  }
   function openAddCharModal(presetOwner){
     editingCharId = null;
     addTargetOwner = presetOwner || ownerName || '';
@@ -1662,6 +1675,7 @@ $('btnMarketRefresh').addEventListener('click', ()=>{
     $('btnSaveChar').textContent = '등록';
     $('ownerDisplayRow').style.display = 'block';
     $('editOwnerField').style.display = 'none';
+    $('editRaidVisibilityField').style.display = 'none';
     $('charNameInput').value = '';
     lookupData = {};
     $('lookupStatus').textContent = '';
@@ -1681,6 +1695,8 @@ $('btnMarketRefresh').addEventListener('click', ()=>{
     $('btnSaveChar').textContent = '저장';
     $('ownerDisplayRow').style.display = 'none';
     $('editOwnerField').style.display = 'block';
+    $('editRaidVisibilityField').style.display = 'block';
+    renderRaidVisibilityList(char);
     $('editOwnerInput').value = char.owner;
     $('charNameInput').value = char.name;
     lookupData = {};
@@ -1744,6 +1760,15 @@ $('btnMarketRefresh').addEventListener('click', ()=>{
         if(lookupData[name]){
           c.className = lookupData[name].className;
           c.itemLevel = lookupData[name].itemLevel;
+        }
+        const raidCheckboxes = Array.from(document.querySelectorAll('#raidVisibilityList input[type=checkbox]'));
+        if(raidCheckboxes.length){
+          const checkedIds = raidCheckboxes.filter(cb=>cb.checked).map(cb=>cb.dataset.raidId);
+          if(checkedIds.length >= raidCatalog.length){
+            delete c.visibleRaids;
+          } else {
+            c.visibleRaids = checkedIds;
+          }
         }
       }
       editingCharId = null;
