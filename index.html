@@ -218,6 +218,7 @@
   .field label{display:block;font-size:12px;color:var(--text-dim);margin-bottom:6px;}
   .field input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 12px;font-size:14px;font-family:inherit;}
   .field textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 12px;font-size:14px;font-family:inherit;resize:vertical;}
+  .title-row{display:flex;align-items:baseline;gap:8px;}
   .notice-link{margin-left:8px;font-size:12px;color:var(--text-dim);cursor:pointer;text-decoration:underline;vertical-align:middle;}
   .notice-link:hover{color:var(--violet);}
   .notice-content{white-space:pre-wrap;font-size:14px;line-height:1.6;color:var(--text);max-height:50vh;overflow-y:auto;margin:12px 0;}
@@ -287,8 +288,10 @@
   <header>
 <div class="header-title">
   <p class="eyebrow">Raid Tracker</p>
+    <div class="title-row">
     <h1>로손실</h1>
     <span class="notice-link" id="noticeOpenBtn">공지사항</span>
+    </div>
     <div class="reset-line">
       <span id="resetLine">불러오는 중…</span>
       <button class="reset-line-btn" id="btnManualReset">지금 초기화</button>
