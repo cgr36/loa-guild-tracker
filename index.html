@@ -267,6 +267,11 @@
   .chart-modal{max-width:640px;}
   .chart-wrap{position:relative;height:260px;margin-top:10px;}
   .chart-legend{font-size:11.5px;color:var(--text-faint);margin-top:8px;text-align:center;}
+.market-card-combo{cursor:default;}
+.mc-combo-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-top:1px solid var(--border);cursor:pointer;margin-top:4px;}
+.mc-combo-row:first-of-type{border-top:none;margin-top:0;}
+.mc-combo-row:hover .mc-combo-label{color:var(--violet);}
+.mc-combo-label{font-size:11px;color:var(--text-dim);font-weight:700;}
 </style>
 </head>
 <body>
@@ -503,9 +508,6 @@
     { name: '위대한 운명의 돌파석', type: 'market' },
     { name: '아비도스 융화 재료', type: 'market' },
     { name: '상급 아비도스 융화 재료', type: 'market' },
-    { name: '명예의 파편 주머니(소)', type: 'market' },
-    { name: '명예의 파편 주머니(중)', type: 'market' },
-    { name: '명예의 파편 주머니(대)', type: 'market' },
     { name: '운명의 파편 주머니(소)', type: 'market' },
     { name: '운명의 파편 주머니(중)', type: 'market' },
     { name: '운명의 파편 주머니(대)', type: 'market' },
@@ -521,12 +523,27 @@
     { name: '7레벨 겁화의 보석', type: 'auction' },
     { name: '7레벨 작열의 보석', type: 'auction' },
     ];
-  const MARKET_GROUPS = [
-    { title: '재련 재료', names: ['운명의 파괴석','운명의 파괴석 결정','운명의 수호석','운명의 수호석 결정','운명의 돌파석','위대한 운명의 돌파석','아비도스 융화 재료','상급 아비도스 융화 재료'] },
-    { title: '파편 주머니', names: ['명예의 파편 주머니(소)','명예의 파편 주머니(중)','명예의 파편 주머니(대)','운명의 파편 주머니(소)','운명의 파편 주머니(중)','운명의 파편 주머니(대)'] },
-    { title: '숨결/기운', names: ['용암의 숨결','빙하의 숨결','에스더의 기운'] },
-    { title: '보석', names: ['10레벨 겁화의 보석','10레벨 작열의 보석','9레벨 겁화의 보석','9레벨 작열의 보석','8레벨 겁화의 보석','8레벨 작열의 보석','7레벨 겁화의 보석','7레벨 작열의 보석'] },
-    ];
+const MARKET_GROUPS = [
+{ title: '재료', names: [
+'아비도스 융화 재료',
+'상급 아비도스 융화 재료',
+'용암의 숨결',
+'빙하의 숨결',
+'운명의 파괴석',
+'운명의 파괴석 결정',
+'운명의 수호석',
+'운명의 수호석 결정',
+'운명의 돌파석',
+'위대한 운명의 돌파석',
+{ combo:true, label:'운명의 파편 주머니', items:[
+{ name:'운명의 파편 주머니(소)', size:'소' },
+{ name:'운명의 파편 주머니(중)', size:'중' },
+{ name:'운명의 파편 주머니(대)', size:'대' }
+] },
+'에스더의 기운'
+] },
+{ title: '보석', names: ['10레벨 겁화의 보석','10레벨 작열의 보석','9레벨 겁화의 보석','9레벨 작열의 보석','8레벨 겁화의 보석','8레벨 작열의 보석','7레벨 겁화의 보석','7레벨 작열의 보석'] },
+];
   let marketHistory = {};
   let marketLive = {};
   let marketTabLoaded = false;
@@ -557,51 +574,70 @@
     }catch(e){ return null; }
   }
 
-  function marketCardHtml(name){
-    const cat = findMarketCatalog(name);
-    const hist = marketHistory[name] || [];
-    const live = marketLive[name];
-    const isMarketType = cat && cat.type === 'market';
-    let todayVal = null, prevVal = null, sub = '';
-    if(isMarketType){
-      if(live && live.recentPrice != null){
-        todayVal = live.recentPrice;
-        prevVal = live.ydayAvgPrice != null ? live.ydayAvgPrice : null;
-        
-      } else if(hist.length){
-        todayVal = hist[hist.length-1].avgPrice;
-        prevVal = hist.length>1 ? hist[hist.length-2].avgPrice : null;
-      }
-      sub = '최근 거래가 (전일 평균 거래가 대비)';
-    } else {
-      if(live && live.minBuyPrice != null){
-        todayVal = live.minBuyPrice;
-      } else if(hist.length){
-        todayVal = hist[hist.length-1].minBuyPrice;
-      }
-      prevVal = hist.length ? hist[hist.length-1].minBuyPrice : null;
-      if(live && hist.length && live.minBuyPrice === hist[hist.length-1].minBuyPrice){
-        prevVal = hist.length>1 ? hist[hist.length-2].minBuyPrice : null;
-      }
-      sub = '경매장 최소 즉시구매가';
-    }
-    let diffHtml = '';
-    if(isMarketType){
-    diffHtml = '<span class="mc-diff flat">전일 데이터 없음</span>';
-    if(todayVal != null && prevVal != null){
-      const diff = todayVal - prevVal;
-      const cls = diff > 0 ? 'up' : (diff < 0 ? 'down' : 'flat');
-      const sign = diff > 0 ? '+' : '';
-      diffHtml = '<span class="mc-diff ' + cls + '">' + sign + fmtGold(diff) + 'G</span>';
-    }
-    }
-    const priceText = todayVal != null ? (fmtGold(todayVal) + 'G') : '데이터 없음';
-    return '<div class="market-card" data-market-card="' + escAttr(name) + '">'
-    + '<div class="mc-name">' + name + '</div>'
-    + '<div><span class="mc-price">' + priceText + '</span>' + (todayVal!=null?diffHtml:'') + '</div>'
-    + '<div class="mc-sub">' + sub + '</div>'
-    + '</div>';
-  }
+function computeMarketDisplay(name){
+const cat = findMarketCatalog(name);
+const hist = marketHistory[name] || [];
+const live = marketLive[name];
+const isMarketType = cat && cat.type === 'market';
+let todayVal = null, prevVal = null, sub = '';
+if(isMarketType){
+if(live && live.recentPrice != null){
+todayVal = live.recentPrice;
+prevVal = live.ydayAvgPrice != null ? live.ydayAvgPrice : null;
+} else if(hist.length){
+todayVal = hist[hist.length-1].avgPrice;
+prevVal = hist.length>1 ? hist[hist.length-2].avgPrice : null;
+}
+sub = '최근 거래가 (전일 평균 거래가 대비)';
+} else {
+if(live && live.minBuyPrice != null){
+todayVal = live.minBuyPrice;
+} else if(hist.length){
+todayVal = hist[hist.length-1].minBuyPrice;
+}
+prevVal = hist.length ? hist[hist.length-1].minBuyPrice : null;
+if(live && hist.length && live.minBuyPrice === hist[hist.length-1].minBuyPrice){
+prevVal = hist.length>1 ? hist[hist.length-2].minBuyPrice : null;
+}
+sub = '경매장 최소 즉시구매가';
+}
+let diffHtml = '';
+if(isMarketType){
+diffHtml = '<span class="mc-diff flat">전일 데이터 없음</span>';
+if(todayVal != null && prevVal != null){
+const diff = todayVal - prevVal;
+const cls = diff > 0 ? 'up' : (diff < 0 ? 'down' : 'flat');
+const sign = diff > 0 ? '+' : '';
+diffHtml = '<span class="mc-diff ' + cls + '">' + sign + fmtGold(diff) + 'G</span>';
+}
+}
+const priceText = todayVal != null ? (fmtGold(todayVal) + 'G') : '데이터 없음';
+return { priceText: priceText, diffHtml: diffHtml, sub: sub, todayVal: todayVal };
+}
+
+function marketCardHtml(name){
+const d = computeMarketDisplay(name);
+return '<div class="market-card" data-market-card="' + escAttr(name) + '">'
++ '<div class="mc-name">' + name + '</div>'
++ '<div><span class="mc-price">' + d.priceText + '</span>' + (d.todayVal!=null?d.diffHtml:'') + '</div>'
++ '<div class="mc-sub">' + d.sub + '</div>'
++ '</div>';
+}
+
+function comboCardHtml(combo){
+const rows = combo.items.map(function(item){
+const d = computeMarketDisplay(item.name);
+return '<div class="mc-combo-row" data-market-card="' + escAttr(item.name) + '">'
++ '<span class="mc-combo-label">' + escAttr(item.size) + '</span>'
++ '<span class="mc-price">' + d.priceText + '</span>' + (d.todayVal!=null?d.diffHtml:'')
++ '</div>';
+}).join('');
+return '<div class="market-card market-card-combo">'
++ '<div class="mc-name">' + escAttr(combo.label) + '</div>'
++ rows
++ '<div class="mc-sub">최근 거래가 (전일 평균 거래가 대비)</div>'
++ '</div>';
+}
 
   function renderMarketGroups(){
     const el = $('marketGroups');
@@ -609,7 +645,7 @@
     el.innerHTML = MARKET_GROUPS.map(function(g){
       return '<div class="market-group">'
       + '<div class="market-group-title">' + g.title + '</div>'
-      + '<div class="market-grid">' + g.names.map(function(n){ return marketCardHtml(n); }).join('') + '</div>'
++ '<div class="market-grid">' + g.names.map(function(n){ return (n && n.combo) ? comboCardHtml(n) : marketCardHtml(n); }).join('') + '</div>'
       + '</div>';
     }).join('');
   }
@@ -1222,6 +1258,25 @@ function escAttr(s){
       return;
     }
   });
+
+document.addEventListener('contextmenu', async (e)=>{
+const tagBtn = e.target.closest('[data-open-tier]');
+if(!tagBtn) return;
+e.preventDefault();
+const char = characters.find(c=>c.id===tagBtn.dataset.cid);
+const raid = raidCatalog.find(r=>r.id===tagBtn.dataset.raid);
+if(!char || !raid) return;
+const lvl = parseFloat(char.itemLevel) || 0;
+const elig = raid.tiers.filter(t=>t.levelReq==null || lvl>=t.levelReq);
+if(!elig.length) return;
+const best = elig.reduce((a,b)=> b.gold>a.gold ? b : a);
+char.raids = char.raids || {};
+char.raids[raid.id] = { tier: best.name, gold: true };
+await setShared('characters', characters);
+closeDropdown();
+renderRaidSummary();
+render();
+});
 
 $('ownerGrid').addEventListener('change', async (e) => {
   const memoInput = e.target.closest('[data-owner-memo]');
