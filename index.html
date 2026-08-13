@@ -1266,11 +1266,19 @@ e.preventDefault();
 const char = characters.find(c=>c.id===tagBtn.dataset.cid);
 const raid = raidCatalog.find(r=>r.id===tagBtn.dataset.raid);
 if(!char || !raid) return;
+char.raids = char.raids || {};
+if(char.raids[raid.id]){
+delete char.raids[raid.id];
+await setShared('characters', characters);
+closeDropdown();
+renderRaidSummary();
+render();
+return;
+}
 const lvl = parseFloat(char.itemLevel) || 0;
 const elig = raid.tiers.filter(t=>t.levelReq==null || lvl>=t.levelReq);
 if(!elig.length) return;
 const best = elig.reduce((a,b)=> b.gold>a.gold ? b : a);
-char.raids = char.raids || {};
 char.raids[raid.id] = { tier: best.name, gold: true };
 await setShared('characters', characters);
 closeDropdown();
