@@ -277,6 +277,7 @@
   .mc-sub{font-size:10.5px;color:var(--text-faint);margin-top:4px;}
   .chart-modal{max-width:640px;}
   .chart-wrap{position:relative;height:260px;margin-top:10px;}
+  .chart-wrap canvas{cursor:crosshair;}
   .chart-legend{font-size:11.5px;color:var(--text-faint);margin-top:8px;text-align:center;}
 .market-card-combo{cursor:default;}
 .mc-combo-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-top:1px solid var(--border);cursor:pointer;margin-top:4px;}
@@ -619,6 +620,8 @@ const MARKET_GROUPS = [
   let marketHistory = {};
   let marketLive = {};
   let marketTabLoaded = false;
+  let currentChartHist = null;
+  let currentChartField = null;
   function findMarketCatalog(name){ return MARKET_CATALOG.find(function(m){ return m.name===name; }); }
 
   async function fetchMarketLive(name){
@@ -766,7 +769,14 @@ return '<div class="market-card market-card-combo">'
     drawMarketChart(hist, cat && cat.type === 'market' ? 'avgPrice' : 'minBuyPrice');
   }
 
+  function themeColor(varName, fallback){
+    const v = getComputedStyle(document.body).getPropertyValue(varName).trim();
+    return v || fallback;
+  }
+
   function drawMarketChart(hist, field){
+    currentChartHist = hist;
+    currentChartField = field;
     const canvas = $('marketChartCanvas');
     const wrap = canvas.parentElement;
     const w = wrap.clientWidth, h = wrap.clientHeight;
@@ -775,43 +785,164 @@ return '<div class="market-card market-card-combo">'
     canvas.style.width = w+'px'; canvas.style.height = h+'px';
     const ctx = canvas.getContext('2d');
     ctx.scale(dpr, dpr);
-    ctx.clearRect(0,0,w,h);
+
+    const colorViolet = themeColor('--violet', '#9c89e8');
+    const colorGold = themeColor('--gold-bright', '#e4b65a');
+    const colorTextDim = themeColor('--text-dim', '#a79fc0');
+    const colorBorder = themeColor('--border', '#3c355a');
+
     const points = (hist||[]).filter(function(d){ return d[field]!=null; });
     if(!points.length){
-      ctx.fillStyle = '#a79fc0';
-  ctx.font = '13px sans-serif';
+      ctx.clearRect(0,0,w,h);
+      ctx.fillStyle = colorTextDim;
+      ctx.font = '13px sans-serif';
       ctx.fillText('아직 수집된 데이터가 없어요. 매일 자동 수집되니 며칠 후 다시 확인해주세요.', 10, h/2);
       $('chartLegend').textContent = '';
+      canvas.onmousemove = null;
+      canvas.onmouseleave = null;
       return;
     }
     const values = points.map(function(p){ return p[field]; });
     const min = Math.min.apply(null, values), max = Math.max.apply(null, values);
-    const pad = 30;
+    ctx.font = 'bold 11px sans-serif';
+    const maxLabelWidth = Math.max(ctx.measureText(fmtGold(Math.round(min))+'G').width, ctx.measureText(fmtGold(Math.round(max))+'G').width);
+    const padL = Math.max(44, maxLabelWidth + 14), padR = 12, padT = 16, padB = 26;
     const range = (max - min) || 1;
-    ctx.strokeStyle = '#9c89e8';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    points.forEach(function(p, i){
-      const x = pad + (i/(points.length-1 || 1)) * (w - pad*2);
-      const y = h - pad - ((p[field]-min)/range) * (h - pad*2);
-      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-    });
-    ctx.stroke();
-    ctx.fillStyle = '#e4b65a';
-    points.forEach(function(p, i){
-      const x = pad + (i/(points.length-1 || 1)) * (w - pad*2);
-      const y = h - pad - ((p[field]-min)/range) * (h - pad*2);
+    const plotW = w - padL - padR, plotH = h - padT - padB;
+    const xOf = function(i){ return padL + (i/(points.length-1 || 1)) * plotW; };
+    const yOf = function(v){ return padT + plotH - ((v-min)/range) * plotH; };
+
+    function render(hoverIdx){
+      ctx.clearRect(0,0,w,h);
+
+      // gridlines + value labels (골드: 볼드 + 강조색)
+      const steps = 4;
+      ctx.font = '11px sans-serif';
+      ctx.textBaseline = 'middle';
+      for(let s=0; s<=steps; s++){
+        const v = min + (range * s/steps);
+        const y = yOf(v);
+        ctx.strokeStyle = colorBorder;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padL, y);
+        ctx.lineTo(w-padR, y);
+        ctx.stroke();
+        ctx.fillStyle = colorGold;
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(fmtGold(Math.round(v))+'G', padL-6, y);
+      }
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+
+      // area fill under line
+      const grad = ctx.createLinearGradient(0, padT, 0, padT+plotH);
+      grad.addColorStop(0, colorViolet + '55');
+      grad.addColorStop(1, colorViolet + '00');
       ctx.beginPath();
-      ctx.arc(x, y, 2.5, 0, Math.PI*2);
+      points.forEach(function(p, i){
+        const x = xOf(i), y = yOf(p[field]);
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      ctx.lineTo(xOf(points.length-1), padT+plotH);
+      ctx.lineTo(xOf(0), padT+plotH);
+      ctx.closePath();
+      ctx.fillStyle = grad;
       ctx.fill();
-    });
-    ctx.fillStyle = '#a79fc0';
-    ctx.font = '11px sans-serif';
-    ctx.fillText(points[0].date, pad, h-8);
-    ctx.fillText(points[points.length-1].date, w-pad-60, h-8);
-    ctx.fillText(fmtGold(max)+'G', 4, 14);
-    ctx.fillText(fmtGold(min)+'G', 4, h-pad+4);
-    $('chartLegend').textContent = points.length + '일치 데이터 · 최저 ' + fmtGold(min) + 'G · 최고 ' + fmtGold(max) + 'G';
+
+      // line
+      ctx.strokeStyle = colorViolet;
+      ctx.lineWidth = 2.5;
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      points.forEach(function(p, i){
+        const x = xOf(i), y = yOf(p[field]);
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      ctx.stroke();
+
+      // dots (마지막 값은 더 크게 강조)
+      points.forEach(function(p, i){
+        const x = xOf(i), y = yOf(p[field]);
+        const isLast = i === points.length-1;
+        ctx.fillStyle = colorGold;
+        ctx.beginPath();
+        ctx.arc(x, y, isLast ? 4.5 : 2.5, 0, Math.PI*2);
+        ctx.fill();
+        if(isLast){
+          ctx.strokeStyle = colorViolet;
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+      });
+
+      // 최신 값 라벨 (볼드 + 강조색)
+      const lastP = points[points.length-1];
+      const lx = xOf(points.length-1), ly = yOf(lastP[field]);
+      ctx.font = 'bold 12px sans-serif';
+      ctx.fillStyle = colorGold;
+      const label = fmtGold(lastP[field])+'G';
+      const labelW = ctx.measureText(label).width;
+      ctx.textAlign = (lx + labelW + 10 > w-padR) ? 'right' : 'left';
+      ctx.fillText(label, ctx.textAlign === 'right' ? lx-8 : lx+8, Math.max(ly-8, padT+10));
+      ctx.textAlign = 'left';
+
+      // 날짜 축
+      ctx.fillStyle = colorTextDim;
+      ctx.font = '11px sans-serif';
+      ctx.fillText(points[0].date, padL, h-6);
+      ctx.textAlign = 'right';
+      ctx.fillText(points[points.length-1].date, w-padR, h-6);
+      ctx.textAlign = 'left';
+
+      // hover: 세로 가이드라인 + 툴팁
+      if(hoverIdx != null){
+        const hp = points[hoverIdx];
+        const hx = xOf(hoverIdx), hy = yOf(hp[field]);
+        ctx.strokeStyle = colorTextDim;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3,3]);
+        ctx.beginPath();
+        ctx.moveTo(hx, padT);
+        ctx.lineTo(hx, padT+plotH);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = colorViolet;
+        ctx.beginPath();
+        ctx.arc(hx, hy, 5, 0, Math.PI*2);
+        ctx.fill();
+
+        const tipText = hp.date + '  ' + fmtGold(hp[field]) + 'G';
+        ctx.font = 'bold 12px sans-serif';
+        const tw = ctx.measureText(tipText).width;
+        let tx = hx - tw/2 - 8;
+        tx = Math.max(padL, Math.min(tx, w-padR-tw-16));
+        let ty = hy - 34;
+        if(ty < padT) ty = hy + 14;
+        ctx.fillStyle = colorBorder;
+        ctx.fillRect(tx, ty, tw+16, 22);
+        ctx.fillStyle = colorGold;
+        ctx.fillText(tipText, tx+8, ty+15);
+      }
+    }
+
+    render(null);
+
+    canvas.onmousemove = function(e){
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      let nearest = 0, nearestDist = Infinity;
+      points.forEach(function(p, i){
+        const d = Math.abs(xOf(i) - mx);
+        if(d < nearestDist){ nearestDist = d; nearest = i; }
+      });
+      render(nearest);
+    };
+    canvas.onmouseleave = function(){ render(null); };
+
+    $('chartLegend').innerHTML = points.length + '일치 데이터 · 최저 <b style="color:'+colorGold+'">' + fmtGold(min) + 'G</b> · 최고 <b style="color:'+colorGold+'">' + fmtGold(max) + 'G</b>';
   }
 
   // ---------- storage helpers ----------
@@ -1545,6 +1676,9 @@ draggedChar.owner = targetChar.owner;
     const next = document.body.dataset.theme === 'light' ? 'dark' : 'light';
     applyTheme(next);
     localStorage.setItem('la-theme', next);
+    if($('marketChartOverlay').classList.contains('open') && currentChartField){
+      drawMarketChart(currentChartHist, currentChartField);
+    }
   });
 
   function getEffectiveOwnerOrder(allOwners){
