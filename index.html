@@ -95,6 +95,7 @@
   button{font-family:inherit;cursor:pointer;border:none;border-radius:10px;font-weight:700;font-size:13.5px;}
   .btn-primary{background:linear-gradient(135deg,var(--violet),var(--violet-dim));color:var(--btn-primary-text);padding:11px 18px;}
   .btn-primary:hover{filter:brightness(1.08);}
+  .btn-primary:disabled{opacity:.4;cursor:default;filter:none;}
   .btn-ghost{background:var(--surface);color:var(--text-dim);border:1px solid var(--border);padding:10px 16px;}
   .btn-ghost:hover{color:var(--text);border-color:var(--text-faint);}
   .btn-danger{background:transparent;color:var(--rose);border:1px solid rgba(226,99,122,0.4);padding:6px 10px;font-size:12px;}
@@ -503,6 +504,22 @@
   </div>
 </div>
 
+<!-- Reset Password Modal -->
+<div class="overlay" id="resetPasswordOverlay">
+  <div class="modal" style="max-width:340px;">
+    <h3>초기화 비밀번호 확인</h3>
+    <p class="desc">모든 캐릭터의 이번 주 체크/골드를 초기화하려면 비밀번호를 입력하세요.</p>
+    <div class="field">
+      <label>비밀번호</label>
+      <input type="password" id="resetPasswordInput" placeholder="비밀번호 입력">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" data-close="resetPasswordOverlay">취소</button>
+      <button class="btn-primary" id="resetPasswordConfirm" disabled>초기화</button>
+    </div>
+  </div>
+</div>
+
 
   <!-- Market Chart Modal -->
   <div class="overlay" id="marketChartOverlay">
@@ -545,6 +562,12 @@
   let lookupData = {};
 
   const $ = (id) => document.getElementById(id);
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  }
+  function renderNoticeContent(text){
+    return escapeHtml(text).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  }
   applyTheme(localStorage.getItem('la-theme') || 'light');
 
   // ---------- market tab ----------
@@ -1616,8 +1639,24 @@ draggedChar.owner = targetChar.owner;
     render();
   });
 
-  $('btnManualReset').addEventListener('click', async ()=>{
+  const RESET_PASSWORD = '123';
+  $('btnManualReset').addEventListener('click', ()=>{
+    $('resetPasswordInput').value = '';
+    $('resetPasswordConfirm').disabled = true;
+    $('resetPasswordOverlay').classList.add('open');
+    $('resetPasswordInput').focus();
+  });
+  $('resetPasswordInput').addEventListener('input', ()=>{
+    $('resetPasswordConfirm').disabled = $('resetPasswordInput').value !== RESET_PASSWORD;
+  });
+  $('resetPasswordInput').addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter' && !$('resetPasswordConfirm').disabled) $('resetPasswordConfirm').click();
+  });
+  $('resetPasswordConfirm').addEventListener('click', async ()=>{
+    if($('resetPasswordInput').value !== RESET_PASSWORD) return;
     if(!(await askConfirm('모든 캐릭터의 이번 주 체크/골드를 지금 초기화할까요?'))) return;
+    $('resetPasswordOverlay').classList.remove('open');
+    $('resetPasswordInput').value = '';
     const allIds = characters.map(c=>c.id);
     clearProgress();
     await clearRaidChecksForChars(allIds);
@@ -1649,7 +1688,7 @@ draggedChar.owner = targetChar.owner;
     if(!announcement || !announcement.content || !announcement.content.trim()) return;
     const dismissedAt = Number(localStorage.getItem('la-notice-dismissed') || 0);
     if(dismissedAt >= announcement.updatedAt) return;
-    $('noticeViewContent').textContent = announcement.content;
+    $('noticeViewContent').innerHTML = renderNoticeContent(announcement.content);
     $('noticeDontShowAgain').checked = false;
     $('noticeViewOverlay').classList.add('open');
   }
