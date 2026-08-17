@@ -11,9 +11,10 @@ export default async function handler(req, res) {
   const category = Number(req.query.category || 40000);
   const endpoint = req.query.endpoint === 'market' ? 'markets/items' : 'auctions/items';
   try {
+    const sortCondition = req.query.sortCondition || 'ASC';
     const body = endpoint === 'markets/items'
-      ? { CategoryCode: category, Sort: 'CURRENT_MIN_PRICE', SortCondition: 'ASC', PageNo: 1 }
-      : { CategoryCode: category, Sort: 'BUY_PRICE', SortCondition: 'ASC', PageNo: 1 };
+      ? { CategoryCode: category, Sort: 'CURRENT_MIN_PRICE', SortCondition: sortCondition, PageNo: 1 }
+      : { CategoryCode: category, Sort: 'BUY_PRICE', SortCondition: sortCondition, PageNo: 1 };
     if (name) body.ItemName = name;
     if (req.query.itemGrade) body.ItemGrade = req.query.itemGrade;
     if (req.query.itemTier) body.ItemTier = Number(req.query.itemTier);
