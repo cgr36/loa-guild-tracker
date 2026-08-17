@@ -280,10 +280,13 @@
   .chart-wrap canvas{cursor:crosshair;}
   .chart-legend{font-size:11.5px;color:var(--text-faint);margin-top:8px;text-align:center;}
 .market-card-combo{cursor:default;}
-.mc-combo-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-top:1px solid var(--border);cursor:pointer;margin-top:4px;}
-.mc-combo-row:first-of-type{border-top:none;margin-top:0;}
-.mc-combo-row:hover .mc-combo-label{color:var(--violet);}
-.mc-combo-label{font-size:11px;color:var(--text-dim);font-weight:700;}
+.mc-combo-cols{display:flex;gap:6px;margin-top:2px;}
+.mc-combo-col{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;text-align:center;padding:6px 2px;border-radius:8px;cursor:pointer;background:var(--surface-2);}
+.mc-combo-col:hover{background:var(--surface);}
+.mc-combo-col:hover .mc-combo-label{color:var(--violet);}
+.mc-combo-label{font-size:11px;color:var(--text-dim);font-weight:700;margin-bottom:3px;}
+.mc-combo-col .mc-price{font-size:13.5px;white-space:nowrap;}
+.mc-combo-col .mc-diff{font-size:10px;margin-left:0;display:block;margin-top:2px;}
 </style>
 </head>
 <body>
@@ -700,16 +703,16 @@ return '<div class="market-card" data-market-card="' + escAttr(name) + '">'
 }
 
 function comboCardHtml(combo){
-const rows = combo.items.map(function(item){
+const cols = combo.items.map(function(item){
 const d = computeMarketDisplay(item.name);
-return '<div class="mc-combo-row" data-market-card="' + escAttr(item.name) + '">'
+return '<div class="mc-combo-col" data-market-card="' + escAttr(item.name) + '">'
 + '<span class="mc-combo-label">' + escAttr(item.size) + '</span>'
 + '<span class="mc-price">' + d.priceText + '</span>' + (d.todayVal!=null?d.diffHtml:'')
 + '</div>';
 }).join('');
 return '<div class="market-card market-card-combo">'
 + '<div class="mc-name">' + escAttr(combo.label) + '</div>'
-+ rows
++ '<div class="mc-combo-cols">' + cols + '</div>'
 + '<div class="mc-sub">최근 거래가 (전일 평균 거래가 대비)</div>'
 + '</div>';
 }
