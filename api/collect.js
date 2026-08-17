@@ -29,14 +29,26 @@ const MARKET_ITEMS = [
 ];
 
 const AUCTION_ITEMS = [
-'10레벨 겁화의 보석',
-'10레벨 작열의 보석',
-'9레벨 겁화의 보석',
-'9레벨 작열의 보석',
-'8레벨 겁화의 보석',
-'8레벨 작열의 보석',
-'7레벨 겁화의 보석',
-'7레벨 작열의 보석',
+{ name: '10레벨 겁화의 보석', category: 210000 },
+{ name: '10레벨 작열의 보석', category: 210000 },
+{ name: '9레벨 겁화의 보석', category: 210000 },
+{ name: '9레벨 작열의 보석', category: 210000 },
+{ name: '8레벨 겁화의 보석', category: 210000 },
+{ name: '8레벨 작열의 보석', category: 210000 },
+{ name: '7레벨 겁화의 보석', category: 210000 },
+{ name: '7레벨 작열의 보석', category: 210000 },
+{ name: '유물 원한 각인서', category: 40000 },
+{ name: '유물 돌격대장 각인서', category: 40000 },
+{ name: '유물 예리한 둔기 각인서', category: 40000 },
+{ name: '유물 아드레날린 각인서', category: 40000 },
+{ name: '유물 질량 증가 각인서', category: 40000 },
+{ name: '유물 기습의 대가 각인서', category: 40000 },
+{ name: '유물 저주받은 인형 각인서', category: 40000 },
+{ name: '유물 타격의 대가 각인서', category: 40000 },
+{ name: '유물 각성 각인서', category: 40000 },
+{ name: '유물 전문의 각인서', category: 40000 },
+{ name: '유물 결투의 대가 각인서', category: 40000 },
+{ name: '유물 슈퍼 차지 각인서', category: 40000 },
 ];
 
 async function readHistory() {
@@ -98,7 +110,7 @@ const stats = (statsItem && statsItem.Stats) || [];
 return { name, stats };
 }
 
-async function fetchAuctionItem(name) {
+async function fetchAuctionItem(name, category) {
 const r = await fetch('https://developer-lostark.game.onstove.com/auctions/items', {
 method: 'POST',
 headers: {
@@ -106,7 +118,7 @@ accept: 'application/json',
 'content-type': 'application/json',
 authorization: `bearer ${LOSTARK_KEY}`,
 },
-body: JSON.stringify({ ItemName: name, CategoryCode: 210000, Sort: 'BUY_PRICE', SortCondition: 'ASC', PageNo: 1 }),
+body: JSON.stringify({ ItemName: name, CategoryCode: category, Sort: 'BUY_PRICE', SortCondition: 'ASC', PageNo: 1 }),
 });
 const data = await r.json();
 const items = (data && data.Items) || [];
@@ -174,8 +186,8 @@ mergeMarketHistory(history, result.name, result.stats);
 });
 
 const auctionResults = await Promise.all(
-AUCTION_ITEMS.map((name) =>
-fetchAuctionItem(name).catch((err) => ({ name, error: err.message }))
+AUCTION_ITEMS.map((item) =>
+fetchAuctionItem(item.name, item.category).catch((err) => ({ name: item.name, error: err.message }))
 )
 );
 auctionResults.forEach((result) => {
