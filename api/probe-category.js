@@ -1,8 +1,8 @@
 // 임시 진단용 엔드포인트 - 각인서 CategoryCode 확인 후 삭제 예정
 const LOSTARK_KEY = process.env.LOSTARK_API_KEY;
 
-async function searchOne(name, category) {
-  const body = { CategoryCode: category, Sort: 'BUY_PRICE', SortCondition: 'ASC', PageNo: 1 };
+async function searchOne(name, category, sort) {
+  const body = { CategoryCode: category, Sort: sort, SortCondition: 'ASC', PageNo: 1 };
   if (name) body.ItemName = name;
   const r = await fetch('https://developer-lostark.game.onstove.com/auctions/items', {
     method: 'POST',
@@ -35,11 +35,12 @@ export default async function handler(req, res) {
   const from = Number(req.query.from || 10000);
   const to = Number(req.query.to || 300000);
   const step = Number(req.query.step || 10000);
+  const sort = req.query.sort || 'BUY_PRICE';
   const codes = [];
   for (let c = from; c <= to; c += step) codes.push(c);
 
   try {
-    const results = await Promise.all(codes.map((c) => searchOne(name, c).catch((e) => ({ category: c, error: e.message }))));
+    const results = await Promise.all(codes.map((c) => searchOne(name, c, sort).catch((e) => ({ category: c, error: e.message }))));
     const hits = results.filter((r) => r.totalCount != null && r.totalCount > 0);
     res.status(200).json({ name, scanned: codes.length, hits, all: results });
   } catch (err) {
