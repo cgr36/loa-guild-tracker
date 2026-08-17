@@ -11,7 +11,7 @@ if (req.method === 'OPTIONS') {
   return;
 }
 
-const { name, key } = req.query;
+const { name, key, category } = req.query;
 
 if (!name || !key) {
   res.status(400).json({ error: '아이템 이름 또는 API 키가 없습니다.' });
@@ -27,7 +27,7 @@ try {
       authorization: `bearer ${key}`,
     },
     body: JSON.stringify({
-      ItemName: name, CategoryCode: 210000,
+      ItemName: name, CategoryCode: category ? Number(category) : 210000,
       Sort: 'BUY_PRICE',
       SortCondition: 'ASC',
       PageNo: 1,

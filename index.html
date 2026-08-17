@@ -590,14 +590,26 @@
     { name: '용암의 숨결', type: 'market' },
     { name: '빙하의 숨결', type: 'market' },
     { name: '에스더의 기운', type: 'market' },
-    { name: '10레벨 겁화의 보석', type: 'auction' },
-    { name: '10레벨 작열의 보석', type: 'auction' },
-    { name: '9레벨 겁화의 보석', type: 'auction' },
-    { name: '9레벨 작열의 보석', type: 'auction' },
-    { name: '8레벨 겁화의 보석', type: 'auction' },
-    { name: '8레벨 작열의 보석', type: 'auction' },
-    { name: '7레벨 겁화의 보석', type: 'auction' },
-    { name: '7레벨 작열의 보석', type: 'auction' },
+    { name: '10레벨 겁화의 보석', type: 'auction', category: 210000 },
+    { name: '10레벨 작열의 보석', type: 'auction', category: 210000 },
+    { name: '9레벨 겁화의 보석', type: 'auction', category: 210000 },
+    { name: '9레벨 작열의 보석', type: 'auction', category: 210000 },
+    { name: '8레벨 겁화의 보석', type: 'auction', category: 210000 },
+    { name: '8레벨 작열의 보석', type: 'auction', category: 210000 },
+    { name: '7레벨 겁화의 보석', type: 'auction', category: 210000 },
+    { name: '7레벨 작열의 보석', type: 'auction', category: 210000 },
+    { name: '유물 원한 각인서', type: 'auction', category: 40000 },
+    { name: '유물 돌격대장 각인서', type: 'auction', category: 40000 },
+    { name: '유물 예리한 둔기 각인서', type: 'auction', category: 40000 },
+    { name: '유물 아드레날린 각인서', type: 'auction', category: 40000 },
+    { name: '유물 질량 증가 각인서', type: 'auction', category: 40000 },
+    { name: '유물 기습의 대가 각인서', type: 'auction', category: 40000 },
+    { name: '유물 저주받은 인형 각인서', type: 'auction', category: 40000 },
+    { name: '유물 타격의 대가 각인서', type: 'auction', category: 40000 },
+    { name: '유물 각성 각인서', type: 'auction', category: 40000 },
+    { name: '유물 전문의 각인서', type: 'auction', category: 40000 },
+    { name: '유물 결투의 대가 각인서', type: 'auction', category: 40000 },
+    { name: '유물 슈퍼 차지 각인서', type: 'auction', category: 40000 },
     ];
 const MARKET_GROUPS = [
 { title: '재료', names: [
@@ -619,6 +631,7 @@ const MARKET_GROUPS = [
 '에스더의 기운'
 ] },
 { title: '보석', names: ['10레벨 겁화의 보석','10레벨 작열의 보석','9레벨 겁화의 보석','9레벨 작열의 보석','8레벨 겁화의 보석','8레벨 작열의 보석','7레벨 겁화의 보석','7레벨 작열의 보석'] },
+{ title: '각인서', names: ['유물 원한 각인서','유물 돌격대장 각인서','유물 예리한 둔기 각인서','유물 아드레날린 각인서','유물 질량 증가 각인서','유물 기습의 대가 각인서','유물 저주받은 인형 각인서','유물 타격의 대가 각인서','유물 각성 각인서','유물 전문의 각인서','유물 결투의 대가 각인서','유물 슈퍼 차지 각인서'] },
 ];
   let marketHistory = {};
   let marketLive = {};
@@ -643,10 +656,10 @@ const MARKET_GROUPS = [
     }catch(e){ return null; }
   }
 
-  async function fetchAuctionLive(name){
+  async function fetchAuctionLive(name, category){
     if(!apiKey) return null;
     try{
-      const res = await fetch(`/api/auction?name=${encodeURIComponent(name)}&key=${encodeURIComponent(apiKey)}`);
+      const res = await fetch(`/api/auction?name=${encodeURIComponent(name)}&key=${encodeURIComponent(apiKey)}&category=${encodeURIComponent(category)}`);
       const data = await res.json();
       return { name: name, minBuyPrice: data && data.minBuyPrice };
     }catch(e){ return null; }
@@ -738,7 +751,7 @@ return '<div class="market-card market-card-combo">'
     }
     const results = await Promise.all(MARKET_CATALOG.map(async function(m){
       if(m.type === 'market') return await fetchMarketLive(m.name);
-      return await fetchAuctionLive(m.name);
+      return await fetchAuctionLive(m.name, m.category);
     }));
     results.forEach(function(r){ if(r) marketLive[r.name] = r; });
     renderMarketGroups();
