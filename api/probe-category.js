@@ -8,7 +8,11 @@ export default async function handler(req, res) {
     return;
   }
   const name = req.query.name || '유물 원한 각인서';
-  const category = Number(req.query.category || 0);
+  const category = req.query.category != null ? Number(req.query.category) : undefined;
+  const grade = req.query.grade;
+  const bodyObj = { ItemName: name, Sort: 'BUY_PRICE', SortCondition: 'ASC', PageNo: 1 };
+  if (category != null) bodyObj.CategoryCode = category;
+  if (grade) bodyObj.Grade = grade;
   try {
     const r = await fetch('https://developer-lostark.game.onstove.com/auctions/items', {
       method: 'POST',
@@ -17,14 +21,14 @@ export default async function handler(req, res) {
         'content-type': 'application/json',
         authorization: `bearer ${LOSTARK_KEY}`,
       },
-      body: JSON.stringify({ ItemName: name, CategoryCode: category, Sort: 'BUY_PRICE', SortCondition: 'ASC', PageNo: 1 }),
+      body: JSON.stringify(bodyObj),
     });
     const rawText = await r.text();
     let data = null;
     try { data = JSON.parse(rawText); } catch (e) { /* keep raw */ }
     res.status(200).json({
       lostarkStatus: r.status,
-      category,
+      sentBody: bodyObj,
       rawText: data ? undefined : rawText.slice(0, 500),
       totalCount: data && data.TotalCount,
       items: ((data && data.Items) || []).slice(0, 3).map((it) => ({ Name: it.Name, Grade: it.Grade, BuyPrice: it.AuctionInfo && it.AuctionInfo.BuyPrice })),
