@@ -50,7 +50,7 @@ export default async function handler(req, res) {
       lostarkStatus: r.status,
       rawText: data ? undefined : rawText.slice(0, 300),
       totalCount: data && data.TotalCount,
-      items: ((data && data.Items) || []).slice(0, 5).map((it) => ({ Id: it.Id, Name: it.Name, Grade: it.Grade, CurrentMinPrice: it.CurrentMinPrice, BuyPrice: it.AuctionInfo && it.AuctionInfo.BuyPrice })),
+      items: (data && data.Items) || [],
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
