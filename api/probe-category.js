@@ -2,6 +2,8 @@
 const LOSTARK_KEY = process.env.LOSTARK_API_KEY;
 
 async function searchOne(name, category) {
+  const body = { CategoryCode: category, Sort: 'BUY_PRICE', SortCondition: 'ASC', PageNo: 1 };
+  if (name) body.ItemName = name;
   const r = await fetch('https://developer-lostark.game.onstove.com/auctions/items', {
     method: 'POST',
     headers: {
@@ -9,12 +11,18 @@ async function searchOne(name, category) {
       'content-type': 'application/json',
       authorization: `bearer ${LOSTARK_KEY}`,
     },
-    body: JSON.stringify({ ItemName: name, CategoryCode: category, Sort: 'BUY_PRICE', SortCondition: 'ASC', PageNo: 1 }),
+    body: JSON.stringify(body),
   });
   const rawText = await r.text();
   let data = null;
   try { data = JSON.parse(rawText); } catch (e) { /* ignore */ }
-  return { category, status: r.status, totalCount: data ? data.TotalCount : null };
+  const items = data ? (data.Items || []) : [];
+  return {
+    category,
+    status: r.status,
+    totalCount: data ? data.TotalCount : null,
+    sample: items.slice(0, 3).map((it) => it.Name),
+  };
 }
 
 export default async function handler(req, res) {
@@ -23,7 +31,7 @@ export default async function handler(req, res) {
     res.status(500).json({ error: 'LOSTARK_API_KEY 없음' });
     return;
   }
-  const name = req.query.name || '유물 원한 각인서';
+  const name = req.query.name != null ? req.query.name : '';
   const from = Number(req.query.from || 10000);
   const to = Number(req.query.to || 300000);
   const step = Number(req.query.step || 10000);
