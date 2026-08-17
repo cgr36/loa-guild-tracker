@@ -598,18 +598,18 @@
     { name: '8레벨 작열의 보석', type: 'auction', category: 210000 },
     { name: '7레벨 겁화의 보석', type: 'auction', category: 210000 },
     { name: '7레벨 작열의 보석', type: 'auction', category: 210000 },
-    { name: '유물 원한 각인서', type: 'auction', category: 40000 },
-    { name: '유물 돌격대장 각인서', type: 'auction', category: 40000 },
-    { name: '유물 예리한 둔기 각인서', type: 'auction', category: 40000 },
-    { name: '유물 아드레날린 각인서', type: 'auction', category: 40000 },
-    { name: '유물 질량 증가 각인서', type: 'auction', category: 40000 },
-    { name: '유물 기습의 대가 각인서', type: 'auction', category: 40000 },
-    { name: '유물 저주받은 인형 각인서', type: 'auction', category: 40000 },
-    { name: '유물 타격의 대가 각인서', type: 'auction', category: 40000 },
-    { name: '유물 각성 각인서', type: 'auction', category: 40000 },
-    { name: '유물 전문의 각인서', type: 'auction', category: 40000 },
-    { name: '유물 결투의 대가 각인서', type: 'auction', category: 40000 },
-    { name: '유물 슈퍼 차지 각인서', type: 'auction', category: 40000 },
+    { name: '유물 원한 각인서', type: 'market', category: 40000, grade: '유물' },
+    { name: '유물 돌격대장 각인서', type: 'market', category: 40000, grade: '유물' },
+    { name: '유물 예리한 둔기 각인서', type: 'market', category: 40000, grade: '유물' },
+    { name: '유물 아드레날린 각인서', type: 'market', category: 40000, grade: '유물' },
+    { name: '유물 질량 증가 각인서', type: 'market', category: 40000, grade: '유물' },
+    { name: '유물 기습의 대가 각인서', type: 'market', category: 40000, grade: '유물' },
+    { name: '유물 저주받은 인형 각인서', type: 'market', category: 40000, grade: '유물' },
+    { name: '유물 타격의 대가 각인서', type: 'market', category: 40000, grade: '유물' },
+    { name: '유물 각성 각인서', type: 'market', category: 40000, grade: '유물' },
+    { name: '유물 전문의 각인서', type: 'market', category: 40000, grade: '유물' },
+    { name: '유물 결투의 대가 각인서', type: 'market', category: 40000, grade: '유물' },
+    { name: '유물 슈퍼 차지 각인서', type: 'market', category: 40000, grade: '유물' },
     ];
 const MARKET_GROUPS = [
 { title: '재료', names: [
@@ -640,10 +640,13 @@ const MARKET_GROUPS = [
   let currentChartField = null;
   function findMarketCatalog(name){ return MARKET_CATALOG.find(function(m){ return m.name===name; }); }
 
-  async function fetchMarketLive(name){
+  async function fetchMarketLive(name, category, grade){
     if(!apiKey) return null;
     try{
-      const searchRes = await fetch(`/api/market?mode=search&name=${encodeURIComponent(name)}&key=${encodeURIComponent(apiKey)}`);
+      let searchUrl = `/api/market?mode=search&name=${encodeURIComponent(name)}&key=${encodeURIComponent(apiKey)}`;
+      if(category) searchUrl += `&category=${encodeURIComponent(category)}`;
+      if(grade) searchUrl += `&grade=${encodeURIComponent(grade)}`;
+      const searchRes = await fetch(searchUrl);
       const searchData = await searchRes.json();
       const items = (searchData && searchData.Items) || [];
       const found = items.find(function(it){ return it.Name===name; }) || items[0];
@@ -750,7 +753,7 @@ return '<div class="market-card market-card-combo">'
       return;
     }
     const results = await Promise.all(MARKET_CATALOG.map(async function(m){
-      if(m.type === 'market') return await fetchMarketLive(m.name);
+      if(m.type === 'market') return await fetchMarketLive(m.name, m.category, m.grade);
       return await fetchAuctionLive(m.name, m.category);
     }));
     results.forEach(function(r){ if(r) marketLive[r.name] = r; });
