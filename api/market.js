@@ -11,7 +11,7 @@ res.status(200).end();
 return;
 }
 
-const { mode, name, id, key } = req.query;
+const { mode, name, id, key, category, grade } = req.query;
 
 if (!key) {
 res.status(400).json({ error: 'API 키가 없습니다.' });
@@ -46,6 +46,13 @@ if (!name) {
 res.status(400).json({ error: 'name이 필요합니다.' });
 return;
 }
+const searchBody = {
+ItemName: name, CategoryCode: category ? Number(category) : 50000,
+Sort: 'CURRENT_MIN_PRICE',
+SortCondition: 'ASC',
+PageNo: 1,
+};
+if (grade) searchBody.ItemGrade = grade;
 const r = await fetch('https://developer-lostark.game.onstove.com/markets/items', {
 method: 'POST',
 headers: {
@@ -53,12 +60,7 @@ accept: 'application/json',
 'content-type': 'application/json',
 authorization: `bearer ${key}`,
 },
-body: JSON.stringify({
-ItemName: name, CategoryCode: 50000,
-Sort: 'CURRENT_MIN_PRICE',
-SortCondition: 'ASC',
-PageNo: 1,
-}),
+body: JSON.stringify(searchBody),
 });
 const data = await r.json();
 if (!r.ok) {
