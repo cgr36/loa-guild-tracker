@@ -19,10 +19,13 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({ ItemName: name, CategoryCode: category, Sort: 'BUY_PRICE', SortCondition: 'ASC', PageNo: 1 }),
     });
-    const data = await r.json();
+    const rawText = await r.text();
+    let data = null;
+    try { data = JSON.parse(rawText); } catch (e) { /* keep raw */ }
     res.status(200).json({
-      status: r.status,
+      lostarkStatus: r.status,
       category,
+      rawText: data ? undefined : rawText.slice(0, 500),
       totalCount: data && data.TotalCount,
       items: ((data && data.Items) || []).slice(0, 3).map((it) => ({ Name: it.Name, Grade: it.Grade, BuyPrice: it.AuctionInfo && it.AuctionInfo.BuyPrice })),
     });
