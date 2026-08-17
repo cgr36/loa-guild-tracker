@@ -1,6 +1,22 @@
 // 임시 진단용 엔드포인트 - 각인서 CategoryCode 확인 후 삭제 예정
 const LOSTARK_KEY = process.env.LOSTARK_API_KEY;
 
+async function searchOne(name, category) {
+  const r = await fetch('https://developer-lostark.game.onstove.com/auctions/items', {
+    method: 'POST',
+    headers: {
+      accept: 'application/json',
+      'content-type': 'application/json',
+      authorization: `bearer ${LOSTARK_KEY}`,
+    },
+    body: JSON.stringify({ ItemName: name, CategoryCode: category, Sort: 'BUY_PRICE', SortCondition: 'ASC', PageNo: 1 }),
+  });
+  const rawText = await r.text();
+  let data = null;
+  try { data = JSON.parse(rawText); } catch (e) { /* ignore */ }
+  return { category, status: r.status, totalCount: data ? data.TotalCount : null };
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (!LOSTARK_KEY) {
@@ -8,31 +24,16 @@ export default async function handler(req, res) {
     return;
   }
   const name = req.query.name || '유물 원한 각인서';
-  const category = req.query.category != null ? Number(req.query.category) : undefined;
-  const grade = req.query.grade;
-  const bodyObj = { ItemName: name, Sort: 'BUY_PRICE', SortCondition: 'ASC', PageNo: 1 };
-  if (category != null) bodyObj.CategoryCode = category;
-  if (grade) bodyObj.Grade = grade;
+  const from = Number(req.query.from || 10000);
+  const to = Number(req.query.to || 300000);
+  const step = Number(req.query.step || 10000);
+  const codes = [];
+  for (let c = from; c <= to; c += step) codes.push(c);
+
   try {
-    const r = await fetch('https://developer-lostark.game.onstove.com/auctions/items', {
-      method: 'POST',
-      headers: {
-        accept: 'application/json',
-        'content-type': 'application/json',
-        authorization: `bearer ${LOSTARK_KEY}`,
-      },
-      body: JSON.stringify(bodyObj),
-    });
-    const rawText = await r.text();
-    let data = null;
-    try { data = JSON.parse(rawText); } catch (e) { /* keep raw */ }
-    res.status(200).json({
-      lostarkStatus: r.status,
-      sentBody: bodyObj,
-      rawText: data ? undefined : rawText.slice(0, 500),
-      totalCount: data && data.TotalCount,
-      items: ((data && data.Items) || []).slice(0, 3).map((it) => ({ Name: it.Name, Grade: it.Grade, BuyPrice: it.AuctionInfo && it.AuctionInfo.BuyPrice })),
-    });
+    const results = await Promise.all(codes.map((c) => searchOne(name, c).catch((e) => ({ category: c, error: e.message }))));
+    const hits = results.filter((r) => r.totalCount != null && r.totalCount > 0);
+    res.status(200).json({ name, scanned: codes.length, hits, all: results });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
