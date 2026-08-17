@@ -10,6 +10,19 @@ export default async function handler(req, res) {
   const name = req.query.name != null ? req.query.name : '유물 원한 각인서';
   const category = Number(req.query.category || 40000);
   const endpoint = req.query.endpoint === 'market' ? 'markets/items' : 'auctions/items';
+  if (req.query.statsId) {
+    try {
+      const r = await fetch(`https://developer-lostark.game.onstove.com/markets/items/${encodeURIComponent(req.query.statsId)}`, {
+        headers: { accept: 'application/json', authorization: `bearer ${LOSTARK_KEY}` },
+      });
+      const data = await r.json();
+      const item = Array.isArray(data) ? data[0] : data;
+      res.status(200).json({ lostarkStatus: r.status, name: item && item.Name, stats: item && item.Stats });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+    return;
+  }
   try {
     const sortCondition = req.query.sortCondition || 'ASC';
     const body = endpoint === 'markets/items'
@@ -37,7 +50,7 @@ export default async function handler(req, res) {
       lostarkStatus: r.status,
       rawText: data ? undefined : rawText.slice(0, 300),
       totalCount: data && data.TotalCount,
-      items: ((data && data.Items) || []).slice(0, 5).map((it) => ({ Name: it.Name, Grade: it.Grade, CurrentMinPrice: it.CurrentMinPrice, BuyPrice: it.AuctionInfo && it.AuctionInfo.BuyPrice })),
+      items: ((data && data.Items) || []).slice(0, 5).map((it) => ({ Id: it.Id, Name: it.Name, Grade: it.Grade, CurrentMinPrice: it.CurrentMinPrice, BuyPrice: it.AuctionInfo && it.AuctionInfo.BuyPrice })),
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
