@@ -1813,6 +1813,7 @@ draggedChar.owner = targetChar.owner;
     const allIds = characters.map(c=>c.id);
     clearProgress();
     await clearRaidChecksForChars(allIds);
+    await setShared('characters', characters);
     renderRaidSummary();
     render();
   });
