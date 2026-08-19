@@ -1807,7 +1807,6 @@ draggedChar.owner = targetChar.owner;
   });
   $('resetPasswordConfirm').addEventListener('click', async ()=>{
     if($('resetPasswordInput').value !== RESET_PASSWORD) return;
-    if(!(await askConfirm('모든 캐릭터의 이번 주 체크/골드를 지금 초기화할까요?'))) return;
     $('resetPasswordOverlay').classList.remove('open');
     $('resetPasswordInput').value = '';
     const allIds = characters.map(c=>c.id);
