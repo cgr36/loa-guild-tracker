@@ -85,10 +85,11 @@
   }
   .raid-stat .rname{font-size:11px;color:var(--gold-bright);font-weight:700;letter-spacing:.01em;margin-bottom:4px;white-space:nowrap;}
   .raid-stat .rtier{
-    display:flex;justify-content:space-between;gap:10px;
-    font-size:9.5px;color:var(--text-dim);padding:1.5px 0;white-space:nowrap;
+    display:flex;flex-wrap:wrap;gap:1.5px 10px;
+    font-size:9.5px;color:var(--text-dim);padding:1.5px 0;
   }
-  .raid-stat .rtier .rt-gold{color:var(--text-faint);font-weight:600;}
+  .raid-stat .rtier > span:first-child{white-space:nowrap;}
+  .raid-stat .rtier .rt-gold{color:var(--text-faint);font-weight:600;margin-left:auto;text-align:right;}
   .raid-stat .rtier .rt-level{color:var(--text-faint);font-size:8.5px;font-weight:600;margin-left:3px;}
 
   .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap;}
