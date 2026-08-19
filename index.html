@@ -85,11 +85,15 @@
   }
   .raid-stat .rname{font-size:11px;color:var(--gold-bright);font-weight:700;letter-spacing:.01em;margin-bottom:4px;white-space:nowrap;}
   .raid-stat .rtier{
-    display:flex;flex-wrap:wrap;gap:1.5px 10px;
+    display:flex;justify-content:space-between;align-items:flex-start;gap:10px;
     font-size:9.5px;color:var(--text-dim);padding:1.5px 0;
   }
   .raid-stat .rtier > span:first-child{white-space:nowrap;}
-  .raid-stat .rtier .rt-gold{color:var(--text-faint);font-weight:600;margin-left:auto;text-align:right;}
+  .raid-stat .rtier .rt-gold{
+    color:var(--text-faint);font-weight:600;text-align:right;
+    display:flex;flex-direction:column;align-items:flex-end;gap:0;flex-shrink:0;
+  }
+  .raid-stat .rtier .rt-gold-line{white-space:nowrap;}
   .raid-stat .rtier .rt-level{color:var(--text-faint);font-size:8.5px;font-weight:600;margin-left:3px;}
 
   .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap;}
@@ -1097,6 +1101,13 @@ return '<div class="market-card market-card-combo">'
     }
     return `${fmtGold(tier.gold)}G`;
   }
+  function tierGoldLabelStacked(tier){
+    if(tier.splitBound){
+      const half = Math.round(tier.gold/2);
+      return `<span class="rt-gold-line">${fmtGold(half)}G</span><span class="rt-gold-line">+ <span class="gold-bound">${fmtGold(half)}G</span></span>`;
+    }
+    return `<span class="rt-gold-line">${tierGoldLabel(tier)}</span>`;
+  }
   function tierGoldPlain(tier){
     if(tier.fullBound){
       return `${fmtGold(tier.gold)}G`;
@@ -1316,7 +1327,7 @@ return `<span class="crow-gold-wrap">${inner}</span>`;
     el.innerHTML = raidCatalog.map(r=>`
       <div class="raid-stat">
         <div class="rname">${r.name}</div>
-        ${r.tiers.map(t=>`<div class="rtier"><span>${t.name}${t.levelReq?` <span class="rt-level">Lv.${t.levelReq}+</span>`:''}</span><span class="rt-gold">${tierGoldLabel(t)}</span></div>`).join('')}
+        ${r.tiers.map(t=>`<div class="rtier"><span>${t.name}${t.levelReq?` <span class="rt-level">Lv.${t.levelReq}+</span>`:''}</span><span class="rt-gold">${tierGoldLabelStacked(t)}</span></div>`).join('')}
       </div>`).join('');
   }
 
