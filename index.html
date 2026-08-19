@@ -86,15 +86,20 @@
   .raid-stat .rname{font-size:11px;color:var(--gold-bright);font-weight:700;letter-spacing:.01em;margin-bottom:4px;white-space:nowrap;}
   .raid-stat .rtier{
     display:flex;justify-content:space-between;align-items:center;gap:10px;
-    font-size:9.5px;color:var(--text-dim);padding:2.5px 0;
+    font-size:9.5px;color:var(--text-dim);padding:1.5px 0;
   }
   .raid-stat .rtier > span:first-child{white-space:nowrap;}
   .raid-stat .rtier .rt-gold{
     color:var(--text-faint);font-weight:600;text-align:right;
-    display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0;
+    display:flex;flex-direction:row;align-items:baseline;gap:4px;flex-shrink:0;
   }
-  .raid-stat .rtier .rt-gold-line{white-space:nowrap;line-height:1.3;}
+  .raid-stat .rtier .rt-gold-line{white-space:nowrap;}
   .raid-stat .rtier .rt-level{color:var(--text-faint);font-size:8.5px;font-weight:600;margin-left:3px;}
+  @media (max-width:640px){
+    .raid-stat .rtier{padding:2.5px 0;}
+    .raid-stat .rtier .rt-gold{flex-direction:column;align-items:flex-end;gap:2px;}
+    .raid-stat .rtier .rt-gold-line{line-height:1.3;}
+  }
 
   .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap;}
   button{font-family:inherit;cursor:pointer;border:none;border-radius:10px;font-weight:700;font-size:13.5px;}
