@@ -1204,7 +1204,7 @@ return `<span class="crow-gold-wrap">${inner}</span>`;
   async function refreshCharacter(id, btn){
     const c = characters.find(x=>x.id===id);
     if(!c) return;
-    const metaEl = btn.closest('.crow').querySelector('.crow-meta');
+    const metaEl = btn.closest('.crow').querySelector('.crow-stats');
     const originalMeta = metaEl.textContent;
     if(!apiKey){
       metaEl.textContent = 'API 키가 없어요 — "API 키 설정"에서 등록해주세요.';
@@ -1215,20 +1215,15 @@ return `<span class="crow-gold-wrap">${inner}</span>`;
     btn.disabled = true;
     metaEl.textContent = '갱신 중…';
     try{
-      const res = await fetch(`https://developer-lostark.game.onstove.com/armories/characters/${encodeURIComponent(c.name)}/profiles`, {
-        headers: { accept:'application/json', authorization:`bearer ${apiKey}` }
-      });
-      if(!res.ok) throw new Error('status '+res.status);
-      const data = await res.json();
-      if(!data || !data.CharacterClassName) throw new Error('not found');
-      c.className = data.CharacterClassName;
-      c.itemLevel = (data.ItemAvgLevel||'').toString().replace(/,/g,'');
-      c.combatPower = (data.CombatPower||'').toString().replace(/,/g,'');
+      const r = await fetchCharLevel(c.name);
+      c.className = r.className;
+      c.itemLevel = r.itemLevel;
+      c.combatPower = r.combatPower;
       await setShared('characters', characters);
       renderRaidSummary();
       render();
     }catch(err){
-      metaEl.textContent = '자동갱신 실패(CORS) — ✎ 버튼으로 직접 수정해주세요.';
+      metaEl.textContent = '갱신 실패 — ✎ 버튼으로 직접 수정해주세요.';
       metaEl.style.color = 'var(--rose)';
       btn.disabled = false;
       setTimeout(()=>{ render(); }, 2800);
@@ -1238,12 +1233,9 @@ return `<span class="crow-gold-wrap">${inner}</span>`;
   function sleep(ms){ return new Promise(res=>setTimeout(res, ms)); }
 
   async function fetchCharLevel(name){
-    const res = await fetch(`https://developer-lostark.game.onstove.com/armories/characters/${encodeURIComponent(name)}/profiles`, {
-      headers: { accept:'application/json', authorization:`bearer ${apiKey}` }
-    });
-    if(!res.ok) throw new Error('status '+res.status);
+    const res = await fetch(`/api/lookup?name=${encodeURIComponent(name)}&key=${encodeURIComponent(apiKey)}`);
     const data = await res.json();
-    if(!data || !data.CharacterClassName) throw new Error('not found');
+    if(!res.ok || !data || !data.CharacterClassName) throw new Error((data && data.error) || 'not found');
     return { className: data.CharacterClassName, itemLevel: (data.ItemAvgLevel||'').toString().replace(/,/g,''), combatPower: (data.CombatPower||'').toString().replace(/,/g,'') };
   }
 
