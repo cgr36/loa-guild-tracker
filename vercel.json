@@ -3,6 +3,10 @@
     {
       "path": "/api/collect",
       "schedule": "10 15 * * *"
+    },
+    {
+      "path": "/api/auto-reset",
+      "schedule": "0 21 * * 2"
     }
   ],
   "functions": {
