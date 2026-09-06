@@ -914,10 +914,8 @@ return '<div class="market-card market-card-combo">'
   const ABIDOS_CRIT_RATE = 0.07; // 대성공 확률
   let abidosSellPrice = null; // 상급 아비도스 융화 재료 실시간 최저가 (조회 전엔 null -> 194G 스냅샷 사용)
   function abidosRankMaterialsSum(method){
-    const gen = getAbidosChainPrice(method.chain, 0);
-    const adv = getAbidosChainPrice(method.chain, 1);
-    const rare = getAbidosChainPrice(method.chain, 2);
-    return gen + adv + rare;
+    // "제작 방식 비교" 표와 동일한, 개수를 반영한 총 재료비 (희귀+고급+일반)
+    return computeLiveTotalCost(method) - ABIDOS_CRAFT_GOLD;
   }
   // (a) 수수료 제외한 판매가 -> (b) 아비도스 총수익(400개 기준) -> (c) 재료비/제작비 차감한 순수익
   function computeAbidosProfit(method, price){
