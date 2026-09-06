@@ -866,19 +866,20 @@ return '<div class="market-card market-card-combo">'
     { name:'철광석', tierNames:['철광석','묵직한 철광석','아비도스 철광석'], tiers:[180,399,2249] },
     { name:'고기', tierNames:['두툼한 생고기','다듬은 생고기','아비도스 두툼한 생고기'], tiers:[185,381,2599] },
   ];
-  // 제작비용(제작비: 17% 감소 기준 431G)은 상급 아비도스 융화 재료 X10 제작 1회 기준이며,
-  // 이 표는 "40개 = 4줄 제작"(431G × 4) 기준이라 4를 곱한 1,724G를 사용합니다.
-  const ABIDOS_CRAFT_GOLD = 1724;
   // 아비도스 1개 제작 시 필요한 재료 개수(일반 112/고급 59/희귀 43개, 방식 무관) x 40개
   const ABIDOS_QTY = { general: 112*40, advanced: 59*40, rare: 43*40 };
   const ABIDOS_METHODS = [
-    { name:'벌목 제작', chain:'목재', craftGold:ABIDOS_CRAFT_GOLD },
-    { name:'고고학 제작', chain:'유물', craftGold:ABIDOS_CRAFT_GOLD },
-    { name:'낚시 제작', chain:'생선', craftGold:ABIDOS_CRAFT_GOLD },
-    { name:'채집 제작', chain:'들꽃', craftGold:ABIDOS_CRAFT_GOLD },
-    { name:'채광 제작', chain:'철광석', craftGold:ABIDOS_CRAFT_GOLD },
-    { name:'수렵 제작', chain:'고기', craftGold:ABIDOS_CRAFT_GOLD },
+    { name:'벌목 제작', chain:'목재' },
+    { name:'고고학 제작', chain:'유물' },
+    { name:'낚시 제작', chain:'생선' },
+    { name:'채집 제작', chain:'들꽃' },
+    { name:'채광 제작', chain:'철광석' },
+    { name:'수렵 제작', chain:'고기' },
   ];
+  // 실제 게임 화면 검증 결과: 제작 골드는 "520 × (1-제작수수료감소율)"이 한 번만 더해짐
+  function getAbidosCraftGold(pctRate){
+    return Math.round(520 * (1 - pctRate));
+  }
   function getAbidosChainPrice(chainName, tierIdx){
     const m = ABIDOS_MATERIALS.find(x=>x.name===chainName);
     if(!m) return null;
@@ -890,7 +891,8 @@ return '<div class="market-card market-card-combo">'
     const gen = getAbidosChainPrice(method.chain, 0);
     const adv = getAbidosChainPrice(method.chain, 1);
     const rare = getAbidosChainPrice(method.chain, 2);
-    return Math.round(ABIDOS_QTY.general*(gen/100) + ABIDOS_QTY.advanced*(adv/100) + ABIDOS_QTY.rare*(rare/100) + ABIDOS_CRAFT_GOLD);
+    const craftGold = getAbidosCraftGold(ABIDOS_CURRENT.pct / 100);
+    return Math.round(ABIDOS_QTY.general*(gen/100) + ABIDOS_QTY.advanced*(adv/100) + ABIDOS_QTY.rare*(rare/100) + craftGold);
   }
   function abidosMaterialCellText(method, tierIdx){
     const chainInfo = ABIDOS_MATERIALS.find(x=>x.name===method.chain);
@@ -910,20 +912,14 @@ return '<div class="market-card market-card-combo">'
     '수렵 제작': {1:[-6630,-6209,-5787,-5366],2:[-6430,-6009,-5587,-5166],3:[-6230,-5809,-5387,-4966],4:[-6030,-5609,-5187,-4766],5:[-5830,-5409,-4987,-4566],6:[-5590,-5169,-4747,-4326],7:[-5390,-4969,-4547,-4126],8:[-5190,-4769,-4347,-3926],9:[-4990,-4569,-4147,-3726],10:[-4790,-4369,-3947,-3526],11:[-4550,-4129,-3707,-3286],12:[-4350,-3929,-3507,-3086],13:[-4150,-3729,-3307,-2886],14:[-3950,-3529,-3107,-2686],15:[-3750,-3329,-2907,-2486],16:[-3510,-3089,-2667,-2246],17:[-3310,-2889,-2467,-2046]},
   };
   const ABIDOS_CURRENT = { pct:17, priceIdx:1 }; // 현재 실제 기준: 수수료 -17%, 194골드(스냅샷 기본값)
-  const ABIDOS_MARKET_FEE = 0.10; // 거래소 판매 수수료
+  const ABIDOS_MARKET_FEE = 0.05; // 거래소 판매 수수료 (실제 게임 화면 검증: 196G -> 수수료 10 = 5%)
   const ABIDOS_CRIT_RATE = 0.07; // 대성공 확률
   let abidosSellPrice = null; // 상급 아비도스 융화 재료 실시간 최저가 (조회 전엔 null -> 194G 스냅샷 사용)
-  function abidosRankMaterialsSum(method){
-    // "제작 방식 비교" 표와 동일한, 개수를 반영한 총 재료비 (희귀+고급+일반)
-    return computeLiveTotalCost(method) - ABIDOS_CRAFT_GOLD;
-  }
-  // (a) 수수료 제외한 판매가 -> (b) 아비도스 총수익(400개 기준) -> (c) 재료비/제작비 차감한 순수익
+  // (a) 수수료 제외한 판매가 -> (b) 아비도스 총수익 -> 순수익 = b - 총 제작비용("제작 방식 비교"와 동일)
   function computeAbidosProfit(method, price){
-    const pctRate = ABIDOS_CURRENT.pct / 100;
-    const a = price * (1 - ABIDOS_MARKET_FEE);
-    const b = a * 400; // 대성공 확률 항 임시 제외 (검증용)
-    const craftCost = Math.floor(520 * (1 - pctRate) * 40);
-    return Math.round(b - abidosRankMaterialsSum(method) - craftCost);
+    const a = price - Math.round(price * ABIDOS_MARKET_FEE);
+    const b = a * 400 * (1 + (5 * (1 + ABIDOS_CRIT_RATE)) / 100);
+    return Math.round(b - computeLiveTotalCost(method));
   }
   async function loadAbidosSellPrice(){
     if(!apiKey) return;
@@ -975,7 +971,7 @@ return '<div class="market-card market-card-combo">'
   function renderAbidosMethodsTable(){
     $('abiMethodsTable').innerHTML = `
       <tr><th>제작 방식</th><th>희귀재료</th><th>고급재료</th><th>일반재료</th><th>제작 비용(-17%)</th><th>총 제작 비용</th></tr>
-      ${ABIDOS_METHODS.map(m=>`<tr><td>${m.name}</td><td>${abidosMaterialCellText(m,2)}</td><td>${abidosMaterialCellText(m,1)}</td><td>${abidosMaterialCellText(m,0)}</td><td>${fmtAbi(m.craftGold)}G</td><td class="abi-total">${fmtAbi(computeLiveTotalCost(m))}G</td></tr>`).join('')}
+      ${ABIDOS_METHODS.map(m=>`<tr><td>${m.name}</td><td>${abidosMaterialCellText(m,2)}</td><td>${abidosMaterialCellText(m,1)}</td><td>${abidosMaterialCellText(m,0)}</td><td>${fmtAbi(getAbidosCraftGold(ABIDOS_CURRENT.pct/100))}G</td><td class="abi-total">${fmtAbi(computeLiveTotalCost(m))}G</td></tr>`).join('')}
     `;
   }
 
