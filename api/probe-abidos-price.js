@@ -15,9 +15,12 @@ export default async function handler(req, res) {
       headers: { accept: 'application/json', 'content-type': 'application/json', authorization: `bearer ${LOSTARK_KEY}` },
       body: JSON.stringify(body),
     });
-    const data = await r.json();
-    res.status(200).json({ query: name, status: r.status, data });
+    const text = await r.text();
+    let data = null;
+    let parseError = null;
+    try { data = JSON.parse(text); } catch (e) { parseError = e.message; }
+    res.status(200).json({ query: name, status: r.status, statusText: r.statusText, rawTextLength: text.length, rawTextSample: text.slice(0, 500), parseError, data });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 }
