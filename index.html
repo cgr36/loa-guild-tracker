@@ -869,8 +869,8 @@ return '<div class="market-card market-card-combo">'
   // 제작비용(제작비: 17% 감소 기준 431G)은 상급 아비도스 융화 재료 X10 제작 1회 기준이며,
   // 이 표는 "40개 = 4줄 제작"(431G × 4) 기준이라 4를 곱한 1,724G를 사용합니다.
   const ABIDOS_CRAFT_GOLD = 1724;
-  // 40개(4줄) 제작 시 필요한 재료 개수 (일반/고급/희귀 공통, 방식 무관 - 스냅샷 데이터로 역산 검증됨)
-  const ABIDOS_QTY = { general: 448, advanced: 236, rare: 172 };
+  // 아비도스 1개 제작 시 필요한 재료 개수(일반 112/고급 59/희귀 43개, 방식 무관) x 40개
+  const ABIDOS_QTY = { general: 112*40, advanced: 59*40, rare: 43*40 };
   const ABIDOS_METHODS = [
     { name:'벌목 제작', chain:'목재', craftGold:ABIDOS_CRAFT_GOLD },
     { name:'고고학 제작', chain:'유물', craftGold:ABIDOS_CRAFT_GOLD },
@@ -890,14 +890,14 @@ return '<div class="market-card market-card-combo">'
     const gen = getAbidosChainPrice(method.chain, 0);
     const adv = getAbidosChainPrice(method.chain, 1);
     const rare = getAbidosChainPrice(method.chain, 2);
-    return Math.round(ABIDOS_QTY.general*(gen/10) + ABIDOS_QTY.advanced*(adv/10) + ABIDOS_QTY.rare*(rare/10) + ABIDOS_CRAFT_GOLD);
+    return Math.round(ABIDOS_QTY.general*(gen/100) + ABIDOS_QTY.advanced*(adv/100) + ABIDOS_QTY.rare*(rare/100) + ABIDOS_CRAFT_GOLD);
   }
   function abidosMaterialCellText(method, tierIdx){
     const chainInfo = ABIDOS_MATERIALS.find(x=>x.name===method.chain);
     const tierName = chainInfo.tierNames[tierIdx];
     const price = getAbidosChainPrice(method.chain, tierIdx);
     const qty = tierIdx===0 ? ABIDOS_QTY.general : tierIdx===1 ? ABIDOS_QTY.advanced : ABIDOS_QTY.rare;
-    const subtotal = Math.round(qty*(price/10));
+    const subtotal = Math.round(qty*(price/100));
     return `${tierName} ${fmtAbi(subtotal)}`;
   }
   // 각 방식: { pct: [193G, 194G, 195G, 196G] } (수수료 감소 1~17%) — 제작비용 1,724G(431G×4줄) 반영
