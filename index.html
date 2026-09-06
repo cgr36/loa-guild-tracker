@@ -929,7 +929,7 @@ return '<div class="market-card market-card-combo">'
     loadAbidosMaterialsLive();
 
     $('abiMethodsTable').innerHTML = `
-      <tr><th>제작 방식</th><th>재료1</th><th>재료2</th><th>아비도스 재료</th><th>제작 골드</th><th>총 제작 비용</th></tr>
+      <tr><th>제작 방식</th><th>일반재료</th><th>고급재료</th><th>희귀재료</th><th>제작 골드</th><th>총 제작 비용</th></tr>
       ${ABIDOS_METHODS.map(m=>`<tr><td>${m.name}</td><td>${m.mat1}</td><td>${m.mat2}</td><td>${m.abidosMat}</td><td>${fmtAbi(m.craftGold)}G</td><td class="abi-total">${fmtAbi(m.totalCost)}G</td></tr>`).join('')}
     `;
 
