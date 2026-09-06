@@ -921,7 +921,7 @@ return '<div class="market-card market-card-combo">'
   function computeAbidosProfit(method, price){
     const pctRate = ABIDOS_CURRENT.pct / 100;
     const a = price * (1 - ABIDOS_MARKET_FEE);
-    const b = a * 400 * (1 + (5 * (1 + ABIDOS_CRIT_RATE)) / 100);
+    const b = a * 400; // 대성공 확률 항 임시 제외 (검증용)
     const craftCost = Math.floor(520 * (1 - pctRate) * 40);
     return Math.round(b - abidosRankMaterialsSum(method) - craftCost);
   }
