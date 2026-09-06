@@ -359,7 +359,7 @@
 <div class="tabs">
   <button type="button" class="tab-btn active" data-tab="raid">레이드 체크</button>
   <button type="button" class="tab-btn" data-tab="market">거래소 시세</button>
-  <button type="button" class="tab-btn" data-tab="abidos">아비도스 제작/판매 효율</button>
+  <button type="button" class="tab-btn" data-tab="abidos">아비도스 제작 효율</button>
 </div>
   
   <div class="tab-panel active" id="tabRaid">
@@ -853,7 +853,7 @@ return '<div class="market-card market-card-combo">'
     $('marketStatus').textContent = '방금 불러온 실시간 시세예요 · 그래프는 매일 자동 수집되어 누적돼요.';
   }
 
-  // ---------- 아비도스 제작/판매 효율 (정적 스냅샷 데이터) ----------
+  // ---------- 아비도스 제작 효율 (정적 스냅샷 데이터) ----------
   const ABIDOS_META = {
     updatedAt: '2026. 9. 6 오후 1:26:01',
     criticalRate: '7%',
@@ -949,8 +949,7 @@ return '<div class="market-card market-card-combo">'
         const tierName = m.tierNames[i];
         const live = abidosMaterialsLive && abidosMaterialsLive[tierName];
         const val = live != null ? live : m.tiers[i];
-        const cls = i===2 ? ' class="abi-total"' : '';
-        return `<td${cls}>${fmtAbi(val)}${typeof val==='number'?'G':''}</td>`;
+        return `<td>${fmtAbi(val)}${typeof val==='number'?'G':''}</td>`;
       }).join('')}</tr>`).join('')}
     `;
   }
@@ -1059,6 +1058,7 @@ return '<div class="market-card market-card-combo">'
   }
 
   function switchTab(tab){
+    try { localStorage.setItem('la-active-tab', tab); } catch(e){}
     document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.tab===tab); });
     $('tabRaid').classList.toggle('active', tab==='raid');
     $('tabMarket').classList.toggle('active', tab==='market');
@@ -2498,6 +2498,11 @@ $('btnAbidosRefresh').addEventListener('click', ()=>{
     renderResetLine();
     setInterval(renderResetLine, 60000);
     checkNotice();
+
+    try {
+      const savedTab = localStorage.getItem('la-active-tab');
+      if(savedTab && savedTab !== 'raid') switchTab(savedTab);
+    } catch(e){}
 
     // 다른 사람이 체크한 내역을 주기적으로 반영합니다. (드롭다운/모달이 열려있을 땐
     // 화면을 다시 그리면 조작 중인 UI가 끊길 수 있어 그 동안은 건너뜁니다.)
