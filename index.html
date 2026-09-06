@@ -297,6 +297,35 @@
 .mc-combo-label{font-size:11px;color:var(--text-dim);font-weight:700;margin-bottom:3px;}
 .mc-combo-col .mc-price{font-size:13.5px;white-space:nowrap;}
 .mc-combo-col .mc-diff{font-size:10px;margin-left:0;display:block;margin-top:2px;}
+
+.abi-meta{font-size:12.5px;color:var(--text-dim);margin-bottom:18px;display:flex;gap:16px;flex-wrap:wrap;}
+.abi-meta b{color:var(--gold-bright);}
+.abi-section{margin-bottom:24px;}
+.abi-section-title{font-size:13.5px;font-weight:900;color:var(--gold-bright);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.abi-table-wrap{overflow-x:auto;background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;}
+.abi-table{width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap;}
+.abi-table th,.abi-table td{padding:7px 12px;text-align:right;border-bottom:1px solid var(--border);}
+.abi-table tr:last-child td{border-bottom:none;}
+.abi-table th:first-child,.abi-table td:first-child{text-align:left;color:var(--text);font-weight:700;}
+.abi-table th{color:var(--text-faint);font-weight:700;font-size:10.5px;}
+.abi-table td{color:var(--text-dim);}
+.abi-table td.abi-total{color:var(--gold-bright);font-weight:700;}
+.abi-table td.abi-pos{color:#6fa8ff;font-weight:700;}
+.abi-table td.abi-neg{color:var(--rose);font-weight:700;}
+.abi-matrix-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;}
+.abi-matrix-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:10px 12px;}
+.abi-matrix-card h4{margin:0 0 8px;font-size:12.5px;color:var(--violet);}
+.abi-matrix-card table{width:100%;border-collapse:collapse;font-size:10.5px;}
+.abi-matrix-card th,.abi-matrix-card td{padding:3px 5px;text-align:right;color:var(--text-dim);}
+.abi-matrix-card th{color:var(--text-faint);font-weight:700;}
+.abi-matrix-card th:first-child,.abi-matrix-card td:first-child{text-align:left;}
+.abi-matrix-card td.abi-pos{color:#6fa8ff;font-weight:700;}
+.abi-matrix-card td.abi-neg{color:var(--rose);font-weight:700;}
+.abi-matrix-card tr.abi-current{background:rgba(228,182,90,0.12);}
+.abi-t4-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;}
+.abi-t4-item{background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12px;display:flex;justify-content:space-between;gap:8px;}
+.abi-t4-item b{color:var(--gold-bright);white-space:nowrap;}
+.abi-note{font-size:11px;color:var(--text-faint);margin-top:6px;}
 </style>
 </head>
 <body>
@@ -325,6 +354,7 @@
 <div class="tabs">
   <button type="button" class="tab-btn active" data-tab="raid">레이드 체크</button>
   <button type="button" class="tab-btn" data-tab="market">거래소 시세</button>
+  <button type="button" class="tab-btn" data-tab="abidos">아비도스 제작/판매 효율</button>
 </div>
   
   <div class="tab-panel active" id="tabRaid">
@@ -355,7 +385,36 @@
     <div class="market-status" id="marketStatus">불러오는 중…</div>
     <div id="marketGroups"></div>
   </div>
-  
+
+  <div class="tab-panel" id="tabAbidos">
+    <div class="abi-meta" id="abiMeta"></div>
+    <div class="abi-section">
+      <div class="abi-section-title">생활 재료 시세</div>
+      <div class="abi-table-wrap"><table class="abi-table" id="abiMaterialsTable"></table></div>
+    </div>
+    <div class="abi-section">
+      <div class="abi-section-title">제작 방식 비교 (40개 · 4줄 제작 기준)</div>
+      <div class="abi-table-wrap"><table class="abi-table" id="abiMethodsTable"></table></div>
+    </div>
+    <div class="abi-section">
+      <div class="abi-section-title">현재 기준(수수료 -17% · 상아비도스 194G) 순수익 랭킹</div>
+      <div class="abi-table-wrap"><table class="abi-table" id="abiRankTable"></table></div>
+    </div>
+    <div class="abi-section">
+      <div class="abi-section-title">방식별 수수료 감소 · 판매가 순수익 매트릭스</div>
+      <div class="abi-matrix-grid" id="abiMatrixGrid"></div>
+    </div>
+    <div class="abi-section">
+      <div class="abi-section-title">크리스탈 · 생활의 기운 환전 (크리스탈 시세 <span id="abiCrystalPrice"></span>골드)</div>
+      <div class="abi-table-wrap"><table class="abi-table" id="abiCrystalTable"></table></div>
+    </div>
+    <div class="abi-section">
+      <div class="abi-section-title">T4 재련 재료 시세</div>
+      <div class="abi-t4-grid" id="abiT4Grid"></div>
+    </div>
+    <div class="abi-note">실시간 시세가 아닌 정적 스냅샷입니다 · 기준 시각: <span id="abiUpdatedAt"></span> · 원본: 상급 아비도스 쌀산기 ver.3</div>
+  </div>
+
 
   <footer>
     이 페이지는 링크로 들어온 모든 공대원이 같은 데이터를 봅니다 (로그인 없음, 서로 수정 가능) · API 키는 각자 브라우저에만 개인 저장됩니다
@@ -771,13 +830,118 @@ return '<div class="market-card market-card-combo">'
     $('marketStatus').textContent = '방금 불러온 실시간 시세예요 · 그래프는 매일 자동 수집되어 누적돼요.';
   }
 
+  // ---------- 아비도스 제작/판매 효율 (정적 스냅샷 데이터) ----------
+  const ABIDOS_META = {
+    updatedAt: '2026. 9. 6 오후 1:26:01',
+    criticalRate: '7%',
+    fee: '-17%',
+  };
+  const ABIDOS_MATERIALS = [
+    { name:'목재', tiers:[186,377,1886,2369] },
+    { name:'고대 유물', tiers:[190,378,'#N/A',2290] },
+    { name:'생선', tiers:[186,377,480,2418] },
+    { name:'들꽃', tiers:[188,526,1278,2320] },
+    { name:'철광석', tiers:[180,399,1870,2249] },
+    { name:'두툼한 생고기', tiers:[185,381,5995,2599] },
+  ];
+  const ABIDOS_METHODS = [
+    { name:'벌목 제작', mat1:'목재 8,333', mat2:'부드러운 목재 8,897', abidosMat:'아비도스 목재 40,747', craftGold:520, totalCost:58414 },
+    { name:'목재 교환 제작', mat1:'튼튼한 목재 26개', mat2:'부드러운 목재 8,897', abidosMat:'튼튼한 목재 49,036', craftGold:520, totalCost:58370 },
+    { name:'고고학 제작', mat1:'고대 유물 8,512', mat2:'희귀한 유물 8,921', abidosMat:'아비도스 유물 39,388', craftGold:520, totalCost:57258 },
+    { name:'낚시 제작', mat1:'생선 8,333', mat2:'붉은 살 생선 8,897', abidosMat:'아비도스 태양 잉어 41,590', craftGold:520, totalCost:59256 },
+    { name:'채집 제작', mat1:'들꽃 8,422', mat2:'수줍은 들꽃 12,414', abidosMat:'아비도스 들꽃 39,904', craftGold:520, totalCost:61177 },
+    { name:'채광 제작', mat1:'철광석 8,064', mat2:'묵직한 철광석 9,416', abidosMat:'아비도스 철광석 38,683', craftGold:520, totalCost:56600 },
+    { name:'수렵 제작', mat1:'두툼한 생고기 8,288', mat2:'다듬은 생고기 8,992', abidosMat:'아비도스 두툼한 생고기 44,703', craftGold:520, totalCost:62419 },
+  ];
+  // 각 방식: { pct: [193G, 194G, 195G, 196G] } (수수료 감소 1~17%)
+  const ABIDOS_PROFIT_MATRIX = {
+    '벌목 제작': {1:[-1421,-999,-578,-156],2:[-1221,-799,-378,44],3:[-1021,-599,-178,244],4:[-821,-399,22,444],5:[-621,-199,222,644],6:[-381,41,462,884],7:[-181,241,662,1084],8:[19,441,862,1284],9:[219,641,1062,1484],10:[419,841,1262,1684],11:[659,1081,1502,1924],12:[859,1281,1702,2124],13:[1059,1481,1902,2324],14:[1259,1681,2102,2524],15:[1459,1881,2302,2724],16:[1699,2121,2542,2964],17:[1899,2321,2742,3164]},
+    '목재 교환 제작': {1:[-1377,-956,-534,-113],2:[-1177,-756,-334,87],3:[-977,-556,-134,287],4:[-777,-356,66,487],5:[-577,-156,266,687],6:[-337,84,506,927],7:[-137,284,706,1127],8:[63,484,906,1327],9:[263,684,1106,1527],10:[463,884,1306,1727],11:[703,1124,1546,1967],12:[903,1324,1746,2167],13:[1103,1524,1946,2367],14:[1303,1724,2146,2567],15:[1503,1924,2346,2767],16:[1743,2164,2586,3007],17:[1943,2364,2786,3207]},
+    '고고학 제작': {1:[-265,157,578,1000],2:[-65,357,778,1200],3:[135,557,978,1400],4:[335,757,1178,1600],5:[535,957,1378,1800],6:[775,1197,1618,2040],7:[975,1397,1818,2240],8:[1175,1597,2018,2440],9:[1375,1797,2218,2640],10:[1575,1997,2418,2840],11:[1815,2237,2658,3080],12:[2015,2437,2858,3280],13:[2215,2637,3058,3480],14:[2415,2837,3258,3680],15:[2615,3037,3458,3880],16:[2855,3277,3698,4120],17:[3055,3477,3898,4320]},
+    '낚시 제작': {1:[-2263,-1842,-1421,-999],2:[-2063,-1642,-1221,-799],3:[-1863,-1442,-1021,-599],4:[-1663,-1242,-821,-399],5:[-1463,-1042,-621,-199],6:[-1223,-802,-381,41],7:[-1023,-602,-181,241],8:[-823,-402,19,441],9:[-623,-202,219,641],10:[-423,-2,419,841],11:[-183,238,659,1081],12:[17,438,859,1281],13:[217,638,1059,1481],14:[417,838,1259,1681],15:[617,1038,1459,1881],16:[857,1278,1699,2121],17:[1057,1478,1899,2321]},
+    '채집 제작': {1:[-4184,-3762,-3341,-2920],2:[-3984,-3562,-3141,-2720],3:[-3784,-3362,-2941,-2520],4:[-3584,-3162,-2741,-2320],5:[-3384,-2962,-2541,-2120],6:[-3144,-2722,-2301,-1880],7:[-2944,-2522,-2101,-1680],8:[-2744,-2322,-1901,-1480],9:[-2544,-2122,-1701,-1280],10:[-2344,-1922,-1501,-1080],11:[-2104,-1682,-1261,-840],12:[-1904,-1482,-1061,-640],13:[-1704,-1282,-861,-440],14:[-1504,-1082,-661,-240],15:[-1304,-882,-461,-40],16:[-1064,-642,-221,200],17:[-864,-442,-21,400]},
+    '채광 제작': {1:[393,814,1236,1657],2:[593,1014,1436,1857],3:[793,1214,1636,2057],4:[993,1414,1836,2257],5:[1193,1614,2036,2457],6:[1433,1854,2276,2697],7:[1633,2054,2476,2897],8:[1833,2254,2676,3097],9:[2033,2454,2876,3297],10:[2233,2654,3076,3497],11:[2473,2894,3316,3737],12:[2673,3094,3516,3937],13:[2873,3294,3716,4137],14:[3073,3494,3916,4337],15:[3273,3694,4116,4537],16:[3513,3934,4356,4777],17:[3713,4134,4556,4977]},
+    '수렵 제작': {1:[-5426,-5005,-4583,-4162],2:[-5226,-4805,-4383,-3962],3:[-5026,-4605,-4183,-3762],4:[-4826,-4405,-3983,-3562],5:[-4626,-4205,-3783,-3362],6:[-4386,-3965,-3543,-3122],7:[-4186,-3765,-3343,-2922],8:[-3986,-3565,-3143,-2722],9:[-3786,-3365,-2943,-2522],10:[-3586,-3165,-2743,-2322],11:[-3346,-2925,-2503,-2082],12:[-3146,-2725,-2303,-1882],13:[-2946,-2525,-2103,-1682],14:[-2746,-2325,-1903,-1482],15:[-2546,-2125,-1703,-1282],16:[-2306,-1885,-1463,-1042],17:[-2106,-1685,-1263,-842]},
+  };
+  const ABIDOS_CURRENT = { pct:17, priceIdx:1 }; // 현재 실제 기준: 수수료 -17%, 194골드
+  const ABIDOS_CRYSTAL_PRICE = 18000;
+  const ABIDOS_CRYSTAL_ROWS = [
+    { label:'초생기 10개', cost:18948, income:23328, profit:4380 },
+    { label:'중생기 5개', cost:23685, income:34992, profit:11307 },
+    { label:'중생기 10개', cost:43579, income:69984, profit:26405 },
+  ];
+  const ABIDOS_T4_ITEMS = [
+    ['운명의 파편 주머니(소)',43],['운명의 파편 주머니(중)',130],['운명의 파편 주머니(대)',120],
+    ['운명의 돌파석',3],['운명의 수호석',20],['운명의 파괴석',179],['아비도스 융화 재료',156],
+    ['용암의 숨결',409],['빙하의 숨결',280],
+    ['재봉술 : 업화 [11-14]',850],['재봉술 : 업화 [15-18]',12],['재봉술 : 업화 [19-20]',979],['강화 재봉술 : 업화 [19-20]',6900],
+    ['야금술 : 업화 [11-14]',1029],['야금술 : 업화 [15-18]',44],['야금술 : 업화 [19-20]',1297],['강화 야금술 : 업화 [19-20]',14100],
+    ['장인의 재봉술 : 1단계',131],['장인의 재봉술 : 2단계',44],['장인의 재봉술 : 3단계',304],['장인의 재봉술 : 4단계',200],
+    ['장인의 야금술 : 1단계',153],['장인의 야금술 : 2단계',50],['장인의 야금술 : 3단계',280],['장인의 야금술 : 4단계',199],
+    ['위대한 운명의 돌파석',15],['운명의 수호석 결정',132],['운명의 파괴석 결정',951],['상급 아비도스 융화 재료',194],
+  ];
+
+  let abidosTabLoaded = false;
+  function fmtAbi(n){ return typeof n === 'number' ? n.toLocaleString('ko-KR') : n; }
+  function abiCellClass(n){ if(typeof n !== 'number') return ''; return n > 0 ? 'abi-pos' : (n < 0 ? 'abi-neg' : ''); }
+
+  function renderAbidosTab(){
+    $('abiMeta').innerHTML = `기준 시각 <b>${ABIDOS_META.updatedAt}</b> · 대성공 확률 <b>${ABIDOS_META.criticalRate}</b> · 거래소 수수료 <b>${ABIDOS_META.fee}</b>`;
+    $('abiUpdatedAt').textContent = ABIDOS_META.updatedAt;
+    $('abiCrystalPrice').textContent = fmtAbi(ABIDOS_CRYSTAL_PRICE);
+
+    $('abiMaterialsTable').innerHTML = `
+      <tr><th>재료</th><th>1단계</th><th>2단계</th><th>3단계</th><th>아비도스(4단계)</th></tr>
+      ${ABIDOS_MATERIALS.map(m=>`<tr><td>${m.name}</td>${m.tiers.map((t,i)=>`<td${i===3?' class="abi-total"':''}>${fmtAbi(t)}${typeof t==='number'?'G':''}</td>`).join('')}</tr>`).join('')}
+    `;
+
+    $('abiMethodsTable').innerHTML = `
+      <tr><th>제작 방식</th><th>재료1</th><th>재료2</th><th>아비도스 재료</th><th>제작 골드</th><th>총 제작 비용</th></tr>
+      ${ABIDOS_METHODS.map(m=>`<tr><td>${m.name}</td><td>${m.mat1}</td><td>${m.mat2}</td><td>${m.abidosMat}</td><td>${fmtAbi(m.craftGold)}G</td><td class="abi-total">${fmtAbi(m.totalCost)}G</td></tr>`).join('')}
+    `;
+
+    const ranked = ABIDOS_METHODS.map(m=>({
+      name: m.name,
+      profit: ABIDOS_PROFIT_MATRIX[m.name][ABIDOS_CURRENT.pct][ABIDOS_CURRENT.priceIdx]
+    })).sort((a,b)=>b.profit-a.profit);
+    $('abiRankTable').innerHTML = `
+      <tr><th>순위</th><th>제작 방식</th><th>순수익</th></tr>
+      ${ranked.map((r,i)=>`<tr><td>${i+1}</td><td>${r.name}</td><td class="${abiCellClass(r.profit)}">${fmtAbi(r.profit)}G</td></tr>`).join('')}
+    `;
+
+    $('abiMatrixGrid').innerHTML = ABIDOS_METHODS.map(m=>{
+      const matrix = ABIDOS_PROFIT_MATRIX[m.name];
+      const rowsHtml = Object.keys(matrix).map(pct=>{
+        const isCurrent = Number(pct) === ABIDOS_CURRENT.pct;
+        const vals = matrix[pct];
+        return `<tr${isCurrent?' class="abi-current"':''}><td>${pct}%</td>${vals.map((v,i)=>`<td class="${abiCellClass(v)}">${fmtAbi(v)}</td>`).join('')}</tr>`;
+      }).join('');
+      return `<div class="abi-matrix-card"><h4>${m.name}</h4><table>
+        <tr><th>수수료↓</th><th>193G</th><th>194G</th><th>195G</th><th>196G</th></tr>
+        ${rowsHtml}
+      </table></div>`;
+    }).join('');
+
+    $('abiCrystalTable').innerHTML = `
+      <tr><th>구성</th><th>크리스탈 비용</th><th>생기 수입</th><th>순수익</th></tr>
+      ${ABIDOS_CRYSTAL_ROWS.map(r=>`<tr><td>${r.label}</td><td>${fmtAbi(r.cost)}</td><td>${fmtAbi(r.income)}</td><td class="abi-pos">${fmtAbi(r.profit)}G</td></tr>`).join('')}
+    `;
+
+    $('abiT4Grid').innerHTML = ABIDOS_T4_ITEMS.map(([name,price])=>`<div class="abi-t4-item"><span>${name}</span><b>${fmtAbi(price)}G</b></div>`).join('');
+  }
+
   function switchTab(tab){
     document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.tab===tab); });
     $('tabRaid').classList.toggle('active', tab==='raid');
     $('tabMarket').classList.toggle('active', tab==='market');
+    $('tabAbidos').classList.toggle('active', tab==='abidos');
     if(tab === 'market' && !marketTabLoaded){
       marketTabLoaded = true;
       loadMarketTab();
+    }
+    if(tab === 'abidos' && !abidosTabLoaded){
+      abidosTabLoaded = true;
+      renderAbidosTab();
     }
   }
   document.querySelectorAll('.tab-btn').forEach(function(btn){
