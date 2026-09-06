@@ -915,11 +915,17 @@ return '<div class="market-card market-card-combo">'
   const ABIDOS_MARKET_FEE = 0.05; // 거래소 판매 수수료 (실제 게임 화면 검증: 196G -> 수수료 10 = 5%)
   const ABIDOS_CRIT_RATE = 0.07; // 대성공 확률
   let abidosSellPrice = null; // 상급 아비도스 융화 재료 실시간 최저가 (조회 전엔 null -> 194G 스냅샷 사용)
-  // (a) 수수료 제외한 판매가 -> (b) 아비도스 총수익 -> 순수익 = b - 총 제작비용("제작 방식 비교"와 동일)
+  // 시트 원본 셀 수식으로 검증됨:
+  // N11(수수료 제외 값) = price - ROUND(price*5%)
+  // O11(아비도스 총수익) = N11*400*(1+5*(1+대성공확률)/100)
+  // 순수익 = O11 - sum(재료비만) - ROUNDDOWN(520*(1-제작수수료감소율)*40)
   function computeAbidosProfit(method, price){
-    const a = price - Math.round(price * ABIDOS_MARKET_FEE);
-    const b = a * 400 * (1 + (5 * (1 + ABIDOS_CRIT_RATE)) / 100);
-    return Math.round(b - computeLiveTotalCost(method));
+    const pctRate = ABIDOS_CURRENT.pct / 100;
+    const n = price - Math.round(price * ABIDOS_MARKET_FEE);
+    const o = n * 400 * (1 + (5 * (1 + ABIDOS_CRIT_RATE)) / 100);
+    const materialsOnly = computeLiveTotalCost(method) - getAbidosCraftGold(pctRate);
+    const craftCost = Math.floor(520 * (1 - pctRate) * 40);
+    return Math.round(o - materialsOnly - craftCost);
   }
   async function loadAbidosSellPrice(){
     if(!apiKey) return;
