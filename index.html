@@ -961,7 +961,7 @@ return '<div class="market-card market-card-combo">'
       profit: computeAbidosProfit(m, price)
     })).sort((a,b)=>b.profit-a.profit);
     $('abiRankTable').innerHTML = `
-      <tr><th>순위</th><th>제작 방식</th><th>순수익 (아비도스 40개 판매가 - 40개 제작비용)</th></tr>
+      <tr><th>순위</th><th>제작 방식</th><th>순수익</th></tr>
       ${ranked.map((r,i)=>`<tr><td>${i+1}</td><td>${r.name}</td><td class="${abiCellClass(r.profit)}">${fmtAbi(r.profit)}G</td></tr>`).join('')}
     `;
   }
