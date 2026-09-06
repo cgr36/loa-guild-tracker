@@ -896,10 +896,12 @@ return '<div class="market-card market-card-combo">'
   function fmtAbi(n){ return typeof n === 'number' ? n.toLocaleString('ko-KR') : n; }
   function abiCellClass(n){ if(typeof n !== 'number') return ''; return n > 0 ? 'abi-pos' : (n < 0 ? 'abi-neg' : ''); }
 
+  const ABI_MATERIAL_DISPLAY_ORDER = [2,1,0,3]; // 희귀재료,고급재료,일반재료,아비도스(4단계)
   function renderAbidosMaterialsTable(){
     $('abiMaterialsTable').innerHTML = `
-      <tr><th>재료</th><th>일반재료</th><th>고급재료</th><th>희귀재료</th><th>아비도스(4단계)</th></tr>
-      ${ABIDOS_MATERIALS.map(m=>`<tr><td>${m.name}</td>${m.tierNames.map((tierName,i)=>{
+      <tr><th>재료</th><th>희귀재료</th><th>고급재료</th><th>일반재료</th><th>아비도스(4단계)</th></tr>
+      ${ABIDOS_MATERIALS.map(m=>`<tr><td>${m.name}</td>${ABI_MATERIAL_DISPLAY_ORDER.map(i=>{
+        const tierName = m.tierNames[i];
         const live = abidosMaterialsLive && abidosMaterialsLive[tierName];
         const val = live != null ? live : m.tiers[i];
         const cls = i===3 ? ' class="abi-total"' : '';
