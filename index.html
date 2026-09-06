@@ -401,7 +401,7 @@
         <div class="abi-table-wrap"><table class="abi-table abi-align-left" id="abiMaterialsTable"></table></div>
       </div>
       <div class="abi-section">
-        <div class="abi-section-title">제작 우선순위 (수수료 -17% · <span id="abiSellPriceLabel">194G(스냅샷)</span> 판매 기준)</div>
+        <div class="abi-section-title">제작 우선순위 (제작 수수료 -17% · <span id="abiSellPriceLabel">194G(스냅샷)</span> 판매 기준)</div>
         <div class="abi-table-wrap"><table class="abi-table abi-align-left" id="abiRankTable"></table></div>
       </div>
     </div>
@@ -410,7 +410,7 @@
       <div class="abi-table-wrap"><table class="abi-table abi-align-left" id="abiMethodsTable"></table></div>
     </div>
     <div class="abi-section">
-      <div class="abi-section-title">방식별 수수료 감소(12~17%) · 판매가 순수익 매트릭스</div>
+      <div class="abi-section-title">방식별 제작 수수료 감소(12~17%) · 판매가 순수익 매트릭스</div>
       <div class="abi-matrix-grid" id="abiMatrixGrid"></div>
     </div>
     <div class="abi-section">
@@ -855,6 +855,7 @@ return '<div class="market-card market-card-combo">'
     updatedAt: '2026. 9. 6 오후 1:26:01',
     criticalRate: '7%',
     fee: '-17%',
+    marketFee: '10%',
   };
   // tierNames/tiers: [일반재료(1단계), 고급재료(2단계), 희귀재료(=아비도스급 최종 재료)]
   const ABIDOS_MATERIALS = [
@@ -958,7 +959,7 @@ return '<div class="market-card market-card-combo">'
   }
 
   function renderAbidosTab(){
-    $('abiMeta').innerHTML = `기준 시각 <b>${ABIDOS_META.updatedAt}</b> · 대성공 확률 <b>${ABIDOS_META.criticalRate}</b> · 거래소 수수료 <b>${ABIDOS_META.fee}</b>`;
+    $('abiMeta').innerHTML = `기준 시각 <b>${ABIDOS_META.updatedAt}</b> · 대성공 확률 <b>${ABIDOS_META.criticalRate}</b> · 제작 수수료 <b>${ABIDOS_META.fee}</b> · 거래소 판매 수수료 <b>${ABIDOS_META.marketFee}</b>`;
     $('abiUpdatedAt').textContent = ABIDOS_META.updatedAt;
     $('abiCrystalPrice').textContent = fmtAbi(ABIDOS_CRYSTAL_PRICE);
 
@@ -982,7 +983,7 @@ return '<div class="market-card market-card-combo">'
         return `<tr${isCurrent?' class="abi-current"':''}><td>${pct}%</td>${vals.map((v,i)=>`<td class="${abiCellClass(v)}">${fmtAbi(v)}</td>`).join('')}</tr>`;
       }).join('');
       return `<div class="abi-matrix-card"><h4>${m.name}</h4><table>
-        <tr><th>수수료↓</th><th>193G</th><th>194G</th><th>195G</th><th>196G</th></tr>
+        <tr><th>제작수수료↓</th><th>193G</th><th>194G</th><th>195G</th><th>196G</th></tr>
         ${rowsHtml}
       </table></div>`;
     }).join('');
@@ -1005,6 +1006,8 @@ return '<div class="market-card market-card-combo">'
     if(tab === 'abidos' && !abidosTabLoaded){
       abidosTabLoaded = true;
       renderAbidosTab();
+    } else if(tab === 'abidos' && abidosSellPrice == null){
+      loadAbidosSellPrice();
     }
   }
   document.querySelectorAll('.tab-btn').forEach(function(btn){
