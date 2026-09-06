@@ -401,7 +401,7 @@
         <div class="abi-table-wrap"><table class="abi-table abi-align-left" id="abiMaterialsTable"></table></div>
       </div>
       <div class="abi-section">
-        <div class="abi-section-title">제작 우선순위 (수수료 -17% · 194G 판매 기준)</div>
+        <div class="abi-section-title">제작 우선순위 (수수료 -17% · <span id="abiSellPriceLabel">194G(스냅샷)</span> 판매 기준)</div>
         <div class="abi-table-wrap"><table class="abi-table abi-align-left" id="abiRankTable"></table></div>
       </div>
     </div>
@@ -856,24 +856,25 @@ return '<div class="market-card market-card-combo">'
     criticalRate: '7%',
     fee: '-17%',
   };
+  // tierNames/tiers: [일반재료(1단계), 고급재료(2단계), 희귀재료(=아비도스급 최종 재료)]
   const ABIDOS_MATERIALS = [
-    { name:'목재', tierNames:['목재','부드러운 목재','튼튼한 목재','아비도스 목재'], tiers:[186,377,1886,2369] },
-    { name:'유물', tierNames:['고대 유물','희귀한 유물','아비도스 유물','아비도스 유물'], tiers:[190,378,2290,2290] },
-    { name:'생선', tierNames:['생선','붉은 살 생선','오레하 태양 잉어','아비도스 태양 잉어'], tiers:[186,377,480,2418] },
-    { name:'들꽃', tierNames:['들꽃','수줍은 들꽃','화사한 들꽃','아비도스 들꽃'], tiers:[188,526,1278,2320] },
-    { name:'철광석', tierNames:['철광석','묵직한 철광석','단단한 철광석','아비도스 철광석'], tiers:[180,399,1870,2249] },
-    { name:'고기', tierNames:['두툼한 생고기','다듬은 생고기','오레하 두툼한 생고기','아비도스 두툼한 생고기'], tiers:[185,381,5995,2599] },
+    { name:'목재', tierNames:['목재','부드러운 목재','아비도스 목재'], tiers:[186,377,2369] },
+    { name:'유물', tierNames:['고대 유물','희귀한 유물','아비도스 유물'], tiers:[190,378,2290] },
+    { name:'생선', tierNames:['생선','붉은 살 생선','아비도스 태양 잉어'], tiers:[186,377,2418] },
+    { name:'들꽃', tierNames:['들꽃','수줍은 들꽃','아비도스 들꽃'], tiers:[188,526,2320] },
+    { name:'철광석', tierNames:['철광석','묵직한 철광석','아비도스 철광석'], tiers:[180,399,2249] },
+    { name:'고기', tierNames:['두툼한 생고기','다듬은 생고기','아비도스 두툼한 생고기'], tiers:[185,381,2599] },
   ];
   // 제작비용(제작비: 17% 감소 기준 431G)은 상급 아비도스 융화 재료 X10 제작 1회 기준이며,
   // 이 표는 "40개 = 4줄 제작"(431G × 4) 기준이라 4를 곱한 1,724G를 사용합니다.
   const ABIDOS_CRAFT_GOLD = 1724;
   const ABIDOS_METHODS = [
-    { name:'벌목 제작', mat1:'목재 8,333', mat2:'부드러운 목재 8,897', abidosMat:'튼튼한 목재 40,747', craftGold:ABIDOS_CRAFT_GOLD, totalCost:59618 },
+    { name:'벌목 제작', mat1:'목재 8,333', mat2:'부드러운 목재 8,897', abidosMat:'아비도스 목재 40,747', craftGold:ABIDOS_CRAFT_GOLD, totalCost:59618 },
     { name:'고고학 제작', mat1:'고대 유물 8,512', mat2:'희귀한 유물 8,921', abidosMat:'아비도스 유물 39,388', craftGold:ABIDOS_CRAFT_GOLD, totalCost:58462 },
-    { name:'낚시 제작', mat1:'생선 8,333', mat2:'붉은 살 생선 8,897', abidosMat:'오레하 태양 잉어 41,590', craftGold:ABIDOS_CRAFT_GOLD, totalCost:60460 },
-    { name:'채집 제작', mat1:'들꽃 8,422', mat2:'수줍은 들꽃 12,414', abidosMat:'화사한 들꽃 39,904', craftGold:ABIDOS_CRAFT_GOLD, totalCost:62381 },
-    { name:'채광 제작', mat1:'철광석 8,064', mat2:'묵직한 철광석 9,416', abidosMat:'단단한 철광석 38,683', craftGold:ABIDOS_CRAFT_GOLD, totalCost:57804 },
-    { name:'수렵 제작', mat1:'두툼한 생고기 8,288', mat2:'다듬은 생고기 8,992', abidosMat:'오레하 두툼한 생고기 44,703', craftGold:ABIDOS_CRAFT_GOLD, totalCost:63623 },
+    { name:'낚시 제작', mat1:'생선 8,333', mat2:'붉은 살 생선 8,897', abidosMat:'아비도스 태양 잉어 41,590', craftGold:ABIDOS_CRAFT_GOLD, totalCost:60460 },
+    { name:'채집 제작', mat1:'들꽃 8,422', mat2:'수줍은 들꽃 12,414', abidosMat:'아비도스 들꽃 39,904', craftGold:ABIDOS_CRAFT_GOLD, totalCost:62381 },
+    { name:'채광 제작', mat1:'철광석 8,064', mat2:'묵직한 철광석 9,416', abidosMat:'아비도스 철광석 38,683', craftGold:ABIDOS_CRAFT_GOLD, totalCost:57804 },
+    { name:'수렵 제작', mat1:'두툼한 생고기 8,288', mat2:'다듬은 생고기 8,992', abidosMat:'아비도스 두툼한 생고기 44,703', craftGold:ABIDOS_CRAFT_GOLD, totalCost:63623 },
   ];
   // 각 방식: { pct: [193G, 194G, 195G, 196G] } (수수료 감소 1~17%) — 제작비용 1,724G(431G×4줄) 반영
   const ABIDOS_PROFIT_MATRIX = {
@@ -884,7 +885,22 @@ return '<div class="market-card market-card-combo">'
     '채광 제작': {1:[-811,-390,32,453],2:[-611,-190,232,653],3:[-411,10,432,853],4:[-211,210,632,1053],5:[-11,410,832,1253],6:[229,650,1072,1493],7:[429,850,1272,1693],8:[629,1050,1472,1893],9:[829,1250,1672,2093],10:[1029,1450,1872,2293],11:[1269,1690,2112,2533],12:[1469,1890,2312,2733],13:[1669,2090,2512,2933],14:[1869,2290,2712,3133],15:[2069,2490,2912,3333],16:[2309,2730,3152,3573],17:[2509,2930,3352,3773]},
     '수렵 제작': {1:[-6630,-6209,-5787,-5366],2:[-6430,-6009,-5587,-5166],3:[-6230,-5809,-5387,-4966],4:[-6030,-5609,-5187,-4766],5:[-5830,-5409,-4987,-4566],6:[-5590,-5169,-4747,-4326],7:[-5390,-4969,-4547,-4126],8:[-5190,-4769,-4347,-3926],9:[-4990,-4569,-4147,-3726],10:[-4790,-4369,-3947,-3526],11:[-4550,-4129,-3707,-3286],12:[-4350,-3929,-3507,-3086],13:[-4150,-3729,-3307,-2886],14:[-3950,-3529,-3107,-2686],15:[-3750,-3329,-2907,-2486],16:[-3510,-3089,-2667,-2246],17:[-3310,-2889,-2467,-2046]},
   };
-  const ABIDOS_CURRENT = { pct:17, priceIdx:1 }; // 현재 실제 기준: 수수료 -17%, 194골드
+  const ABIDOS_CURRENT = { pct:17, priceIdx:1 }; // 현재 실제 기준: 수수료 -17%, 194골드(스냅샷 기본값)
+  // 판매가 1골드당 순수익 변화폭(전 방식 공통, 스냅샷 매트릭스에서 역산한 평균값)
+  const ABIDOS_REVENUE_SLOPE = 421.44;
+  let abidosSellPrice = null; // 상급 아비도스 융화 재료 실시간 최저가 (조회 전엔 null -> 194G 스냅샷 사용)
+  function computeAbidosProfit(methodName, price){
+    const base = ABIDOS_PROFIT_MATRIX[methodName][ABIDOS_CURRENT.pct][ABIDOS_CURRENT.priceIdx];
+    return Math.round(base + ABIDOS_REVENUE_SLOPE * (price - 194));
+  }
+  async function loadAbidosSellPrice(){
+    if(!apiKey) return;
+    const price = await fetchMarketPriceOnly('상급 아비도스 융화 재료');
+    if(price != null){
+      abidosSellPrice = price;
+      renderAbidosRankTable();
+    }
+  }
   const ABIDOS_CRYSTAL_PRICE = 18000;
   const ABIDOS_CRYSTAL_ROWS = [
     { label:'초생기 10개', cost:18948, income:23328, profit:4380 },
@@ -897,17 +913,30 @@ return '<div class="market-card market-card-combo">'
   function fmtAbi(n){ return typeof n === 'number' ? n.toLocaleString('ko-KR') : n; }
   function abiCellClass(n){ if(typeof n !== 'number') return ''; return n > 0 ? 'abi-pos' : (n < 0 ? 'abi-neg' : ''); }
 
-  const ABI_MATERIAL_DISPLAY_ORDER = [2,1,0,3]; // 희귀재료,고급재료,일반재료,아비도스(4단계)
+  const ABI_MATERIAL_DISPLAY_ORDER = [2,1,0]; // 희귀재료(아비도스급),고급재료,일반재료
   function renderAbidosMaterialsTable(){
     $('abiMaterialsTable').innerHTML = `
-      <tr><th>재료</th><th>희귀재료</th><th>고급재료</th><th>일반재료</th><th>아비도스(4단계)</th></tr>
+      <tr><th>재료</th><th>희귀재료</th><th>고급재료</th><th>일반재료</th></tr>
       ${ABIDOS_MATERIALS.map(m=>`<tr><td>${m.name}</td>${ABI_MATERIAL_DISPLAY_ORDER.map(i=>{
         const tierName = m.tierNames[i];
         const live = abidosMaterialsLive && abidosMaterialsLive[tierName];
         const val = live != null ? live : m.tiers[i];
-        const cls = i===3 ? ' class="abi-total"' : '';
+        const cls = i===2 ? ' class="abi-total"' : '';
         return `<td${cls}>${fmtAbi(val)}${typeof val==='number'?'G':''}</td>`;
       }).join('')}</tr>`).join('')}
+    `;
+  }
+
+  function renderAbidosRankTable(){
+    const price = abidosSellPrice != null ? abidosSellPrice : 194;
+    $('abiSellPriceLabel').textContent = abidosSellPrice != null ? `${fmtAbi(price)}G(실시간)` : `${price}G(스냅샷)`;
+    const ranked = ABIDOS_METHODS.map(m=>({
+      name: m.name,
+      profit: computeAbidosProfit(m.name, price)
+    })).sort((a,b)=>b.profit-a.profit);
+    $('abiRankTable').innerHTML = `
+      <tr><th>순위</th><th>제작 방식</th><th>순수익</th></tr>
+      ${ranked.map((r,i)=>`<tr><td>${i+1}</td><td>${r.name}</td><td class="${abiCellClass(r.profit)}">${fmtAbi(r.profit)}G</td></tr>`).join('')}
     `;
   }
 
@@ -941,14 +970,8 @@ return '<div class="market-card market-card-combo">'
       ${ABIDOS_METHODS.map(m=>`<tr><td>${m.name}</td><td>${m.abidosMat}</td><td>${m.mat2}</td><td>${m.mat1}</td><td>${fmtAbi(m.craftGold)}G</td><td class="abi-total">${fmtAbi(m.totalCost)}G</td></tr>`).join('')}
     `;
 
-    const ranked = ABIDOS_METHODS.map(m=>({
-      name: m.name,
-      profit: ABIDOS_PROFIT_MATRIX[m.name][ABIDOS_CURRENT.pct][ABIDOS_CURRENT.priceIdx]
-    })).sort((a,b)=>b.profit-a.profit);
-    $('abiRankTable').innerHTML = `
-      <tr><th>순위</th><th>제작 방식</th><th>순수익</th></tr>
-      ${ranked.map((r,i)=>`<tr><td>${i+1}</td><td>${r.name}</td><td class="${abiCellClass(r.profit)}">${fmtAbi(r.profit)}G</td></tr>`).join('')}
-    `;
+    renderAbidosRankTable();
+    loadAbidosSellPrice();
 
     const ABIDOS_MATRIX_PCT_RANGE = [12,13,14,15,16,17];
     $('abiMatrixGrid').innerHTML = ABIDOS_METHODS.map(m=>{
@@ -2089,6 +2112,7 @@ $('btnApiKeyAbidos').addEventListener('click', ()=>{
 });
 $('btnAbidosRefresh').addEventListener('click', ()=>{
   loadAbidosMaterialsLive();
+  loadAbidosSellPrice();
 });
   $('btnApiKey').addEventListener('click', ()=>{
     $('apiKeyInput').value = apiKey;
