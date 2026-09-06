@@ -742,7 +742,7 @@ const MARKET_GROUPS = [
       const res = await fetch(searchUrl);
       const data = await res.json();
       const items = (data && data.Items) || [];
-      const found = items.find(function(it){ return it.Name===name; }) || items[0];
+      const found = items.find(function(it){ return it.Name===name; });
       if(!found || found.CurrentMinPrice == null) return null;
       return found.CurrentMinPrice;
     }catch(e){ return null; }
