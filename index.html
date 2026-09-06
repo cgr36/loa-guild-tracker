@@ -898,7 +898,7 @@ return '<div class="market-card market-card-combo">'
     const price = getAbidosChainPrice(method.chain, tierIdx);
     const qty = tierIdx===0 ? ABIDOS_QTY.general : tierIdx===1 ? ABIDOS_QTY.advanced : ABIDOS_QTY.rare;
     const subtotal = Math.round(qty*(price/100));
-    return `${tierName} ${fmtAbi(subtotal)}`;
+    return `${tierName} ${fmtAbi(subtotal)}G`;
   }
   // 각 방식: { pct: [193G, 194G, 195G, 196G] } (수수료 감소 1~17%) — 제작비용 1,724G(431G×4줄) 반영
   const ABIDOS_PROFIT_MATRIX = {
