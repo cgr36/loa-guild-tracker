@@ -299,6 +299,8 @@
 .mc-combo-col .mc-diff{font-size:10px;margin-left:0;display:block;margin-top:2px;}
 
 .abi-meta{font-size:12.5px;color:var(--text-dim);margin-bottom:18px;display:flex;gap:16px;flex-wrap:wrap;}
+.abi-side-by-side{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;margin-bottom:24px;}
+.abi-side-by-side .abi-section{margin-bottom:0;}
 .abi-meta b{color:var(--gold-bright);}
 .abi-section{margin-bottom:24px;}
 .abi-section-title{font-size:13.5px;font-weight:900;color:var(--gold-bright);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
@@ -322,9 +324,6 @@
 .abi-matrix-card td.abi-pos{color:#6fa8ff;font-weight:700;}
 .abi-matrix-card td.abi-neg{color:var(--rose);font-weight:700;}
 .abi-matrix-card tr.abi-current{background:rgba(228,182,90,0.12);}
-.abi-t4-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;}
-.abi-t4-item{background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12px;display:flex;justify-content:space-between;gap:8px;}
-.abi-t4-item b{color:var(--gold-bright);white-space:nowrap;}
 .abi-note{font-size:11px;color:var(--text-faint);margin-top:6px;}
 </style>
 </head>
@@ -392,13 +391,15 @@
       <button class="btn-ghost" id="btnAbidosRefresh">🔄 갱신하기</button>
     </div>
     <div class="abi-meta" id="abiMeta"></div>
-    <div class="abi-section">
-      <div class="abi-section-title">생활 재료 시세 <span id="abiMaterialsLiveBadge"></span></div>
-      <div class="abi-table-wrap"><table class="abi-table" id="abiMaterialsTable"></table></div>
-    </div>
-    <div class="abi-section">
-      <div class="abi-section-title">제작 우선순위 (수수료 -17% · 194G 판매 기준)</div>
-      <div class="abi-table-wrap"><table class="abi-table" id="abiRankTable"></table></div>
+    <div class="abi-side-by-side">
+      <div class="abi-section">
+        <div class="abi-section-title">생활 재료 시세 <span id="abiMaterialsLiveBadge"></span></div>
+        <div class="abi-table-wrap"><table class="abi-table" id="abiMaterialsTable"></table></div>
+      </div>
+      <div class="abi-section">
+        <div class="abi-section-title">제작 우선순위 (수수료 -17% · 194G 판매 기준)</div>
+        <div class="abi-table-wrap"><table class="abi-table" id="abiRankTable"></table></div>
+      </div>
     </div>
     <div class="abi-section">
       <div class="abi-section-title">제작 방식 비교 (40개 · 4줄 제작 기준)</div>
@@ -411,10 +412,6 @@
     <div class="abi-section">
       <div class="abi-section-title">크리스탈 · 생활의 기운 환전 (크리스탈 시세 <span id="abiCrystalPrice"></span>골드)</div>
       <div class="abi-table-wrap"><table class="abi-table" id="abiCrystalTable"></table></div>
-    </div>
-    <div class="abi-section">
-      <div class="abi-section-title">T4 재련 재료 시세</div>
-      <div class="abi-t4-grid" id="abiT4Grid"></div>
     </div>
     <div class="abi-note">생활 재료 시세는 API 키 등록 시 실시간으로 불러옵니다 (실패 시 스냅샷 값 표시) · 제작 방식 비교/순수익 계산은 정적 스냅샷입니다 · 기준 시각: <span id="abiUpdatedAt"></span> · 원본: 상급 아비도스 쌀산기 ver.3</div>
   </div>
@@ -889,16 +886,6 @@ return '<div class="market-card market-card-combo">'
     { label:'중생기 5개', cost:23685, income:34992, profit:11307 },
     { label:'중생기 10개', cost:43579, income:69984, profit:26405 },
   ];
-  const ABIDOS_T4_ITEMS = [
-    ['운명의 파편 주머니(소)',43],['운명의 파편 주머니(중)',130],['운명의 파편 주머니(대)',120],
-    ['운명의 돌파석',3],['운명의 수호석',20],['운명의 파괴석',179],['아비도스 융화 재료',156],
-    ['용암의 숨결',409],['빙하의 숨결',280],
-    ['재봉술 : 업화 [11-14]',850],['재봉술 : 업화 [15-18]',12],['재봉술 : 업화 [19-20]',979],['강화 재봉술 : 업화 [19-20]',6900],
-    ['야금술 : 업화 [11-14]',1029],['야금술 : 업화 [15-18]',44],['야금술 : 업화 [19-20]',1297],['강화 야금술 : 업화 [19-20]',14100],
-    ['장인의 재봉술 : 1단계',131],['장인의 재봉술 : 2단계',44],['장인의 재봉술 : 3단계',304],['장인의 재봉술 : 4단계',200],
-    ['장인의 야금술 : 1단계',153],['장인의 야금술 : 2단계',50],['장인의 야금술 : 3단계',280],['장인의 야금술 : 4단계',199],
-    ['위대한 운명의 돌파석',15],['운명의 수호석 결정',132],['운명의 파괴석 결정',951],['상급 아비도스 융화 재료',194],
-  ];
 
   let abidosTabLoaded = false;
   let abidosMaterialsLive = null; // { [tierName]: price } once loaded
@@ -973,8 +960,6 @@ return '<div class="market-card market-card-combo">'
       <tr><th>구성</th><th>크리스탈 비용</th><th>생기 수입</th><th>순수익</th></tr>
       ${ABIDOS_CRYSTAL_ROWS.map(r=>`<tr><td>${r.label}</td><td>${fmtAbi(r.cost)}</td><td>${fmtAbi(r.income)}</td><td class="abi-pos">${fmtAbi(r.profit)}G</td></tr>`).join('')}
     `;
-
-    $('abiT4Grid').innerHTML = ABIDOS_T4_ITEMS.map(([name,price])=>`<div class="abi-t4-item"><span>${name}</span><b>${fmtAbi(price)}G</b></div>`).join('');
   }
 
   function switchTab(tab){
