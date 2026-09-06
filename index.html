@@ -301,6 +301,7 @@
 .abi-meta{font-size:12.5px;color:var(--text-dim);margin-bottom:18px;display:flex;gap:16px;flex-wrap:wrap;}
 .abi-side-by-side{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;margin-bottom:24px;}
 .abi-side-by-side .abi-section{margin-bottom:0;}
+.abi-table.abi-align-left th,.abi-table.abi-align-left td{text-align:left;}
 .abi-meta b{color:var(--gold-bright);}
 .abi-section{margin-bottom:24px;}
 .abi-section-title{font-size:13.5px;font-weight:900;color:var(--gold-bright);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
@@ -398,12 +399,12 @@
       </div>
       <div class="abi-section">
         <div class="abi-section-title">제작 우선순위 (수수료 -17% · 194G 판매 기준)</div>
-        <div class="abi-table-wrap"><table class="abi-table" id="abiRankTable"></table></div>
+        <div class="abi-table-wrap"><table class="abi-table abi-align-left" id="abiRankTable"></table></div>
       </div>
     </div>
     <div class="abi-section">
-      <div class="abi-section-title">제작 방식 비교 (40개 · 4줄 제작 기준)</div>
-      <div class="abi-table-wrap"><table class="abi-table" id="abiMethodsTable"></table></div>
+      <div class="abi-section-title">제작 방식 비교 (40개 · 4줄 제작 기준 · 제작 비용 17% 감소 기준)</div>
+      <div class="abi-table-wrap"><table class="abi-table abi-align-left" id="abiMethodsTable"></table></div>
     </div>
     <div class="abi-section">
       <div class="abi-section-title">방식별 수수료 감소(12~17%) · 판매가 순수익 매트릭스</div>
@@ -864,13 +865,13 @@ return '<div class="market-card market-card-combo">'
   // 이 표는 "40개 = 4줄 제작"(431G × 4) 기준이라 4를 곱한 1,724G를 사용합니다.
   const ABIDOS_CRAFT_GOLD = 1724;
   const ABIDOS_METHODS = [
-    { name:'벌목 제작', mat1:'목재 8,333', mat2:'부드러운 목재 8,897', abidosMat:'튼튼한 목재 40,747', craftGold:ABIDOS_CRAFT_GOLD, totalCost:59618 },
+    { name:'벌목 제작', mat1:'목재 8,333', mat2:'부드러운 목재 8,897', abidosMat:'아비도스 목재 40,747', craftGold:ABIDOS_CRAFT_GOLD, totalCost:59618 },
     { name:'목재 교환 제작', mat1:'튼튼한 목재 26개', mat2:'부드러운 목재 8,897', abidosMat:'튼튼한 목재 49,036', craftGold:ABIDOS_CRAFT_GOLD, totalCost:59574 },
-    { name:'고고학 제작', mat1:'고대 유물 8,512', mat2:'희귀한 유물 8,921', abidosMat:'오레하 유물 39,388', craftGold:ABIDOS_CRAFT_GOLD, totalCost:58462 },
-    { name:'낚시 제작', mat1:'생선 8,333', mat2:'붉은 살 생선 8,897', abidosMat:'오레하 태양 잉어 41,590', craftGold:ABIDOS_CRAFT_GOLD, totalCost:60460 },
-    { name:'채집 제작', mat1:'들꽃 8,422', mat2:'수줍은 들꽃 12,414', abidosMat:'화사한 들꽃 39,904', craftGold:ABIDOS_CRAFT_GOLD, totalCost:62381 },
-    { name:'채광 제작', mat1:'철광석 8,064', mat2:'묵직한 철광석 9,416', abidosMat:'단단한 철광석 38,683', craftGold:ABIDOS_CRAFT_GOLD, totalCost:57804 },
-    { name:'수렵 제작', mat1:'두툼한 생고기 8,288', mat2:'다듬은 생고기 8,992', abidosMat:'오레하 두툼한 생고기 44,703', craftGold:ABIDOS_CRAFT_GOLD, totalCost:63623 },
+    { name:'고고학 제작', mat1:'고대 유물 8,512', mat2:'희귀한 유물 8,921', abidosMat:'아비도스 유물 39,388', craftGold:ABIDOS_CRAFT_GOLD, totalCost:58462 },
+    { name:'낚시 제작', mat1:'생선 8,333', mat2:'붉은 살 생선 8,897', abidosMat:'아비도스 태양 잉어 41,590', craftGold:ABIDOS_CRAFT_GOLD, totalCost:60460 },
+    { name:'채집 제작', mat1:'들꽃 8,422', mat2:'수줍은 들꽃 12,414', abidosMat:'아비도스 들꽃 39,904', craftGold:ABIDOS_CRAFT_GOLD, totalCost:62381 },
+    { name:'채광 제작', mat1:'철광석 8,064', mat2:'묵직한 철광석 9,416', abidosMat:'아비도스 철광석 38,683', craftGold:ABIDOS_CRAFT_GOLD, totalCost:57804 },
+    { name:'수렵 제작', mat1:'두툼한 생고기 8,288', mat2:'다듬은 생고기 8,992', abidosMat:'아비도스 두툼한 생고기 44,703', craftGold:ABIDOS_CRAFT_GOLD, totalCost:63623 },
   ];
   // 각 방식: { pct: [193G, 194G, 195G, 196G] } (수수료 감소 1~17%) — 제작비용 1,724G(431G×4줄) 반영
   const ABIDOS_PROFIT_MATRIX = {
@@ -897,7 +898,7 @@ return '<div class="market-card market-card-combo">'
 
   function renderAbidosMaterialsTable(){
     $('abiMaterialsTable').innerHTML = `
-      <tr><th>재료</th><th>1단계</th><th>2단계</th><th>3단계</th><th>아비도스(4단계)</th></tr>
+      <tr><th>재료</th><th>일반재료</th><th>고급재료</th><th>희귀재료</th><th>아비도스(4단계)</th></tr>
       ${ABIDOS_MATERIALS.map(m=>`<tr><td>${m.name}</td>${m.tierNames.map((tierName,i)=>{
         const live = abidosMaterialsLive && abidosMaterialsLive[tierName];
         const val = live != null ? live : m.tiers[i];
@@ -932,8 +933,8 @@ return '<div class="market-card market-card-combo">'
     loadAbidosMaterialsLive();
 
     $('abiMethodsTable').innerHTML = `
-      <tr><th>제작 방식</th><th>일반재료</th><th>고급재료</th><th>희귀재료</th><th>제작 골드</th><th>총 제작 비용</th></tr>
-      ${ABIDOS_METHODS.map(m=>`<tr><td>${m.name}</td><td>${m.mat1}</td><td>${m.mat2}</td><td>${m.abidosMat}</td><td>${fmtAbi(m.craftGold)}G</td><td class="abi-total">${fmtAbi(m.totalCost)}G</td></tr>`).join('')}
+      <tr><th>제작 방식</th><th>희귀재료</th><th>고급재료</th><th>일반재료</th><th>제작 비용(-17%)</th><th>총 제작 비용</th></tr>
+      ${ABIDOS_METHODS.map(m=>`<tr><td>${m.name}</td><td>${m.abidosMat}</td><td>${m.mat2}</td><td>${m.mat1}</td><td>${fmtAbi(m.craftGold)}G</td><td class="abi-total">${fmtAbi(m.totalCost)}G</td></tr>`).join('')}
     `;
 
     const ranked = ABIDOS_METHODS.map(m=>({
