@@ -387,21 +387,25 @@
   </div>
 
   <div class="tab-panel" id="tabAbidos">
+    <div class="toolbar">
+      <button class="btn-ghost" id="btnApiKeyAbidos">API 키 설정</button>
+      <button class="btn-ghost" id="btnAbidosRefresh">🔄 갱신하기</button>
+    </div>
     <div class="abi-meta" id="abiMeta"></div>
     <div class="abi-section">
-      <div class="abi-section-title">생활 재료 시세</div>
+      <div class="abi-section-title">생활 재료 시세 <span id="abiMaterialsLiveBadge"></span></div>
       <div class="abi-table-wrap"><table class="abi-table" id="abiMaterialsTable"></table></div>
+    </div>
+    <div class="abi-section">
+      <div class="abi-section-title">제작 우선순위 (수수료 -17% · 194G 판매 기준)</div>
+      <div class="abi-table-wrap"><table class="abi-table" id="abiRankTable"></table></div>
     </div>
     <div class="abi-section">
       <div class="abi-section-title">제작 방식 비교 (40개 · 4줄 제작 기준)</div>
       <div class="abi-table-wrap"><table class="abi-table" id="abiMethodsTable"></table></div>
     </div>
     <div class="abi-section">
-      <div class="abi-section-title">현재 기준(수수료 -17% · 상아비도스 194G) 순수익 랭킹</div>
-      <div class="abi-table-wrap"><table class="abi-table" id="abiRankTable"></table></div>
-    </div>
-    <div class="abi-section">
-      <div class="abi-section-title">방식별 수수료 감소 · 판매가 순수익 매트릭스</div>
+      <div class="abi-section-title">방식별 수수료 감소(12~17%) · 판매가 순수익 매트릭스</div>
       <div class="abi-matrix-grid" id="abiMatrixGrid"></div>
     </div>
     <div class="abi-section">
@@ -412,7 +416,7 @@
       <div class="abi-section-title">T4 재련 재료 시세</div>
       <div class="abi-t4-grid" id="abiT4Grid"></div>
     </div>
-    <div class="abi-note">실시간 시세가 아닌 정적 스냅샷입니다 · 기준 시각: <span id="abiUpdatedAt"></span> · 원본: 상급 아비도스 쌀산기 ver.3</div>
+    <div class="abi-note">생활 재료 시세는 API 키 등록 시 실시간으로 불러옵니다 (실패 시 스냅샷 값 표시) · 제작 방식 비교/순수익 계산은 정적 스냅샷입니다 · 기준 시각: <span id="abiUpdatedAt"></span> · 원본: 상급 아비도스 쌀산기 ver.3</div>
   </div>
 
 
@@ -728,6 +732,21 @@ const MARKET_GROUPS = [
     }catch(e){ return null; }
   }
 
+  async function fetchMarketPriceOnly(name, category, grade){
+    if(!apiKey) return null;
+    try{
+      let searchUrl = `/api/market?mode=search&name=${encodeURIComponent(name)}&key=${encodeURIComponent(apiKey)}`;
+      if(category) searchUrl += `&category=${encodeURIComponent(category)}`;
+      if(grade) searchUrl += `&grade=${encodeURIComponent(grade)}`;
+      const res = await fetch(searchUrl);
+      const data = await res.json();
+      const items = (data && data.Items) || [];
+      const found = items.find(function(it){ return it.Name===name; }) || items[0];
+      if(!found || found.CurrentMinPrice == null) return null;
+      return found.CurrentMinPrice;
+    }catch(e){ return null; }
+  }
+
   async function fetchAuctionLive(name, category){
     if(!apiKey) return null;
     try{
@@ -837,12 +856,12 @@ return '<div class="market-card market-card-combo">'
     fee: '-17%',
   };
   const ABIDOS_MATERIALS = [
-    { name:'목재', tiers:[186,377,1886,2369] },
-    { name:'고대 유물', tiers:[190,378,'#N/A',2290] },
-    { name:'생선', tiers:[186,377,480,2418] },
-    { name:'들꽃', tiers:[188,526,1278,2320] },
-    { name:'철광석', tiers:[180,399,1870,2249] },
-    { name:'두툼한 생고기', tiers:[185,381,5995,2599] },
+    { name:'목재', tierNames:['목재','부드러운 목재','튼튼한 목재','아비도스 목재'], tiers:[186,377,1886,2369] },
+    { name:'고대 유물', tierNames:['고대 유물','희귀한 유물','오레하 유물','아비도스 유물'], tiers:[190,378,'#N/A',2290] },
+    { name:'생선', tierNames:['생선','붉은 살 생선','오레하 태양 잉어','아비도스 태양 잉어'], tiers:[186,377,480,2418] },
+    { name:'들꽃', tierNames:['들꽃','수줍은 들꽃','화사한 들꽃','아비도스 들꽃'], tiers:[188,526,1278,2320] },
+    { name:'철광석', tierNames:['철광석','묵직한 철광석','단단한 철광석','아비도스 철광석'], tiers:[180,399,1870,2249] },
+    { name:'두툼한 생고기', tierNames:['두툼한 생고기','다듬은 생고기','오레하 두툼한 생고기','아비도스 두툼한 생고기'], tiers:[185,381,5995,2599] },
   ];
   const ABIDOS_METHODS = [
     { name:'벌목 제작', mat1:'목재 8,333', mat2:'부드러운 목재 8,897', abidosMat:'아비도스 목재 40,747', craftGold:520, totalCost:58414 },
@@ -882,18 +901,45 @@ return '<div class="market-card market-card-combo">'
   ];
 
   let abidosTabLoaded = false;
+  let abidosMaterialsLive = null; // { [tierName]: price } once loaded
   function fmtAbi(n){ return typeof n === 'number' ? n.toLocaleString('ko-KR') : n; }
   function abiCellClass(n){ if(typeof n !== 'number') return ''; return n > 0 ? 'abi-pos' : (n < 0 ? 'abi-neg' : ''); }
+
+  function renderAbidosMaterialsTable(){
+    $('abiMaterialsTable').innerHTML = `
+      <tr><th>재료</th><th>1단계</th><th>2단계</th><th>3단계</th><th>아비도스(4단계)</th></tr>
+      ${ABIDOS_MATERIALS.map(m=>`<tr><td>${m.name}</td>${m.tierNames.map((tierName,i)=>{
+        const live = abidosMaterialsLive && abidosMaterialsLive[tierName];
+        const val = live != null ? live : m.tiers[i];
+        const cls = i===3 ? ' class="abi-total"' : '';
+        return `<td${cls}>${fmtAbi(val)}${typeof val==='number'?'G':''}</td>`;
+      }).join('')}</tr>`).join('')}
+    `;
+  }
+
+  async function loadAbidosMaterialsLive(){
+    if(!apiKey){
+      $('abiMaterialsLiveBadge').textContent = '(API 키 필요)';
+      return;
+    }
+    $('abiMaterialsLiveBadge').textContent = '(불러오는 중…)';
+    const allTierNames = ABIDOS_MATERIALS.flatMap(m=>m.tierNames);
+    const results = await Promise.all(allTierNames.map(n=>fetchMarketPriceOnly(n)));
+    const live = {};
+    let hit = 0;
+    allTierNames.forEach((n,i)=>{ if(results[i] != null){ live[n] = results[i]; hit++; } });
+    abidosMaterialsLive = live;
+    renderAbidosMaterialsTable();
+    $('abiMaterialsLiveBadge').textContent = hit > 0 ? `(실시간 ${hit}/${allTierNames.length})` : '(실시간 조회 실패 · 스냅샷 표시)';
+  }
 
   function renderAbidosTab(){
     $('abiMeta').innerHTML = `기준 시각 <b>${ABIDOS_META.updatedAt}</b> · 대성공 확률 <b>${ABIDOS_META.criticalRate}</b> · 거래소 수수료 <b>${ABIDOS_META.fee}</b>`;
     $('abiUpdatedAt').textContent = ABIDOS_META.updatedAt;
     $('abiCrystalPrice').textContent = fmtAbi(ABIDOS_CRYSTAL_PRICE);
 
-    $('abiMaterialsTable').innerHTML = `
-      <tr><th>재료</th><th>1단계</th><th>2단계</th><th>3단계</th><th>아비도스(4단계)</th></tr>
-      ${ABIDOS_MATERIALS.map(m=>`<tr><td>${m.name}</td>${m.tiers.map((t,i)=>`<td${i===3?' class="abi-total"':''}>${fmtAbi(t)}${typeof t==='number'?'G':''}</td>`).join('')}</tr>`).join('')}
-    `;
+    renderAbidosMaterialsTable();
+    loadAbidosMaterialsLive();
 
     $('abiMethodsTable').innerHTML = `
       <tr><th>제작 방식</th><th>재료1</th><th>재료2</th><th>아비도스 재료</th><th>제작 골드</th><th>총 제작 비용</th></tr>
@@ -909,10 +955,11 @@ return '<div class="market-card market-card-combo">'
       ${ranked.map((r,i)=>`<tr><td>${i+1}</td><td>${r.name}</td><td class="${abiCellClass(r.profit)}">${fmtAbi(r.profit)}G</td></tr>`).join('')}
     `;
 
+    const ABIDOS_MATRIX_PCT_RANGE = [12,13,14,15,16,17];
     $('abiMatrixGrid').innerHTML = ABIDOS_METHODS.map(m=>{
       const matrix = ABIDOS_PROFIT_MATRIX[m.name];
-      const rowsHtml = Object.keys(matrix).map(pct=>{
-        const isCurrent = Number(pct) === ABIDOS_CURRENT.pct;
+      const rowsHtml = ABIDOS_MATRIX_PCT_RANGE.map(pct=>{
+        const isCurrent = pct === ABIDOS_CURRENT.pct;
         const vals = matrix[pct];
         return `<tr${isCurrent?' class="abi-current"':''}><td>${pct}%</td>${vals.map((v,i)=>`<td class="${abiCellClass(v)}">${fmtAbi(v)}</td>`).join('')}</tr>`;
       }).join('');
@@ -2042,6 +2089,13 @@ $('btnApiKeyMarket').addEventListener('click', ()=>{
 });
 $('btnMarketRefresh').addEventListener('click', ()=>{
   loadMarketTab();
+});
+$('btnApiKeyAbidos').addEventListener('click', ()=>{
+  $('apiKeyInput').value = apiKey;
+  $('apiKeyOverlay').classList.add('open');
+});
+$('btnAbidosRefresh').addEventListener('click', ()=>{
+  loadAbidosMaterialsLive();
 });
   $('btnApiKey').addEventListener('click', ()=>{
     $('apiKeyInput').value = apiKey;
