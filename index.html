@@ -299,8 +299,9 @@
 .mc-combo-col .mc-diff{font-size:10px;margin-left:0;display:block;margin-top:2px;}
 
 .abi-meta{font-size:12.5px;color:var(--text-dim);margin-bottom:18px;display:flex;gap:16px;flex-wrap:wrap;}
-.abi-side-by-side{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;margin-bottom:24px;}
-.abi-side-by-side .abi-section{margin-bottom:0;}
+.abi-side-by-side{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+.abi-side-by-side .abi-section{margin-bottom:0;min-width:0;}
+@media (max-width:700px){ .abi-side-by-side{grid-template-columns:1fr;} }
 .abi-table.abi-align-left th,.abi-table.abi-align-left td{text-align:left;}
 .abi-meta b{color:var(--gold-bright);}
 .abi-section{margin-bottom:24px;}
@@ -868,7 +869,6 @@ return '<div class="market-card market-card-combo">'
   const ABIDOS_CRAFT_GOLD = 1724;
   const ABIDOS_METHODS = [
     { name:'벌목 제작', mat1:'목재 8,333', mat2:'부드러운 목재 8,897', abidosMat:'아비도스 목재 40,747', craftGold:ABIDOS_CRAFT_GOLD, totalCost:59618 },
-    { name:'목재 교환 제작', mat1:'튼튼한 목재 26개', mat2:'부드러운 목재 8,897', abidosMat:'튼튼한 목재 49,036', craftGold:ABIDOS_CRAFT_GOLD, totalCost:59574 },
     { name:'고고학 제작', mat1:'고대 유물 8,512', mat2:'희귀한 유물 8,921', abidosMat:'아비도스 유물 39,388', craftGold:ABIDOS_CRAFT_GOLD, totalCost:58462 },
     { name:'낚시 제작', mat1:'생선 8,333', mat2:'붉은 살 생선 8,897', abidosMat:'아비도스 태양 잉어 41,590', craftGold:ABIDOS_CRAFT_GOLD, totalCost:60460 },
     { name:'채집 제작', mat1:'들꽃 8,422', mat2:'수줍은 들꽃 12,414', abidosMat:'아비도스 들꽃 39,904', craftGold:ABIDOS_CRAFT_GOLD, totalCost:62381 },
@@ -878,7 +878,6 @@ return '<div class="market-card market-card-combo">'
   // 각 방식: { pct: [193G, 194G, 195G, 196G] } (수수료 감소 1~17%) — 제작비용 1,724G(431G×4줄) 반영
   const ABIDOS_PROFIT_MATRIX = {
     '벌목 제작': {1:[-2625,-2203,-1782,-1360],2:[-2425,-2003,-1582,-1160],3:[-2225,-1803,-1382,-960],4:[-2025,-1603,-1182,-760],5:[-1825,-1403,-982,-560],6:[-1585,-1163,-742,-320],7:[-1385,-963,-542,-120],8:[-1185,-763,-342,80],9:[-985,-563,-142,280],10:[-785,-363,58,480],11:[-545,-123,298,720],12:[-345,77,498,920],13:[-145,277,698,1120],14:[55,477,898,1320],15:[255,677,1098,1520],16:[495,917,1338,1760],17:[695,1117,1538,1960]},
-    '목재 교환 제작': {1:[-2581,-2160,-1738,-1317],2:[-2381,-1960,-1538,-1117],3:[-2181,-1760,-1338,-917],4:[-1981,-1560,-1138,-717],5:[-1781,-1360,-938,-517],6:[-1541,-1120,-698,-277],7:[-1341,-920,-498,-77],8:[-1141,-720,-298,123],9:[-941,-520,-98,323],10:[-741,-320,102,523],11:[-501,-80,342,763],12:[-301,120,542,963],13:[-101,320,742,1163],14:[99,520,942,1363],15:[299,720,1142,1563],16:[539,960,1382,1803],17:[739,1160,1582,2003]},
     '고고학 제작': {1:[-1469,-1047,-626,-204],2:[-1269,-847,-426,-4],3:[-1069,-647,-226,196],4:[-869,-447,-26,396],5:[-669,-247,174,596],6:[-429,-7,414,836],7:[-229,193,614,1036],8:[-29,393,814,1236],9:[171,593,1014,1436],10:[371,793,1214,1636],11:[611,1033,1454,1876],12:[811,1233,1654,2076],13:[1011,1433,1854,2276],14:[1211,1633,2054,2476],15:[1411,1833,2254,2676],16:[1651,2073,2494,2916],17:[1851,2273,2694,3116]},
     '낚시 제작': {1:[-3467,-3046,-2625,-2203],2:[-3267,-2846,-2425,-2003],3:[-3067,-2646,-2225,-1803],4:[-2867,-2446,-2025,-1603],5:[-2667,-2246,-1825,-1403],6:[-2427,-2006,-1585,-1163],7:[-2227,-1806,-1385,-963],8:[-2027,-1606,-1185,-763],9:[-1827,-1406,-985,-563],10:[-1627,-1206,-785,-363],11:[-1387,-966,-545,-123],12:[-1187,-766,-345,77],13:[-987,-566,-145,277],14:[-787,-366,55,477],15:[-587,-166,255,677],16:[-347,74,495,917],17:[-147,274,695,1117]},
     '채집 제작': {1:[-5388,-4966,-4545,-4124],2:[-5188,-4766,-4345,-3924],3:[-4988,-4566,-4145,-3724],4:[-4788,-4366,-3945,-3524],5:[-4588,-4166,-3745,-3324],6:[-4348,-3926,-3505,-3084],7:[-4148,-3726,-3305,-2884],8:[-3948,-3526,-3105,-2684],9:[-3748,-3326,-2905,-2484],10:[-3548,-3126,-2705,-2284],11:[-3308,-2886,-2465,-2044],12:[-3108,-2686,-2265,-1844],13:[-2908,-2486,-2065,-1644],14:[-2708,-2286,-1865,-1444],15:[-2508,-2086,-1665,-1244],16:[-2268,-1846,-1425,-1004],17:[-2068,-1646,-1225,-804]},
@@ -918,8 +917,9 @@ return '<div class="market-card market-card-combo">'
       return;
     }
     $('abiMaterialsLiveBadge').textContent = '(불러오는 중…)';
+    const ABIDOS_MATERIAL_CATEGORY = 90000; // 생활 재료(목재 등) 카테고리 - /api/probe-material로 확인됨
     const allTierNames = ABIDOS_MATERIALS.flatMap(m=>m.tierNames);
-    const results = await Promise.all(allTierNames.map(n=>fetchMarketPriceOnly(n)));
+    const results = await Promise.all(allTierNames.map(n=>fetchMarketPriceOnly(n, ABIDOS_MATERIAL_CATEGORY)));
     const live = {};
     let hit = 0;
     allTierNames.forEach((n,i)=>{ if(results[i] != null){ live[n] = results[i]; hit++; } });
