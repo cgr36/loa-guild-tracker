@@ -910,14 +910,22 @@ return '<div class="market-card market-card-combo">'
     '수렵 제작': {1:[-6630,-6209,-5787,-5366],2:[-6430,-6009,-5587,-5166],3:[-6230,-5809,-5387,-4966],4:[-6030,-5609,-5187,-4766],5:[-5830,-5409,-4987,-4566],6:[-5590,-5169,-4747,-4326],7:[-5390,-4969,-4547,-4126],8:[-5190,-4769,-4347,-3926],9:[-4990,-4569,-4147,-3726],10:[-4790,-4369,-3947,-3526],11:[-4550,-4129,-3707,-3286],12:[-4350,-3929,-3507,-3086],13:[-4150,-3729,-3307,-2886],14:[-3950,-3529,-3107,-2686],15:[-3750,-3329,-2907,-2486],16:[-3510,-3089,-2667,-2246],17:[-3310,-2889,-2467,-2046]},
   };
   const ABIDOS_CURRENT = { pct:17, priceIdx:1 }; // 현재 실제 기준: 수수료 -17%, 194골드(스냅샷 기본값)
-  // 판매가 1골드당 순수익 변화폭(전 방식 공통, 스냅샷 매트릭스에서 역산한 평균값)
-  const ABIDOS_REVENUE_SLOPE = 421.44;
-  // 194G 판매 시 총수익(40개, 방식 무관 - 스냅샷에서 역산 검증됨)
-  const ABIDOS_REVENUE_AT_194 = 60734.5;
+  const ABIDOS_MARKET_FEE = 0.10; // 거래소 판매 수수료
+  const ABIDOS_CRIT_RATE = 0.07; // 대성공 확률
   let abidosSellPrice = null; // 상급 아비도스 융화 재료 실시간 최저가 (조회 전엔 null -> 194G 스냅샷 사용)
+  function abidosRankMaterialsSum(method){
+    const gen = getAbidosChainPrice(method.chain, 0);
+    const adv = getAbidosChainPrice(method.chain, 1);
+    const rare = getAbidosChainPrice(method.chain, 2);
+    return gen + adv + rare;
+  }
+  // (a) 수수료 제외한 판매가 -> (b) 아비도스 총수익(400개 기준) -> (c) 재료비/제작비 차감한 순수익
   function computeAbidosProfit(method, price){
-    const revenue = ABIDOS_REVENUE_AT_194 + ABIDOS_REVENUE_SLOPE * (price - 194);
-    return Math.round(revenue - computeLiveTotalCost(method));
+    const pctRate = ABIDOS_CURRENT.pct / 100;
+    const a = price * (1 - ABIDOS_MARKET_FEE);
+    const b = a * 400 * (1 + (5 * (1 + ABIDOS_CRIT_RATE)) / 100);
+    const craftCost = Math.floor(520 * (1 - pctRate) * 40);
+    return Math.round(b - abidosRankMaterialsSum(method) - craftCost);
   }
   async function loadAbidosSellPrice(){
     if(!apiKey) return;
