@@ -889,11 +889,11 @@ return '<div class="market-card market-card-combo">'
     const live = abidosMaterialsLive && abidosMaterialsLive[tierName];
     return live != null ? live : m.tiers[tierIdx];
   }
-  function computeLiveTotalCost(method){
+  function computeLiveTotalCost(method, pct){
     const gen = getAbidosChainPrice(method.chain, 0);
     const adv = getAbidosChainPrice(method.chain, 1);
     const rare = getAbidosChainPrice(method.chain, 2);
-    const craftGold = getAbidosCraftGold(ABIDOS_CURRENT.pct / 100);
+    const craftGold = getAbidosCraftGold((pct != null ? pct : ABIDOS_CURRENT.pct) / 100);
     return Math.round(ABIDOS_QTY.general*(gen/100) + ABIDOS_QTY.advanced*(adv/100) + ABIDOS_QTY.rare*(rare/100) + craftGold);
   }
   function abidosMaterialCellText(method, tierIdx){
@@ -904,15 +904,6 @@ return '<div class="market-card market-card-combo">'
     const subtotal = Math.round(qty*(price/100));
     return `${tierName} ${fmtAbi(subtotal)}G`;
   }
-  // 각 방식: { pct: [193G, 194G, 195G, 196G] } (수수료 감소 1~17%) — 제작비용 1,724G(431G×4줄) 반영
-  const ABIDOS_PROFIT_MATRIX = {
-    '벌목 제작': {1:[-2625,-2203,-1782,-1360],2:[-2425,-2003,-1582,-1160],3:[-2225,-1803,-1382,-960],4:[-2025,-1603,-1182,-760],5:[-1825,-1403,-982,-560],6:[-1585,-1163,-742,-320],7:[-1385,-963,-542,-120],8:[-1185,-763,-342,80],9:[-985,-563,-142,280],10:[-785,-363,58,480],11:[-545,-123,298,720],12:[-345,77,498,920],13:[-145,277,698,1120],14:[55,477,898,1320],15:[255,677,1098,1520],16:[495,917,1338,1760],17:[695,1117,1538,1960]},
-    '고고학 제작': {1:[-1469,-1047,-626,-204],2:[-1269,-847,-426,-4],3:[-1069,-647,-226,196],4:[-869,-447,-26,396],5:[-669,-247,174,596],6:[-429,-7,414,836],7:[-229,193,614,1036],8:[-29,393,814,1236],9:[171,593,1014,1436],10:[371,793,1214,1636],11:[611,1033,1454,1876],12:[811,1233,1654,2076],13:[1011,1433,1854,2276],14:[1211,1633,2054,2476],15:[1411,1833,2254,2676],16:[1651,2073,2494,2916],17:[1851,2273,2694,3116]},
-    '낚시 제작': {1:[-3467,-3046,-2625,-2203],2:[-3267,-2846,-2425,-2003],3:[-3067,-2646,-2225,-1803],4:[-2867,-2446,-2025,-1603],5:[-2667,-2246,-1825,-1403],6:[-2427,-2006,-1585,-1163],7:[-2227,-1806,-1385,-963],8:[-2027,-1606,-1185,-763],9:[-1827,-1406,-985,-563],10:[-1627,-1206,-785,-363],11:[-1387,-966,-545,-123],12:[-1187,-766,-345,77],13:[-987,-566,-145,277],14:[-787,-366,55,477],15:[-587,-166,255,677],16:[-347,74,495,917],17:[-147,274,695,1117]},
-    '채집 제작': {1:[-5388,-4966,-4545,-4124],2:[-5188,-4766,-4345,-3924],3:[-4988,-4566,-4145,-3724],4:[-4788,-4366,-3945,-3524],5:[-4588,-4166,-3745,-3324],6:[-4348,-3926,-3505,-3084],7:[-4148,-3726,-3305,-2884],8:[-3948,-3526,-3105,-2684],9:[-3748,-3326,-2905,-2484],10:[-3548,-3126,-2705,-2284],11:[-3308,-2886,-2465,-2044],12:[-3108,-2686,-2265,-1844],13:[-2908,-2486,-2065,-1644],14:[-2708,-2286,-1865,-1444],15:[-2508,-2086,-1665,-1244],16:[-2268,-1846,-1425,-1004],17:[-2068,-1646,-1225,-804]},
-    '채광 제작': {1:[-811,-390,32,453],2:[-611,-190,232,653],3:[-411,10,432,853],4:[-211,210,632,1053],5:[-11,410,832,1253],6:[229,650,1072,1493],7:[429,850,1272,1693],8:[629,1050,1472,1893],9:[829,1250,1672,2093],10:[1029,1450,1872,2293],11:[1269,1690,2112,2533],12:[1469,1890,2312,2733],13:[1669,2090,2512,2933],14:[1869,2290,2712,3133],15:[2069,2490,2912,3333],16:[2309,2730,3152,3573],17:[2509,2930,3352,3773]},
-    '수렵 제작': {1:[-6630,-6209,-5787,-5366],2:[-6430,-6009,-5587,-5166],3:[-6230,-5809,-5387,-4966],4:[-6030,-5609,-5187,-4766],5:[-5830,-5409,-4987,-4566],6:[-5590,-5169,-4747,-4326],7:[-5390,-4969,-4547,-4126],8:[-5190,-4769,-4347,-3926],9:[-4990,-4569,-4147,-3726],10:[-4790,-4369,-3947,-3526],11:[-4550,-4129,-3707,-3286],12:[-4350,-3929,-3507,-3086],13:[-4150,-3729,-3307,-2886],14:[-3950,-3529,-3107,-2686],15:[-3750,-3329,-2907,-2486],16:[-3510,-3089,-2667,-2246],17:[-3310,-2889,-2467,-2046]},
-  };
   const ABIDOS_CURRENT = { pct:17 }; // 사용자가 토글로 선택하는 제작 수수료 감소율(%)
   const ABIDOS_MARKET_FEE = 0.05; // 거래소 판매 수수료 (실제 게임 화면 검증: 196G -> 수수료 10 = 5%)
   const ABIDOS_CRIT_RATE = 0.07; // 대성공 확률 (고정)
@@ -921,11 +912,11 @@ return '<div class="market-card market-card-combo">'
   // N11(수수료 제외 값) = price - ROUND(price*5%)
   // O11(아비도스 총수익) = N11*400*(1+5*(1+대성공확률)/100)
   // 순수익 = O11 - sum(재료비만) - ROUNDDOWN(520*(1-제작수수료감소율)*40)
-  function computeAbidosProfit(method, price){
-    const pctRate = ABIDOS_CURRENT.pct / 100;
+  function computeAbidosProfit(method, price, pct){
+    const pctRate = (pct != null ? pct : ABIDOS_CURRENT.pct) / 100;
     const n = price - Math.round(price * ABIDOS_MARKET_FEE);
     const o = n * 400 * (1 + (5 * (1 + ABIDOS_CRIT_RATE)) / 100);
-    const materialsOnly = computeLiveTotalCost(method) - getAbidosCraftGold(pctRate);
+    const materialsOnly = computeLiveTotalCost(method, pct) - getAbidosCraftGold(pctRate);
     const craftCost = Math.floor(520 * (1 - pctRate) * 40);
     return Math.round(o - materialsOnly - craftCost);
   }
@@ -935,6 +926,7 @@ return '<div class="market-card market-card-combo">'
     if(price != null){
       abidosSellPrice = price;
       renderAbidosRankTable();
+      renderAbidosMatrixGrid();
     }
   }
   const ABIDOS_CRYSTAL_PRICE = 18000;
@@ -993,6 +985,35 @@ return '<div class="market-card market-card-combo">'
     `;
   }
 
+  const ABIDOS_MATRIX_PCT_RANGE = [12,13,14,15,16,17];
+  function renderAbidosMatrixGrid(){
+    if(abidosSellPrice == null){
+      $('abiMatrixGrid').innerHTML = ABIDOS_METHODS.map(m=>{
+        const rowsHtml = ABIDOS_MATRIX_PCT_RANGE.map(pct=>{
+          const isCurrent = pct === ABIDOS_CURRENT.pct;
+          return `<tr${isCurrent?' class="abi-current"':''}><td>${pct}%</td><td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td></tr>`;
+        }).join('');
+        return `<div class="abi-matrix-card"><h4>${m.name}</h4><table>
+          <tr><th>제작수수료↓</th><th>N/A</th><th>N/A</th><th>N/A</th><th>N/A</th></tr>
+          ${rowsHtml}
+        </table></div>`;
+      }).join('');
+      return;
+    }
+    const prices = [abidosSellPrice-1, abidosSellPrice, abidosSellPrice+1, abidosSellPrice+2];
+    $('abiMatrixGrid').innerHTML = ABIDOS_METHODS.map(m=>{
+      const rowsHtml = ABIDOS_MATRIX_PCT_RANGE.map(pct=>{
+        const isCurrent = pct === ABIDOS_CURRENT.pct;
+        const vals = prices.map(p=>computeAbidosProfit(m, p, pct));
+        return `<tr${isCurrent?' class="abi-current"':''}><td>${pct}%</td>${vals.map(v=>`<td class="${abiCellClass(v)}">${fmtAbi(v)}</td>`).join('')}</tr>`;
+      }).join('');
+      return `<div class="abi-matrix-card"><h4>${m.name}</h4><table>
+        <tr><th>제작수수료↓</th>${prices.map(p=>`<th>${fmtAbi(p)}G</th>`).join('')}</tr>
+        ${rowsHtml}
+      </table></div>`;
+    }).join('');
+  }
+
   async function loadAbidosMaterialsLive(){
     if(!apiKey){
       $('abiMaterialsLiveBadge').textContent = '(API 키 필요)';
@@ -1028,19 +1049,7 @@ return '<div class="market-card market-card-combo">'
     renderAbidosRankTable();
     loadAbidosSellPrice();
 
-    const ABIDOS_MATRIX_PCT_RANGE = [12,13,14,15,16,17];
-    $('abiMatrixGrid').innerHTML = ABIDOS_METHODS.map(m=>{
-      const matrix = ABIDOS_PROFIT_MATRIX[m.name];
-      const rowsHtml = ABIDOS_MATRIX_PCT_RANGE.map(pct=>{
-        const isCurrent = pct === ABIDOS_CURRENT.pct;
-        const vals = matrix[pct];
-        return `<tr${isCurrent?' class="abi-current"':''}><td>${pct}%</td>${vals.map((v,i)=>`<td class="${abiCellClass(v)}">${fmtAbi(v)}</td>`).join('')}</tr>`;
-      }).join('');
-      return `<div class="abi-matrix-card"><h4>${m.name}</h4><table>
-        <tr><th>제작수수료↓</th><th>193G</th><th>194G</th><th>195G</th><th>196G</th></tr>
-        ${rowsHtml}
-      </table></div>`;
-    }).join('');
+    renderAbidosMatrixGrid();
 
     $('abiCrystalTable').innerHTML = `
       <tr><th>구성</th><th>크리스탈 비용</th><th>생기 수입</th><th>순수익</th></tr>
@@ -2179,6 +2188,7 @@ $('btnAbidosRefresh').addEventListener('click', ()=>{
     renderAbidosMeta();
     renderAbidosMethodsTable();
     renderAbidosRankTable();
+    renderAbidosMatrixGrid();
   });
 })();
   $('btnApiKey').addEventListener('click', ()=>{
