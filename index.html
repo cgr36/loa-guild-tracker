@@ -418,7 +418,7 @@
       <div class="abi-section-title">크리스탈 · 생활의 기운 환전 (크리스탈 시세 <span id="abiCrystalPrice"></span>골드)</div>
       <div class="abi-table-wrap"><table class="abi-table" id="abiCrystalTable"></table></div>
     </div>
-    <div class="abi-note">생활 재료 시세는 API 키 등록 시 실시간으로 불러옵니다 (실패 시 스냅샷 값 표시) · 제작 방식 비교/순수익 계산은 정적 스냅샷입니다 · 기준 시각: <span id="abiUpdatedAt"></span> · 원본: 상급 아비도스 쌀산기 ver.3</div>
+    <div class="abi-note">생활 재료 시세·판매가는 서버가 주기적으로 갱신해 캐싱한 값입니다 (최대 10분 지연, 실패 시 스냅샷 값 표시) · 기준 시각: <span id="abiUpdatedAt"></span> · 원본: 상급 아비도스 쌀산기 ver.3</div>
   </div>
 
 
@@ -814,12 +814,15 @@ return '<div class="market-card market-card-combo">'
     }
   }
 
-  // ---------- 아비도스 제작 효율 (정적 스냅샷 데이터) ----------
+  // ---------- 아비도스 제작 효율 (재료/판매가는 서버 캐시로 실시간 조회, 나머지는 고정 상수) ----------
   const ABIDOS_META = {
-    updatedAt: '2026. 9. 6 오후 1:26:01',
     criticalRate: '7%',
     marketFee: '5%',
   };
+  let abidosPricesUpdatedAt = null; // 서버 캐시(/api/abidos-prices)가 마지막으로 갱신된 시각(epoch ms)
+  function abidosUpdatedAtText(){
+    return abidosPricesUpdatedAt != null ? new Date(abidosPricesUpdatedAt).toLocaleString('ko-KR') : '불러오는 중…';
+  }
   // tierNames/tiers: [일반재료(1단계), 고급재료(2단계), 희귀재료(=아비도스급 최종 재료)]
   const ABIDOS_MATERIALS = [
     { name:'목재', tierNames:['목재','부드러운 목재','아비도스 목재'], tiers:[186,377,2369] },
@@ -983,7 +986,10 @@ return '<div class="market-card market-card-combo">'
       allTierNames.forEach(n=>{ if(data.prices[n] != null){ live[n] = data.prices[n]; hit++; } });
       if(data.prices['상급 아비도스 융화 재료'] != null) abidosSellPrice = data.prices['상급 아비도스 융화 재료'];
     }
+    if(data && data.updatedAt) abidosPricesUpdatedAt = data.updatedAt;
     abidosMaterialsLive = live;
+    renderAbidosMeta();
+    $('abiUpdatedAt').textContent = abidosUpdatedAtText();
     renderAbidosMaterialsTable();
     renderAbidosMethodsTable();
     renderAbidosRankTable();
@@ -992,12 +998,12 @@ return '<div class="market-card market-card-combo">'
   }
 
   function renderAbidosMeta(){
-    $('abiMeta').innerHTML = `기준 시각 <b>${ABIDOS_META.updatedAt}</b> · 대성공 확률 <b>${ABIDOS_META.criticalRate}</b> · 제작 수수료 <b>-${ABIDOS_CURRENT.pct}%</b> · 거래소 판매 수수료 <b>${ABIDOS_META.marketFee}</b>`;
+    $('abiMeta').innerHTML = `기준 시각 <b>${abidosUpdatedAtText()}</b> · 대성공 확률 <b>${ABIDOS_META.criticalRate}</b> · 제작 수수료 <b>-${ABIDOS_CURRENT.pct}%</b> · 거래소 판매 수수료 <b>${ABIDOS_META.marketFee}</b>`;
   }
 
   function renderAbidosTab(){
     renderAbidosMeta();
-    $('abiUpdatedAt').textContent = ABIDOS_META.updatedAt;
+    $('abiUpdatedAt').textContent = abidosUpdatedAtText();
     $('abiCrystalPrice').textContent = fmtAbi(ABIDOS_CRYSTAL_PRICE);
 
     renderAbidosMaterialsTable();
