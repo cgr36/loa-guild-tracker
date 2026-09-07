@@ -808,7 +808,8 @@ return '<div class="market-card market-card-combo">'
     if(data && data.live){
       Object.keys(data.live).forEach(function(name){ marketLive[name] = data.live[name]; });
       renderMarketGroups();
-      $('marketStatus').textContent = '방금 불러온 실시간 시세예요 · 그래프는 매일 자동 수집되어 누적돼요.';
+      const updatedAtText = data.updatedAt != null ? new Date(data.updatedAt).toLocaleString('ko-KR') : '알 수 없음';
+      $('marketStatus').textContent = `기준 시각: ${updatedAtText} · 방금 불러온 실시간 시세예요 · 그래프는 매일 자동 수집되어 누적돼요.`;
     } else {
       $('marketStatus').textContent = '실시간 시세를 불러오지 못했어요. 그래프(누적 데이터)는 정상적으로 표시됩니다.';
     }
