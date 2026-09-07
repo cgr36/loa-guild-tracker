@@ -9,7 +9,7 @@ const REST_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_RE
 const LOSTARK_KEY = process.env.LOSTARK_API_KEY;
 
 const REDIS_KEY = 'loa_abidos-live-prices';
-const TTL_MS = 10 * 60 * 1000; // 10분
+const TTL_MS = 5 * 60 * 1000; // 5분
 
 const MATERIAL_CATEGORY = 90000; // 생활 재료(목재 등) 카테고리
 const SELL_ITEM_CATEGORY = 50000;
