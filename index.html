@@ -943,9 +943,8 @@ return '<div class="market-card market-card-combo">'
   function abidosRecommendationCellHtml(rec){
     const label = rec.isCraftBetter ? '제작 추천' : '재료 판매 추천';
     const cls = rec.isCraftBetter ? 'abi-rec-craft' : 'abi-rec-raw';
-    const tooltip = rec.isCraftBetter
-      ? `재료를 그대로 팔면 판매 수수료 5%를 떼여 약 ${fmtAbi(rec.rawSaleNet)}G가 남지만, 제작해서 팔면 약 ${fmtAbi(rec.craftNet)}G가 남아 ${fmtAbi(rec.diff)}G 더 유리합니다.`
-      : `제작해서 팔면 약 ${fmtAbi(rec.craftNet)}G가 남지만, 재료를 그대로 팔면(판매 수수료 5% 차감) 약 ${fmtAbi(rec.rawSaleNet)}G가 남아 ${fmtAbi(Math.abs(rec.diff))}G 더 유리합니다.`;
+    const winner = rec.isCraftBetter ? '제작 판매' : '재료 판매';
+    const tooltip = `재료 판매 시(수수료 5% 제외) ${fmtAbi(rec.rawSaleNet)}G · 제작 판매 시 ${fmtAbi(rec.craftNet)}G — ${winner}가 ${fmtAbi(Math.abs(rec.diff))}G 이득입니다.`;
     return `<span class="abi-rec ${cls}" title="${escAttr(tooltip)}">${label}</span>`;
   }
 
