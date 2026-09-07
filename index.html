@@ -299,7 +299,7 @@
 .mc-combo-col .mc-diff{font-size:10px;margin-left:0;display:block;margin-top:2px;}
 
 .abi-meta{font-size:12.5px;color:var(--text-dim);margin-bottom:18px;display:flex;gap:16px;flex-wrap:wrap;}
-.abi-side-by-side{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+.abi-side-by-side{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:24px;}
 .abi-side-by-side .abi-section{margin-bottom:0;min-width:0;}
 @media (max-width:700px){ .abi-side-by-side{grid-template-columns:1fr;} }
 .abi-table.abi-align-left th,.abi-table.abi-align-left td{text-align:left;}
@@ -405,8 +405,12 @@
         <div class="abi-table-wrap"><table class="abi-table abi-align-left" id="abiMaterialsTable"></table></div>
       </div>
       <div class="abi-section">
-        <div class="abi-section-title">제작 우선순위 (제작 수수료 -<span id="abiPctLabel">17</span>% · <span id="abiSellPriceLabel">N/A</span> 판매 기준)</div>
+        <div class="abi-section-title">제작 우선순위 - 재료 구매 기준 (제작 수수료 -<span id="abiPctLabel">17</span>% · <span id="abiSellPriceLabel">N/A</span> 판매 기준)</div>
         <div class="abi-table-wrap"><table class="abi-table abi-align-left" id="abiRankTable"></table></div>
+      </div>
+      <div class="abi-section">
+        <div class="abi-section-title">제작 우선순위 - 보유 재료 기준 (제작 수수료 -<span id="abiPctLabelHeld">17</span>% · <span id="abiSellPriceLabelHeld">N/A</span> 판매 기준)</div>
+        <div class="abi-table-wrap"><table class="abi-table abi-align-left" id="abiRankTableHeld"></table></div>
       </div>
     </div>
     <div class="abi-section">
@@ -945,23 +949,51 @@ return '<div class="market-card market-card-combo">'
 
   function renderAbidosRankTable(){
     $('abiPctLabel').textContent = ABIDOS_CURRENT.pct;
+    $('abiPctLabelHeld').textContent = ABIDOS_CURRENT.pct;
     if(abidosSellPrice == null){
       $('abiSellPriceLabel').textContent = 'N/A';
+      $('abiSellPriceLabelHeld').textContent = 'N/A';
       $('abiRankTable').innerHTML = `
         <tr><th>순위</th><th>제작 방식</th><th>순수익</th><th>추천</th></tr>
+        ${ABIDOS_METHODS.map(m=>`<tr><td>-</td><td>${m.name}</td><td>N/A</td><td>N/A</td></tr>`).join('')}
+      `;
+      $('abiRankTableHeld').innerHTML = `
+        <tr><th>순위</th><th>제작 방식</th><th>재료 판매 대비 이득</th><th>추천</th></tr>
         ${ABIDOS_METHODS.map(m=>`<tr><td>-</td><td>${m.name}</td><td>N/A</td><td>N/A</td></tr>`).join('')}
       `;
       return;
     }
     const price = abidosSellPrice;
     $('abiSellPriceLabel').textContent = `${fmtAbi(price)}G(실시간)`;
-    const ranked = ABIDOS_METHODS.map(m=>{
-      const rec = abidosRecommendation(m, price);
-      return { name: m.name, profit: rec.profit, rec: rec };
-    }).sort((a,b)=>b.profit-a.profit);
+    $('abiSellPriceLabelHeld').textContent = `${fmtAbi(price)}G(실시간)`;
+
+    // 재료를 지금 시세로 새로 사서 제작한다고 가정했을 때의 우선순위
+    const boughtRanked = ABIDOS_METHODS.map(m=>({
+      name: m.name,
+      profit: computeAbidosProfit(m, price)
+    })).sort((a,b)=>b.profit-a.profit);
     $('abiRankTable').innerHTML = `
       <tr><th>순위</th><th>제작 방식</th><th>순수익</th><th>추천</th></tr>
-      ${ranked.map((r,i)=>`<tr><td>${i+1}</td><td>${r.name}</td><td class="${abiCellClass(r.profit)}">${fmtAbi(r.profit)}G</td><td>${abidosRecommendationCellHtml(r.rec)}</td></tr>`).join('')}
+      ${boughtRanked.map((r,i)=>{
+        const badge = r.profit >= 0
+          ? `<span class="abi-rec abi-rec-craft" title="재료를 지금 시세로 사서 제작해 팔면 ${fmtAbi(r.profit)}G의 순수익이 남습니다.">제작 추천</span>`
+          : `<span class="abi-rec abi-rec-raw" title="재료를 지금 시세로 사서 제작하면 오히려 ${fmtAbi(Math.abs(r.profit))}G 손해입니다. 사서까지 만들 필요는 없어요.">비추천</span>`;
+        return `<tr><td>${i+1}</td><td>${r.name}</td><td class="${abiCellClass(r.profit)}">${fmtAbi(r.profit)}G</td><td>${badge}</td></tr>`;
+      }).join('')}
+    `;
+
+    // 이미 갖고 있는 재료로 제작한다고 가정했을 때의 우선순위.
+    // 제작해서 팔았을 때 실수령액(craftNet)은 판매가·제작 수수료만으로 정해져
+    // 재료 종류와 무관하게 모든 방식이 동일하므로, 우선순위는 "재료를 그대로
+    // 팔 때보다 얼마나 더 유리한지(diff)"로 매김 - 보유한 여러 재료 중
+    // 어떤 것부터 제작에 써야 이득이 큰지를 보여줌
+    const heldRanked = ABIDOS_METHODS.map(m=>{
+      const rec = abidosRecommendation(m, price);
+      return { name: m.name, rec: rec };
+    }).sort((a,b)=>b.rec.diff-a.rec.diff);
+    $('abiRankTableHeld').innerHTML = `
+      <tr><th>순위</th><th>제작 방식</th><th>재료 판매 대비 이득</th><th>추천</th></tr>
+      ${heldRanked.map((r,i)=>`<tr><td>${i+1}</td><td>${r.name}</td><td class="${abiCellClass(r.rec.diff)}">${fmtAbi(r.rec.diff)}G</td><td>${abidosRecommendationCellHtml(r.rec)}</td></tr>`).join('')}
     `;
   }
 
