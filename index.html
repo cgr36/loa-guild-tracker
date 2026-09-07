@@ -384,7 +384,6 @@
 
   <div class="tab-panel" id="tabMarket">
     <div class="toolbar">
-      <button class="btn-ghost" id="btnApiKeyMarket">API 키 설정</button>
       <button class="btn-ghost" id="btnMarketRefresh">🔄 갱신하기</button>
     </div>
     <div class="market-status" id="marketStatus">불러오는 중…</div>
@@ -716,49 +715,6 @@ const MARKET_GROUPS = [
   let currentChartField = null;
   function findMarketCatalog(name){ return MARKET_CATALOG.find(function(m){ return m.name===name; }); }
 
-  async function fetchMarketLive(name, category, grade){
-    if(!apiKey) return null;
-    try{
-      let searchUrl = `/api/market?mode=search&name=${encodeURIComponent(name)}&key=${encodeURIComponent(apiKey)}`;
-      if(category) searchUrl += `&category=${encodeURIComponent(category)}`;
-      if(grade) searchUrl += `&grade=${encodeURIComponent(grade)}`;
-      const searchRes = await fetch(searchUrl);
-      const searchData = await searchRes.json();
-      const items = (searchData && searchData.Items) || [];
-      const found = items.find(function(it){ return it.Name===name; }) || items[0];
-      if(!found) return null;
-      const statsRes = await fetch(`/api/market?mode=stats&id=${encodeURIComponent(found.Id)}&key=${encodeURIComponent(apiKey)}`);
-      const statsData = await statsRes.json();
-      const statsItem = Array.isArray(statsData) ? statsData[0] : statsData;
-      const stats = (statsItem && statsItem.Stats) || [];
-      return { name: name, stats: stats, recentPrice: found.RecentPrice, ydayAvgPrice: found.YDayAvgPrice };
-    }catch(e){ return null; }
-  }
-
-  async function fetchMarketPriceOnly(name, category, grade){
-    if(!apiKey) return null;
-    try{
-      let searchUrl = `/api/market?mode=search&name=${encodeURIComponent(name)}&key=${encodeURIComponent(apiKey)}`;
-      if(category) searchUrl += `&category=${encodeURIComponent(category)}`;
-      if(grade) searchUrl += `&grade=${encodeURIComponent(grade)}`;
-      const res = await fetch(searchUrl);
-      const data = await res.json();
-      const items = (data && data.Items) || [];
-      const found = items.find(function(it){ return it.Name===name; });
-      if(!found || found.CurrentMinPrice == null) return null;
-      return found.CurrentMinPrice;
-    }catch(e){ return null; }
-  }
-
-  async function fetchAuctionLive(name, category){
-    if(!apiKey) return null;
-    try{
-      const res = await fetch(`/api/auction?name=${encodeURIComponent(name)}&key=${encodeURIComponent(apiKey)}&category=${encodeURIComponent(category)}`);
-      const data = await res.json();
-      return { name: name, minBuyPrice: data && data.minBuyPrice };
-    }catch(e){ return null; }
-  }
-
 function computeMarketDisplay(name){
 const cat = findMarketCatalog(name);
 const hist = marketHistory[name] || [];
@@ -835,21 +791,27 @@ return '<div class="market-card market-card-combo">'
     }).join('');
   }
 
+  async function fetchMarketSharedLive(){
+    try{
+      const res = await fetch('/api/market-live');
+      if(!res.ok) return null;
+      const data = await res.json();
+      return data && data.live ? data : null;
+    }catch(e){ return null; }
+  }
+
   async function loadMarketTab(){
     $('marketStatus').textContent = '시세 불러오는 중…';
     marketHistory = await getShared('market-history', {});
     renderMarketGroups();
-    if(!apiKey){
-      $('marketStatus').textContent = '실시간 현재가를 보려면 상단 "API 키 설정"에서 API 키를 등록해주세요. (그래프는 API 키 없이도 볼 수 있어요)';
-      return;
+    const data = await fetchMarketSharedLive();
+    if(data && data.live){
+      Object.keys(data.live).forEach(function(name){ marketLive[name] = data.live[name]; });
+      renderMarketGroups();
+      $('marketStatus').textContent = '방금 불러온 실시간 시세예요 · 그래프는 매일 자동 수집되어 누적돼요.';
+    } else {
+      $('marketStatus').textContent = '실시간 시세를 불러오지 못했어요. 그래프(누적 데이터)는 정상적으로 표시됩니다.';
     }
-    const results = await Promise.all(MARKET_CATALOG.map(async function(m){
-      if(m.type === 'market') return await fetchMarketLive(m.name, m.category, m.grade);
-      return await fetchAuctionLive(m.name, m.category);
-    }));
-    results.forEach(function(r){ if(r) marketLive[r.name] = r; });
-    renderMarketGroups();
-    $('marketStatus').textContent = '방금 불러온 실시간 시세예요 · 그래프는 매일 자동 수집되어 누적돼요.';
   }
 
   // ---------- 아비도스 제작 효율 (정적 스냅샷 데이터) ----------
@@ -2159,10 +2121,6 @@ draggedChar.owner = targetChar.owner;
   });
 
   // api key modal
-$('btnApiKeyMarket').addEventListener('click', ()=>{
-  $('apiKeyInput').value = apiKey;
-  $('apiKeyOverlay').classList.add('open');
-});
 $('btnMarketRefresh').addEventListener('click', ()=>{
   loadMarketTab();
 });
