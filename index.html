@@ -416,7 +416,7 @@
       </div>
     </div>
     <div class="abi-section">
-      <div class="abi-section-title">제작 방식 비교 (40개 · 4줄 제작 기준 · 제작 비용 <span id="abiMethodsPctLabel">17</span>% 감소 기준)</div>
+      <div class="abi-section-title">제작 방식 비교 (1개 제작 기준 · 제작 비용 <span id="abiMethodsPctLabel">17</span>% 감소 기준)</div>
       <div class="abi-table-wrap"><table class="abi-table abi-align-left" id="abiMethodsTable"></table></div>
     </div>
     <div class="abi-section">
@@ -842,8 +842,10 @@ return '<div class="market-card market-card-combo">'
     { name:'철광석', tierNames:['철광석','묵직한 철광석','아비도스 철광석'], tiers:[180,399,2249] },
     { name:'고기', tierNames:['두툼한 생고기','다듬은 생고기','아비도스 두툼한 생고기'], tiers:[185,381,2599] },
   ];
-  // 아비도스 1개 제작 시 필요한 재료 개수(일반 112/고급 59/희귀 43개, 방식 무관) x 40개
-  const ABIDOS_QTY = { general: 112*40, advanced: 59*40, rare: 43*40 };
+  // 아비도스 1개 제작 시 필요한 재료 개수(일반 112/고급 59/희귀 43개, 방식 무관)
+  const ABIDOS_QTY_UNIT = { general:112, advanced:59, rare:43 };
+  // 실제 제작은 4줄(40개) 단위로 이뤄지므로, 제작 우선순위/매트릭스 계산은 40개 기준을 사용
+  const ABIDOS_QTY = { general: ABIDOS_QTY_UNIT.general*40, advanced: ABIDOS_QTY_UNIT.advanced*40, rare: ABIDOS_QTY_UNIT.rare*40 };
   const ABIDOS_METHODS = [
     { name:'벌목 제작', chain:'목재' },
     { name:'고고학 제작', chain:'유물' },
@@ -870,11 +872,19 @@ return '<div class="market-card market-card-combo">'
     const craftGold = getAbidosCraftGold((pct != null ? pct : ABIDOS_CURRENT.pct) / 100);
     return Math.round(ABIDOS_QTY.general*(gen/100) + ABIDOS_QTY.advanced*(adv/100) + ABIDOS_QTY.rare*(rare/100) + craftGold);
   }
-  function abidosMaterialCellText(method, tierIdx){
+  // 제작 방식 비교 표 전용: 40개(4줄)가 아닌 1개 제작 기준 비용
+  function computeUnitTotalCost(method, pct){
+    const gen = getAbidosChainPrice(method.chain, 0);
+    const adv = getAbidosChainPrice(method.chain, 1);
+    const rare = getAbidosChainPrice(method.chain, 2);
+    const craftGold = getAbidosCraftGold((pct != null ? pct : ABIDOS_CURRENT.pct) / 100);
+    return Math.round(ABIDOS_QTY_UNIT.general*(gen/100) + ABIDOS_QTY_UNIT.advanced*(adv/100) + ABIDOS_QTY_UNIT.rare*(rare/100) + craftGold);
+  }
+  function abidosMaterialCellTextUnit(method, tierIdx){
     const chainInfo = ABIDOS_MATERIALS.find(x=>x.name===method.chain);
     const tierName = chainInfo.tierNames[tierIdx];
     const price = getAbidosChainPrice(method.chain, tierIdx);
-    const qty = tierIdx===0 ? ABIDOS_QTY.general : tierIdx===1 ? ABIDOS_QTY.advanced : ABIDOS_QTY.rare;
+    const qty = tierIdx===0 ? ABIDOS_QTY_UNIT.general : tierIdx===1 ? ABIDOS_QTY_UNIT.advanced : ABIDOS_QTY_UNIT.rare;
     const subtotal = Math.round(qty*(price/100));
     return `${tierName} ${fmtAbi(subtotal)}G`;
   }
@@ -998,7 +1008,7 @@ return '<div class="market-card market-card-combo">'
     $('abiMethodsPctLabel').textContent = ABIDOS_CURRENT.pct;
     $('abiMethodsTable').innerHTML = `
       <tr><th>제작 방식</th><th>희귀재료</th><th>고급재료</th><th>일반재료</th><th>제작 비용(-${ABIDOS_CURRENT.pct}%)</th><th>총 제작 비용</th></tr>
-      ${ABIDOS_METHODS.map(m=>`<tr><td>${m.name}</td><td>${abidosMaterialCellText(m,2)}</td><td>${abidosMaterialCellText(m,1)}</td><td>${abidosMaterialCellText(m,0)}</td><td>${fmtAbi(getAbidosCraftGold(ABIDOS_CURRENT.pct/100))}G</td><td class="abi-total">${fmtAbi(computeLiveTotalCost(m))}G</td></tr>`).join('')}
+      ${ABIDOS_METHODS.map(m=>`<tr><td>${m.name}</td><td>${abidosMaterialCellTextUnit(m,2)}</td><td>${abidosMaterialCellTextUnit(m,1)}</td><td>${abidosMaterialCellTextUnit(m,0)}</td><td>${fmtAbi(getAbidosCraftGold(ABIDOS_CURRENT.pct/100))}G</td><td class="abi-total">${fmtAbi(computeUnitTotalCost(m))}G</td></tr>`).join('')}
     `;
   }
 
