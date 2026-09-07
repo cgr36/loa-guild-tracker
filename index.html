@@ -328,6 +328,9 @@
 .abi-matrix-card td.abi-pos{color:#6fa8ff;font-weight:700;}
 .abi-matrix-card td.abi-neg{color:var(--rose);font-weight:700;}
 .abi-matrix-card tr.abi-current{background:rgba(228,182,90,0.12);}
+.abi-rec{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:700;white-space:nowrap;cursor:help;}
+.abi-rec-craft{background:rgba(111,168,255,0.15);color:#6fa8ff;}
+.abi-rec-raw{background:rgba(255,107,129,0.15);color:var(--rose);}
 .abi-note{font-size:11px;color:var(--text-faint);margin-top:6px;}
 .abi-select-label{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-dim);font-weight:700;}
 .abi-select-label select{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12.5px;}
@@ -418,7 +421,7 @@
       <div class="abi-section-title">크리스탈 · 생활의 기운 환전 (크리스탈 시세 <span id="abiCrystalPrice"></span>골드)</div>
       <div class="abi-table-wrap"><table class="abi-table" id="abiCrystalTable"></table></div>
     </div>
-    <div class="abi-note">생활 재료 시세·판매가는 서버가 주기적으로 갱신해 캐싱한 값입니다 (최대 10분 지연, 실패 시 스냅샷 값 표시) · 기준 시각: <span id="abiUpdatedAt"></span> · 원본: 상급 아비도스 쌀산기 ver.3</div>
+    <div class="abi-note">생활 재료 시세·판매가는 서버가 주기적으로 갱신해 캐싱한 값입니다 (최대 5분 지연, 실패 시 스냅샷 값 표시) · 기준 시각: <span id="abiUpdatedAt"></span> · 원본: 상급 아비도스 쌀산기 ver.3</div>
   </div>
 
 
@@ -885,6 +888,19 @@ return '<div class="market-card market-card-combo">'
     const craftCost = Math.floor(520 * (1 - pctRate) * 40);
     return Math.round(o - materialsOnly - craftCost);
   }
+  // 제작해서 파는 것과 재료를 그대로 파는 것 중 어느 쪽이 나은지 비교.
+  // 재료를 그대로 팔면 거래소 판매 수수료(5%)를 떼이므로, 재료비를 수수료 없이
+  // 그대로 차감하는 순수익(computeAbidosProfit)만으로는 정확한 비교가 안 됨 -
+  // 두 경우의 "손에 남는 골드"를 직접 비교해서 판단.
+  function abidosRecommendation(method, price, pct){
+    const pctRate = (pct != null ? pct : ABIDOS_CURRENT.pct) / 100;
+    const profit = computeAbidosProfit(method, price, pct);
+    const materialsOnly = computeLiveTotalCost(method, pct) - getAbidosCraftGold(pctRate);
+    const craftNet = profit + materialsOnly; // 제작 후 판매 시 실수령액(이미 보유한 재료 기준)
+    const rawSaleNet = Math.round(materialsOnly * (1 - ABIDOS_MARKET_FEE)); // 재료를 그대로 팔았을 때 실수령액
+    const diff = craftNet - rawSaleNet;
+    return { profit, craftNet, rawSaleNet, diff, isCraftBetter: diff >= 0 };
+  }
   async function fetchAbidosSharedPrices(){
     try{
       const res = await fetch('/api/abidos-prices');
@@ -918,25 +934,34 @@ return '<div class="market-card market-card-combo">'
     `;
   }
 
+  function abidosRecommendationCellHtml(rec){
+    const label = rec.isCraftBetter ? '제작 판매 추천' : '재료 판매 추천';
+    const cls = rec.isCraftBetter ? 'abi-rec-craft' : 'abi-rec-raw';
+    const tooltip = rec.isCraftBetter
+      ? `재료를 그대로 팔면 판매 수수료 5%를 떼여 약 ${fmtAbi(rec.rawSaleNet)}G가 남지만, 제작해서 팔면 약 ${fmtAbi(rec.craftNet)}G가 남아 ${fmtAbi(rec.diff)}G 더 유리합니다.`
+      : `제작해서 팔면 약 ${fmtAbi(rec.craftNet)}G가 남지만, 재료를 그대로 팔면(판매 수수료 5% 차감) 약 ${fmtAbi(rec.rawSaleNet)}G가 남아 ${fmtAbi(Math.abs(rec.diff))}G 더 유리합니다.`;
+    return `<span class="abi-rec ${cls}" title="${escAttr(tooltip)}">${label}</span>`;
+  }
+
   function renderAbidosRankTable(){
     $('abiPctLabel').textContent = ABIDOS_CURRENT.pct;
     if(abidosSellPrice == null){
       $('abiSellPriceLabel').textContent = 'N/A';
       $('abiRankTable').innerHTML = `
-        <tr><th>순위</th><th>제작 방식</th><th>순수익</th></tr>
-        ${ABIDOS_METHODS.map(m=>`<tr><td>-</td><td>${m.name}</td><td>N/A</td></tr>`).join('')}
+        <tr><th>순위</th><th>제작 방식</th><th>순수익</th><th>추천</th></tr>
+        ${ABIDOS_METHODS.map(m=>`<tr><td>-</td><td>${m.name}</td><td>N/A</td><td>N/A</td></tr>`).join('')}
       `;
       return;
     }
     const price = abidosSellPrice;
     $('abiSellPriceLabel').textContent = `${fmtAbi(price)}G(실시간)`;
-    const ranked = ABIDOS_METHODS.map(m=>({
-      name: m.name,
-      profit: computeAbidosProfit(m, price)
-    })).sort((a,b)=>b.profit-a.profit);
+    const ranked = ABIDOS_METHODS.map(m=>{
+      const rec = abidosRecommendation(m, price);
+      return { name: m.name, profit: rec.profit, rec: rec };
+    }).sort((a,b)=>b.profit-a.profit);
     $('abiRankTable').innerHTML = `
-      <tr><th>순위</th><th>제작 방식</th><th>순수익</th></tr>
-      ${ranked.map((r,i)=>`<tr><td>${i+1}</td><td>${r.name}</td><td class="${abiCellClass(r.profit)}">${fmtAbi(r.profit)}G</td></tr>`).join('')}
+      <tr><th>순위</th><th>제작 방식</th><th>순수익</th><th>추천</th></tr>
+      ${ranked.map((r,i)=>`<tr><td>${i+1}</td><td>${r.name}</td><td class="${abiCellClass(r.profit)}">${fmtAbi(r.profit)}G</td><td>${abidosRecommendationCellHtml(r.rec)}</td></tr>`).join('')}
     `;
   }
 

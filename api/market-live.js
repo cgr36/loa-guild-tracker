@@ -11,7 +11,7 @@ const REST_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_RE
 const LOSTARK_KEY = process.env.LOSTARK_API_KEY;
 
 const REDIS_KEY = 'loa_market-live-prices';
-const TTL_MS = 10 * 60 * 1000; // 10분
+const TTL_MS = 5 * 60 * 1000; // 5분
 
 const MARKET_ITEMS = [
   { name: '운명의 파괴석', type: 'market' },
