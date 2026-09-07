@@ -1093,6 +1093,12 @@ return '<div class="market-card market-card-combo">'
   document.querySelectorAll('.tab-btn').forEach(function(btn){
     btn.addEventListener('click', function(){ switchTab(btn.dataset.tab); });
   });
+  // 새로고침 시 레이드 체크 탭이 잠깐 보였다가 원래 탭으로 바뀌는 깜빡임을
+  // 막기 위해, 데이터 로딩(init)을 기다리지 않고 탭 전환부터 즉시 반영
+  try {
+    const savedTab = localStorage.getItem('la-active-tab');
+    if(savedTab && savedTab !== 'raid') switchTab(savedTab);
+  } catch(e){}
 
   document.addEventListener('click', function(e){
     const card = e.target.closest('[data-market-card]');
@@ -2505,11 +2511,6 @@ $('btnAbidosRefresh').addEventListener('click', ()=>{
     renderResetLine();
     setInterval(renderResetLine, 60000);
     checkNotice();
-
-    try {
-      const savedTab = localStorage.getItem('la-active-tab');
-      if(savedTab && savedTab !== 'raid') switchTab(savedTab);
-    } catch(e){}
 
     // 다른 사람이 체크한 내역을 주기적으로 반영합니다. (드롭다운/모달이 열려있을 땐
     // 화면을 다시 그리면 조작 중인 UI가 끊길 수 있어 그 동안은 건너뜁니다.)
