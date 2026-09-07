@@ -397,6 +397,7 @@
     <div class="toolbar">
       <button class="btn-ghost" id="btnAbidosRefresh">🔄 갱신하기</button>
       <label class="abi-select-label">제작 수수료 감소 <select id="abiPctSelect"></select></label>
+      <span class="abi-select-label">판매가 <b id="abiSellPriceLabel">N/A</b></span>
     </div>
     <div class="abi-meta" id="abiMeta"></div>
     <div class="abi-side-by-side">
@@ -405,11 +406,11 @@
         <div class="abi-table-wrap"><table class="abi-table abi-align-left" id="abiMaterialsTable"></table></div>
       </div>
       <div class="abi-section">
-        <div class="abi-section-title">제작 우선순위 - 재료 구매 기준 (제작 수수료 -<span id="abiPctLabel">17</span>% · <span id="abiSellPriceLabel">N/A</span> 판매 기준)</div>
+        <div class="abi-section-title">제작 우선순위 - 재료 구매 기준</div>
         <div class="abi-table-wrap"><table class="abi-table abi-align-left" id="abiRankTable"></table></div>
       </div>
       <div class="abi-section">
-        <div class="abi-section-title">제작 우선순위 - 보유 재료 기준 (제작 수수료 -<span id="abiPctLabelHeld">17</span>% · <span id="abiSellPriceLabelHeld">N/A</span> 판매 기준)</div>
+        <div class="abi-section-title">제작 우선순위 - 보유 재료 기준</div>
         <div class="abi-table-wrap"><table class="abi-table abi-align-left" id="abiRankTableHeld"></table></div>
       </div>
     </div>
@@ -948,11 +949,8 @@ return '<div class="market-card market-card-combo">'
   }
 
   function renderAbidosRankTable(){
-    $('abiPctLabel').textContent = ABIDOS_CURRENT.pct;
-    $('abiPctLabelHeld').textContent = ABIDOS_CURRENT.pct;
     if(abidosSellPrice == null){
       $('abiSellPriceLabel').textContent = 'N/A';
-      $('abiSellPriceLabelHeld').textContent = 'N/A';
       $('abiRankTable').innerHTML = `
         <tr><th>순위</th><th>제작 방식</th><th>순수익</th><th>추천</th></tr>
         ${ABIDOS_METHODS.map(m=>`<tr><td>-</td><td>${m.name}</td><td>N/A</td><td>N/A</td></tr>`).join('')}
@@ -965,7 +963,6 @@ return '<div class="market-card market-card-combo">'
     }
     const price = abidosSellPrice;
     $('abiSellPriceLabel').textContent = `${fmtAbi(price)}G(실시간)`;
-    $('abiSellPriceLabelHeld').textContent = `${fmtAbi(price)}G(실시간)`;
 
     // 재료를 지금 시세로 새로 사서 제작한다고 가정했을 때의 우선순위
     const boughtRanked = ABIDOS_METHODS.map(m=>({
