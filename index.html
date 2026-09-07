@@ -393,7 +393,6 @@
 
   <div class="tab-panel" id="tabAbidos">
     <div class="toolbar">
-      <button class="btn-ghost" id="btnApiKeyAbidos">API 키 설정</button>
       <button class="btn-ghost" id="btnAbidosRefresh">🔄 갱신하기</button>
       <label class="abi-select-label">제작 수수료 감소 <select id="abiPctSelect"></select></label>
     </div>
@@ -920,14 +919,13 @@ return '<div class="market-card market-card-combo">'
     const craftCost = Math.floor(520 * (1 - pctRate) * 40);
     return Math.round(o - materialsOnly - craftCost);
   }
-  async function loadAbidosSellPrice(){
-    if(!apiKey) return;
-    const price = await fetchMarketPriceOnly('상급 아비도스 융화 재료');
-    if(price != null){
-      abidosSellPrice = price;
-      renderAbidosRankTable();
-      renderAbidosMatrixGrid();
-    }
+  async function fetchAbidosSharedPrices(){
+    try{
+      const res = await fetch('/api/abidos-prices');
+      if(!res.ok) return null;
+      const data = await res.json();
+      return data && data.prices ? data : null;
+    }catch(e){ return null; }
   }
   const ABIDOS_CRYSTAL_PRICE = 18000;
   const ABIDOS_CRYSTAL_ROWS = [
@@ -1013,18 +1011,16 @@ return '<div class="market-card market-card-combo">'
     }).join('');
   }
 
-  async function loadAbidosMaterialsLive(){
-    if(!apiKey){
-      $('abiMaterialsLiveBadge').textContent = '(API 키 필요)';
-      return;
-    }
+  async function loadAbidosLivePrices(){
     $('abiMaterialsLiveBadge').textContent = '(불러오는 중…)';
-    const ABIDOS_MATERIAL_CATEGORY = 90000; // 생활 재료(목재 등) 카테고리 - /api/probe-material로 확인됨
+    const data = await fetchAbidosSharedPrices();
     const allTierNames = ABIDOS_MATERIALS.flatMap(m=>m.tierNames);
-    const results = await Promise.all(allTierNames.map(n=>fetchMarketPriceOnly(n, ABIDOS_MATERIAL_CATEGORY)));
     const live = {};
     let hit = 0;
-    allTierNames.forEach((n,i)=>{ if(results[i] != null){ live[n] = results[i]; hit++; } });
+    if(data && data.prices){
+      allTierNames.forEach(n=>{ if(data.prices[n] != null){ live[n] = data.prices[n]; hit++; } });
+      if(data.prices['상급 아비도스 융화 재료'] != null) abidosSellPrice = data.prices['상급 아비도스 융화 재료'];
+    }
     abidosMaterialsLive = live;
     renderAbidosMaterialsTable();
     renderAbidosMethodsTable();
@@ -1043,13 +1039,10 @@ return '<div class="market-card market-card-combo">'
     $('abiCrystalPrice').textContent = fmtAbi(ABIDOS_CRYSTAL_PRICE);
 
     renderAbidosMaterialsTable();
-    loadAbidosMaterialsLive();
-
     renderAbidosMethodsTable();
     renderAbidosRankTable();
-    loadAbidosSellPrice();
-
     renderAbidosMatrixGrid();
+    loadAbidosLivePrices();
 
     $('abiCrystalTable').innerHTML = `
       <tr><th>구성</th><th>크리스탈 비용</th><th>생기 수입</th><th>순수익</th></tr>
@@ -1070,8 +1063,8 @@ return '<div class="market-card market-card-combo">'
     if(tab === 'abidos' && !abidosTabLoaded){
       abidosTabLoaded = true;
       renderAbidosTab();
-    } else if(tab === 'abidos' && abidosSellPrice == null){
-      loadAbidosSellPrice();
+    } else if(tab === 'abidos' && (abidosSellPrice == null || abidosMaterialsLive == null)){
+      loadAbidosLivePrices();
     }
   }
   document.querySelectorAll('.tab-btn').forEach(function(btn){
@@ -2173,13 +2166,8 @@ $('btnApiKeyMarket').addEventListener('click', ()=>{
 $('btnMarketRefresh').addEventListener('click', ()=>{
   loadMarketTab();
 });
-$('btnApiKeyAbidos').addEventListener('click', ()=>{
-  $('apiKeyInput').value = apiKey;
-  $('apiKeyOverlay').classList.add('open');
-});
 $('btnAbidosRefresh').addEventListener('click', ()=>{
-  loadAbidosMaterialsLive();
-  loadAbidosSellPrice();
+  loadAbidosLivePrices();
 });
 (function initAbidosSelects(){
   const pctSelect = $('abiPctSelect');
