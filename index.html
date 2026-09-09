@@ -809,20 +809,20 @@ return '<div class="market-card market-card-combo">'
     }).join('');
   }
 
-  async function fetchMarketSharedLive(){
+  async function fetchMarketSharedLive(force){
     try{
-      const res = await fetch('/api/market-live');
+      const res = await fetch(force ? '/api/market-live?force=1' : '/api/market-live');
       if(!res.ok) return null;
       const data = await res.json();
       return data && data.live ? data : null;
     }catch(e){ return null; }
   }
 
-  async function loadMarketTab(){
-    $('marketStatus').textContent = '시세 불러오는 중…';
+  async function loadMarketTab(force){
+    $('marketStatus').textContent = force ? '지금 시각 기준으로 다시 불러오는 중…' : '시세 불러오는 중…';
     marketHistory = await getShared('market-history', {});
     renderMarketGroups();
-    const data = await fetchMarketSharedLive();
+    const data = await fetchMarketSharedLive(force);
     if(data && data.live){
       Object.keys(data.live).forEach(function(name){ marketLive[name] = data.live[name]; });
       renderMarketGroups();
@@ -937,9 +937,9 @@ return '<div class="market-card market-card-combo">'
     const diff = craftNet - rawSaleNet;
     return { profit, craftNet, rawSaleNet, diff, isCraftBetter: diff >= 0 };
   }
-  async function fetchAbidosSharedPrices(){
+  async function fetchAbidosSharedPrices(force){
     try{
-      const res = await fetch('/api/abidos-prices');
+      const res = await fetch(force ? '/api/abidos-prices?force=1' : '/api/abidos-prices');
       if(!res.ok) return null;
       const data = await res.json();
       return data && data.prices ? data : null;
@@ -1061,9 +1061,9 @@ return '<div class="market-card market-card-combo">'
     }).join('');
   }
 
-  async function loadAbidosLivePrices(){
-    $('abiMaterialsLiveBadge').textContent = '(불러오는 중…)';
-    const data = await fetchAbidosSharedPrices();
+  async function loadAbidosLivePrices(force){
+    $('abiMaterialsLiveBadge').textContent = force ? '(지금 시각 기준으로 다시 불러오는 중…)' : '(불러오는 중…)';
+    const data = await fetchAbidosSharedPrices(force);
     const allTierNames = ABIDOS_MATERIALS.flatMap(m=>m.tierNames);
     const live = {};
     let hit = 0;
@@ -2219,10 +2219,10 @@ draggedChar.owner = targetChar.owner;
 
   // api key modal
 $('btnMarketRefresh').addEventListener('click', ()=>{
-  loadMarketTab();
+  loadMarketTab(true);
 });
 $('btnAbidosRefresh').addEventListener('click', ()=>{
-  loadAbidosLivePrices();
+  loadAbidosLivePrices(true);
 });
 (function initAbidosSelects(){
   const pctSelect = $('abiPctSelect');
