@@ -3,6 +3,7 @@
 // 이 엔드포인트를 통해 캐시(최대 TTL_MS 만큼 지연될 수 있음) 값을 받아볼 수 있음.
 // 캐시가 TTL보다 오래됐을 때만 로스트아크 API를 다시 호출해 갱신하고,
 // 개별 아이템 조회가 실패하면 그 아이템만 이전 캐시 값을 그대로 유지함.
+// ?force=1 이 붙으면 캐시가 신선해도 무시하고 즉시 다시 조회함(수동 갱신 버튼용).
 
 const REST_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
 const REST_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -80,9 +81,10 @@ export default async function handler(req, res) {
   }
 
   try {
+    const force = req.query.force === '1' || req.query.force === 'true';
     const cached = await readCache();
     const now = Date.now();
-    if (cached && cached.updatedAt && now - cached.updatedAt < TTL_MS) {
+    if (!force && cached && cached.updatedAt && now - cached.updatedAt < TTL_MS) {
       res.status(200).json(cached);
       return;
     }

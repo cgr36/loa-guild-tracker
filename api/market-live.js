@@ -5,6 +5,7 @@
 // 개별 아이템 조회가 실패하면 그 아이템만 이전 캐시 값을 그대로 유지함.
 // (일별 누적 그래프 데이터는 이 엔드포인트가 아니라 /api/collect가 채우는
 // market-history를 그대로 사용함 - 여기서는 "방금" 값만 다룸)
+// ?force=1 이 붙으면 캐시가 신선해도 무시하고 즉시 다시 조회함(수동 갱신 버튼용).
 
 const REST_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
 const REST_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -126,9 +127,10 @@ export default async function handler(req, res) {
   }
 
   try {
+    const force = req.query.force === '1' || req.query.force === 'true';
     const cached = await readCache();
     const now = Date.now();
-    if (cached && cached.updatedAt && now - cached.updatedAt < TTL_MS) {
+    if (!force && cached && cached.updatedAt && now - cached.updatedAt < TTL_MS) {
       res.status(200).json(cached);
       return;
     }
