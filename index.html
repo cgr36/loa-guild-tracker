@@ -886,9 +886,13 @@ return '<div class="market-card market-card-combo">'
     return Math.round(ABIDOS_QTY.general*(gen/100) + ABIDOS_QTY.advanced*(adv/100) + ABIDOS_QTY.rare*(rare/100) + craftGold);
   }
   // 제작 방식 비교 표 전용: 4줄(40개 재료 투입 · 400개 산출)이 아닌 상급 아비도스
-  // 1개 제작 기준 비용. 제작 골드도 배치당 금액을 산출 개수(400)로 나눠서 반영
+  // 1개 제작 기준 비용. getAbidosCraftGold()는 게임 화면 기준 "1회 제작(10개 산출)"
+  // 비용이므로, computeAbidosProfit의 craftCost와 동일하게 x40(=4줄 전체 제작비)을
+  // 곱한 뒤 산출 개수(400)로 나눠야 1개당 비용이 정확함
   function computeUnitCraftGold(pct){
-    return getAbidosCraftGold((pct != null ? pct : ABIDOS_CURRENT.pct) / 100) / ABIDOS_OUTPUT_PER_BATCH;
+    const pctRate = (pct != null ? pct : ABIDOS_CURRENT.pct) / 100;
+    const craftCost = Math.floor(520 * (1 - pctRate) * 40);
+    return craftCost / ABIDOS_OUTPUT_PER_BATCH;
   }
   function computeUnitTotalCost(method, pct){
     const gen = getAbidosChainPrice(method.chain, 0);
