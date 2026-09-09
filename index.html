@@ -942,13 +942,14 @@ return '<div class="market-card market-card-combo">'
     const diff = craftNet - rawSaleNet;
     return { profit, craftNet, rawSaleNet, diff, isCraftBetter: diff >= 0 };
   }
-  // 400개 배치 단위 기준 골드 - 이 폭 안이면 시세가 조금만 움직여도 우열이
-  // 뒤집힐 수 있어 "제작 추천"/"비추천"으로 단정하지 않고 "근소"로 구분해 보여줌
+  // 400개 배치 단위 기준 골드 - 제작 쪽이 근소하게(0~threshold) 앞서는 경우는
+  // 시세가 조금만 움직여도 뒤집힐 수 있어 "제작 추천"으로 단정하지 않고
+  // "근소 우위"로 구분해 보여줌. 반대로 밀리는 경우는 그대로 비추천/재료 판매 추천.
   const ABIDOS_MARGIN_THRESHOLD = 500;
   function abidosMarginTier(value){
     if(value > ABIDOS_MARGIN_THRESHOLD) return 'craft';
-    if(value < -ABIDOS_MARGIN_THRESHOLD) return 'raw';
-    return value >= 0 ? 'marginal-up' : 'marginal-down';
+    if(value >= 0) return 'marginal-up';
+    return 'raw';
   }
   async function fetchAbidosSharedPrices(force){
     try{
@@ -989,7 +990,7 @@ return '<div class="market-card market-card-combo">'
     const tooltip = `재료 판매 시(수수료 5% 제외) ${fmtAbi(rec.rawSaleNet)}G · 제작 판매 시 ${fmtAbi(rec.craftNet)}G — ${winner}가 ${fmtAbi(Math.abs(rec.diff))}G 이득입니다.`
       + (tier.startsWith('marginal') ? ' 다만 차이가 작아 시세가 조금만 움직여도 뒤집힐 수 있어요.' : '');
     const cls = tier==='craft' ? 'abi-rec-craft' : tier==='raw' ? 'abi-rec-raw' : 'abi-rec-marginal';
-    const label = tier==='craft' ? '제작 추천' : tier==='raw' ? '재료 판매 추천' : (tier==='marginal-up' ? '근소 우위' : '근소 열위');
+    const label = tier==='craft' ? '제작 추천' : tier==='raw' ? '재료 판매 추천' : '근소 우위';
     return `<span class="abi-rec ${cls}" title="${escAttr(tooltip)}">${label}</span>`;
   }
 
@@ -1022,7 +1023,7 @@ return '<div class="market-card market-card-combo">'
           ? `<span class="abi-rec abi-rec-craft" title="재료를 지금 시세로 사서 제작해 팔면 ${fmtAbi(r.profit)}G의 순수익이 남습니다.">제작 추천</span>`
           : tier==='raw'
           ? `<span class="abi-rec abi-rec-raw" title="재료를 지금 시세로 사서 제작하면 오히려 ${fmtAbi(Math.abs(r.profit))}G 손해입니다. 사서까지 만들 필요는 없어요.">비추천</span>`
-          : `<span class="abi-rec abi-rec-marginal" title="재료를 지금 시세로 사서 제작해 팔면 ${fmtAbi(r.profit)}G의 순수익이 남습니다.${marginalNote}">${tier==='marginal-up' ? '근소 우위' : '근소 열위'}</span>`;
+          : `<span class="abi-rec abi-rec-marginal" title="재료를 지금 시세로 사서 제작해 팔면 ${fmtAbi(r.profit)}G의 순수익이 남습니다.${marginalNote}">근소 우위</span>`;
         return `<tr><td>${i+1}</td><td>${r.name}</td><td class="${abiCellClass(r.profit)}">${fmtAbi(r.profit)}G</td><td>${badge}</td></tr>`;
       }).join('')}
     `;
