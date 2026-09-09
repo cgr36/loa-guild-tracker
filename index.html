@@ -331,6 +331,7 @@
 .abi-rec{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10.5px;line-height:14px;font-weight:700;white-space:nowrap;cursor:help;}
 .abi-rec-craft{background:rgba(111,168,255,0.15);color:#6fa8ff;}
 .abi-rec-raw{background:rgba(255,107,129,0.15);color:var(--rose);}
+.abi-rec-marginal{background:rgba(228,182,90,0.18);color:var(--gold);}
 .abi-note{font-size:11px;color:var(--text-faint);margin-top:6px;}
 .abi-select-label{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-dim);font-weight:700;}
 .abi-select-label select{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12.5px;}
@@ -941,6 +942,14 @@ return '<div class="market-card market-card-combo">'
     const diff = craftNet - rawSaleNet;
     return { profit, craftNet, rawSaleNet, diff, isCraftBetter: diff >= 0 };
   }
+  // 400개 배치 단위 기준 골드 - 이 폭 안이면 시세가 조금만 움직여도 우열이
+  // 뒤집힐 수 있어 "제작 추천"/"비추천"으로 단정하지 않고 "근소"로 구분해 보여줌
+  const ABIDOS_MARGIN_THRESHOLD = 500;
+  function abidosMarginTier(value){
+    if(value > ABIDOS_MARGIN_THRESHOLD) return 'craft';
+    if(value < -ABIDOS_MARGIN_THRESHOLD) return 'raw';
+    return value >= 0 ? 'marginal-up' : 'marginal-down';
+  }
   async function fetchAbidosSharedPrices(force){
     try{
       const res = await fetch(force ? '/api/abidos-prices?force=1' : '/api/abidos-prices');
@@ -975,10 +984,12 @@ return '<div class="market-card market-card-combo">'
   }
 
   function abidosRecommendationCellHtml(rec){
-    const label = rec.isCraftBetter ? '제작 추천' : '재료 판매 추천';
-    const cls = rec.isCraftBetter ? 'abi-rec-craft' : 'abi-rec-raw';
-    const winner = rec.isCraftBetter ? '제작 판매' : '재료 판매';
-    const tooltip = `재료 판매 시(수수료 5% 제외) ${fmtAbi(rec.rawSaleNet)}G · 제작 판매 시 ${fmtAbi(rec.craftNet)}G — ${winner}가 ${fmtAbi(Math.abs(rec.diff))}G 이득입니다.`;
+    const tier = abidosMarginTier(rec.diff);
+    const winner = rec.diff >= 0 ? '제작 판매' : '재료 판매';
+    const tooltip = `재료 판매 시(수수료 5% 제외) ${fmtAbi(rec.rawSaleNet)}G · 제작 판매 시 ${fmtAbi(rec.craftNet)}G — ${winner}가 ${fmtAbi(Math.abs(rec.diff))}G 이득입니다.`
+      + (tier.startsWith('marginal') ? ' 다만 차이가 작아 시세가 조금만 움직여도 뒤집힐 수 있어요.' : '');
+    const cls = tier==='craft' ? 'abi-rec-craft' : tier==='raw' ? 'abi-rec-raw' : 'abi-rec-marginal';
+    const label = tier==='craft' ? '제작 추천' : tier==='raw' ? '재료 판매 추천' : (tier==='marginal-up' ? '근소 우위' : '근소 열위');
     return `<span class="abi-rec ${cls}" title="${escAttr(tooltip)}">${label}</span>`;
   }
 
@@ -1005,9 +1016,13 @@ return '<div class="market-card market-card-combo">'
     $('abiRankTable').innerHTML = `
       <tr><th>순위</th><th>제작 방식</th><th>순수익</th><th>추천</th></tr>
       ${boughtRanked.map((r,i)=>{
-        const badge = r.profit >= 0
+        const tier = abidosMarginTier(r.profit);
+        const marginalNote = tier.startsWith('marginal') ? ' 다만 차이가 작아 시세가 조금만 움직여도 뒤집힐 수 있어요.' : '';
+        const badge = tier==='craft'
           ? `<span class="abi-rec abi-rec-craft" title="재료를 지금 시세로 사서 제작해 팔면 ${fmtAbi(r.profit)}G의 순수익이 남습니다.">제작 추천</span>`
-          : `<span class="abi-rec abi-rec-raw" title="재료를 지금 시세로 사서 제작하면 오히려 ${fmtAbi(Math.abs(r.profit))}G 손해입니다. 사서까지 만들 필요는 없어요.">비추천</span>`;
+          : tier==='raw'
+          ? `<span class="abi-rec abi-rec-raw" title="재료를 지금 시세로 사서 제작하면 오히려 ${fmtAbi(Math.abs(r.profit))}G 손해입니다. 사서까지 만들 필요는 없어요.">비추천</span>`
+          : `<span class="abi-rec abi-rec-marginal" title="재료를 지금 시세로 사서 제작해 팔면 ${fmtAbi(r.profit)}G의 순수익이 남습니다.${marginalNote}">${tier==='marginal-up' ? '근소 우위' : '근소 열위'}</span>`;
         return `<tr><td>${i+1}</td><td>${r.name}</td><td class="${abiCellClass(r.profit)}">${fmtAbi(r.profit)}G</td><td>${badge}</td></tr>`;
       }).join('')}
     `;
