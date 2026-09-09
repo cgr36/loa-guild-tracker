@@ -334,6 +334,7 @@
 .abi-note{font-size:11px;color:var(--text-faint);margin-top:6px;}
 .abi-select-label{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-dim);font-weight:700;}
 .abi-select-label select{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12.5px;}
+.abi-manual-price-input{width:90px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12.5px;}
 .abi-sellprice{display:inline-block;padding:3px 10px;border-radius:10px;background:rgba(228,182,90,0.18);color:var(--gold-bright);font-weight:900;font-size:14px;}
 </style>
 </head>
@@ -398,7 +399,14 @@
     <div class="toolbar">
       <button class="btn-ghost" id="btnAbidosRefresh">🔄 갱신하기</button>
       <label class="abi-select-label">제작 수수료 감소 <select id="abiPctSelect"></select></label>
-      <span class="abi-select-label">실시간 상급 아비도스 융화 재료 거래가 <b id="abiSellPriceLabel" class="abi-sellprice">N/A</b></span>
+      <label class="abi-select-label">판매가 기준
+        <select id="abiPriceModeSelect">
+          <option value="live">실시간 최저가</option>
+          <option value="manual">직접 입력</option>
+        </select>
+      </label>
+      <input type="number" id="abiManualPriceInput" class="abi-manual-price-input" placeholder="가격(G)" min="1" style="display:none;">
+      <span class="abi-select-label">상급 아비도스 융화 재료 거래가 <b id="abiSellPriceLabel" class="abi-sellprice">N/A</b></span>
     </div>
     <div class="abi-meta" id="abiMeta"></div>
     <div class="abi-side-by-side">
@@ -900,6 +908,11 @@ return '<div class="market-card market-card-combo">'
   const ABIDOS_MARKET_FEE = 0.05; // 거래소 판매 수수료 (실제 게임 화면 검증: 196G -> 수수료 10 = 5%)
   const ABIDOS_CRIT_RATE = 0.07; // 대성공 확률 (고정)
   let abidosSellPrice = null; // 상급 아비도스 융화 재료 실시간 최저가 (조회 실패 시 null -> N/A 표시)
+  let abidosPriceMode = 'live'; // 'live'(실시간 최저가) | 'manual'(직접 입력)
+  let abidosManualPrice = null; // 직접 입력한 판매가
+  function getAbidosEffectivePrice(){
+    return abidosPriceMode === 'manual' ? abidosManualPrice : abidosSellPrice;
+  }
   // 시트 원본 셀 수식으로 검증됨:
   // N11(수수료 제외 값) = price - ROUND(price*5%)
   // O11(아비도스 총수익) = N11*400*(1+5*(1+대성공확률)/100)
@@ -967,8 +980,9 @@ return '<div class="market-card market-card-combo">'
   }
 
   function renderAbidosRankTable(){
-    if(abidosSellPrice == null){
-      $('abiSellPriceLabel').textContent = 'N/A';
+    const price = getAbidosEffectivePrice();
+    $('abiSellPriceLabel').textContent = price != null ? `${fmtAbi(price)}G` : 'N/A';
+    if(price == null){
       $('abiRankTable').innerHTML = `
         <tr><th>순위</th><th>제작 방식</th><th>순수익</th><th>추천</th></tr>
         ${ABIDOS_METHODS.map(m=>`<tr><td>-</td><td>${m.name}</td><td>N/A</td><td>N/A</td></tr>`).join('')}
@@ -979,8 +993,6 @@ return '<div class="market-card market-card-combo">'
       `;
       return;
     }
-    const price = abidosSellPrice;
-    $('abiSellPriceLabel').textContent = `${fmtAbi(price)}G`;
 
     // 재료를 지금 시세로 새로 사서 제작한다고 가정했을 때의 우선순위
     const boughtRanked = ABIDOS_METHODS.map(m=>({
@@ -1022,7 +1034,8 @@ return '<div class="market-card market-card-combo">'
 
   const ABIDOS_MATRIX_PCT_RANGE = [12,13,14,15,16,17];
   function renderAbidosMatrixGrid(){
-    if(abidosSellPrice == null){
+    const effectivePrice = getAbidosEffectivePrice();
+    if(effectivePrice == null){
       $('abiMatrixGrid').innerHTML = ABIDOS_METHODS.map(m=>{
         const rowsHtml = ABIDOS_MATRIX_PCT_RANGE.map(pct=>{
           const isCurrent = pct === ABIDOS_CURRENT.pct;
@@ -1035,7 +1048,7 @@ return '<div class="market-card market-card-combo">'
       }).join('');
       return;
     }
-    const prices = [abidosSellPrice-1, abidosSellPrice, abidosSellPrice+1, abidosSellPrice+2];
+    const prices = [effectivePrice-1, effectivePrice, effectivePrice+1, effectivePrice+2];
     $('abiMatrixGrid').innerHTML = ABIDOS_METHODS.map(m=>{
       const rowsHtml = ABIDOS_MATRIX_PCT_RANGE.map(pct=>{
         const isCurrent = pct === ABIDOS_CURRENT.pct;
@@ -2219,6 +2232,21 @@ $('btnAbidosRefresh').addEventListener('click', ()=>{
     ABIDOS_CURRENT.pct = Number(pctSelect.value);
     renderAbidosMeta();
     renderAbidosMethodsTable();
+    renderAbidosRankTable();
+    renderAbidosMatrixGrid();
+  });
+
+  const priceModeSelect = $('abiPriceModeSelect');
+  const manualPriceInput = $('abiManualPriceInput');
+  priceModeSelect.addEventListener('change', ()=>{
+    abidosPriceMode = priceModeSelect.value;
+    manualPriceInput.style.display = abidosPriceMode === 'manual' ? 'inline-block' : 'none';
+    renderAbidosRankTable();
+    renderAbidosMatrixGrid();
+  });
+  manualPriceInput.addEventListener('input', ()=>{
+    const v = Number(manualPriceInput.value);
+    abidosManualPrice = (manualPriceInput.value !== '' && !isNaN(v) && v > 0) ? Math.round(v) : null;
     renderAbidosRankTable();
     renderAbidosMatrixGrid();
   });
