@@ -278,7 +278,9 @@
   @media (max-width: 520px){ .market-grid{grid-template-columns:repeat(1, minmax(0, 1fr));} }
   .market-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;}
   .market-card:hover{border-color:var(--violet);}
-  .mc-name{font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mc-head{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+  .mc-icon{width:24px;height:24px;border-radius:6px;object-fit:cover;flex-shrink:0;background:var(--surface-2);}
+  .mc-name{font-size:12.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .mc-price{font-size:16px;font-weight:900;color:var(--gold-bright);}
   .mc-diff{font-size:11.5px;font-weight:700;margin-left:6px;}
   .mc-diff.up{color:#e2637a;}
@@ -295,6 +297,7 @@
 .mc-combo-col:hover{background:var(--surface);}
 .mc-combo-col:hover .mc-combo-label{color:var(--violet);}
 .mc-combo-label{font-size:11px;color:var(--text-dim);font-weight:700;margin-bottom:3px;}
+.mc-icon-sm{width:22px;height:22px;border-radius:6px;object-fit:cover;background:var(--surface);margin-bottom:3px;}
 .mc-combo-col .mc-price{font-size:13.5px;white-space:nowrap;}
 .mc-combo-col .mc-diff{font-size:10px;margin-left:0;display:block;margin-top:2px;}
 
@@ -777,8 +780,10 @@ return { priceText: priceText, diffHtml: diffHtml, sub: sub, todayVal: todayVal 
 
 function marketCardHtml(name){
 const d = computeMarketDisplay(name);
+const icon = marketLive[name] && marketLive[name].icon;
+const iconHtml = icon ? '<img class="mc-icon" src="' + escAttr(icon) + '" alt="" onerror="this.remove()">' : '';
 return '<div class="market-card" data-market-card="' + escAttr(name) + '">'
-+ '<div class="mc-name">' + name + '</div>'
++ '<div class="mc-head">' + iconHtml + '<div class="mc-name">' + name + '</div></div>'
 + '<div><span class="mc-price">' + d.priceText + '</span>' + (d.todayVal!=null?d.diffHtml:'') + '</div>'
 + '<div class="mc-sub">' + d.sub + '</div>'
 + '</div>';
@@ -787,7 +792,10 @@ return '<div class="market-card" data-market-card="' + escAttr(name) + '">'
 function comboCardHtml(combo){
 const cols = combo.items.map(function(item){
 const d = computeMarketDisplay(item.name);
+const icon = marketLive[item.name] && marketLive[item.name].icon;
+const iconHtml = icon ? '<img class="mc-icon mc-icon-sm" src="' + escAttr(icon) + '" alt="" onerror="this.remove()">' : '';
 return '<div class="mc-combo-col" data-market-card="' + escAttr(item.name) + '">'
++ iconHtml
 + '<span class="mc-combo-label">' + escAttr(item.size) + '</span>'
 + '<span class="mc-price">' + d.priceText + '</span>' + (d.todayVal!=null?d.diffHtml:'')
 + '</div>';

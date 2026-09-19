@@ -94,7 +94,11 @@ async function fetchMarketLiveItem(name, category, grade) {
   const items = (data && data.Items) || [];
   const found = items.find((it) => it.Name === name) || items[0];
   if (!found) return null;
-  return { recentPrice: found.RecentPrice != null ? found.RecentPrice : null, ydayAvgPrice: found.YDayAvgPrice != null ? found.YDayAvgPrice : null };
+  return {
+    recentPrice: found.RecentPrice != null ? found.RecentPrice : null,
+    ydayAvgPrice: found.YDayAvgPrice != null ? found.YDayAvgPrice : null,
+    icon: found.Icon || null,
+  };
 }
 
 async function fetchAuctionLiveItem(name, category) {
@@ -111,7 +115,10 @@ async function fetchAuctionLiveItem(name, category) {
   const items = (data && data.Items) || [];
   const exact = items.filter((it) => it.Name === name && it.AuctionInfo && typeof it.AuctionInfo.BuyPrice === 'number');
   if (exact.length === 0) return null;
-  return { minBuyPrice: Math.min(...exact.map((it) => it.AuctionInfo.BuyPrice)) };
+  return {
+    minBuyPrice: Math.min(...exact.map((it) => it.AuctionInfo.BuyPrice)),
+    icon: (exact.find((it) => it.Icon) || {}).Icon || null,
+  };
 }
 
 export default async function handler(req, res) {
