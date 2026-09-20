@@ -536,9 +536,7 @@
           </label>
         </div>
         <div class="munga-synergy-row">
-          <span class="munga-synergy-title">공이속 버프 (중복 체크 가능)</span>
-          <label class="munga-synergy-item"><input type="checkbox" class="eumdol-buff-cb" data-atk="5" data-move="5"> 공이속 만찬 (+5%)</label>
-          <label class="munga-synergy-item"><input type="checkbox" class="eumdol-buff-cb" data-atk="9" data-move="9"> 서포터 버프 갈망 (+9%)</label>
+          <span class="munga-synergy-title">추가 공이속 버프 (서포터 갈망·공이속 만찬은 상시 반영됨, 중복 체크 가능)</span>
           <label class="munga-synergy-item"><input type="checkbox" class="eumdol-buff-cb" data-atk="3" data-move="0"> 공속 음식 (+3%)</label>
         </div>
         <div class="munga-result-grid munga-hero-grid" id="eumdolHeroGrid"></div>
@@ -1502,6 +1500,17 @@ return '<div class="market-card market-card-combo">'
       arkAtk += 12; arkMove += 12;
       arkDetail.push({ name: '깨달음: 질풍노도', atk: 12, move: 12 });
     }
+    if(className0 === '스트라이커'){
+      arkAtk += 8;
+      arkDetail.push({ name: '스킬: 번개의 속삭임 (공격 속도)', atk: 8, move: 0 });
+    }
+
+    // 항상 켜져 있다고 가정하는 상시 버프 (서포터 갈망, 공이속 만찬)
+    const buffAtk = 9 + 5, buffMove = 9 + 5;
+    const buffDetail = [
+      { name: '버프: 서포터 갈망', atk: 9, move: 9 },
+      { name: '버프: 공이속 만찬', atk: 5, move: 5 },
+    ];
 
     const equipList = Array.isArray(data.equipment) ? data.equipment : [];
     let equipAtk = 0, equipMove = 0;
@@ -1540,6 +1549,7 @@ return '<div class="market-card market-card-combo">'
       engineAtk: engineAtk, engineMove: engineMove, engraveDetail: engraveDetail,
       arkAtk: arkAtk, arkMove: arkMove, arkDetail: arkDetail,
       equipAtk: equipAtk, equipMove: equipMove, equipDetail: equipDetail,
+      buffAtk: buffAtk, buffMove: buffMove, buffDetail: buffDetail,
       eumdolLevel: eumdolLevel,
     };
   }
@@ -1589,8 +1599,8 @@ return '<div class="market-card market-card-combo">'
       acc.move += parseFloat(cb.dataset.move) || 0;
       return acc;
     }, { atk: 0, move: 0 });
-    const totalAtk = eumdolBreakdown.statAtk + eumdolBreakdown.engineAtk + eumdolBreakdown.arkAtk + eumdolBreakdown.equipAtk + manualAtk + buffSum.atk;
-    const totalMove = eumdolBreakdown.statMove + eumdolBreakdown.engineMove + eumdolBreakdown.arkMove + eumdolBreakdown.equipMove + manualMove + buffSum.move;
+    const totalAtk = eumdolBreakdown.statAtk + eumdolBreakdown.engineAtk + eumdolBreakdown.arkAtk + eumdolBreakdown.equipAtk + eumdolBreakdown.buffAtk + manualAtk + buffSum.atk;
+    const totalMove = eumdolBreakdown.statMove + eumdolBreakdown.engineMove + eumdolBreakdown.arkMove + eumdolBreakdown.equipMove + eumdolBreakdown.buffMove + manualMove + buffSum.move;
     const levelSel = $('eumdolLevelSelect').value;
     const levelDetected = !!(eumdolBreakdown.eumdolLevel && eumdolBreakdown.eumdolLevel.detected);
     const lv = levelDetected ? eumdolBreakdown.eumdolLevel : EUMDOL_LEVELS[levelSel];
@@ -1660,6 +1670,7 @@ return '<div class="market-card market-card-combo">'
     b.engraveDetail.forEach(function(d){ rows.push(`<tr><td>각인</td><td>${escAttr(d.name || '')}</td><td class="abi-total">${d.atk.toFixed(2)}%</td><td class="abi-total">${d.move.toFixed(2)}%</td></tr>`); });
     b.arkDetail.forEach(function(d){ rows.push(`<tr><td>아크패시브</td><td>${escAttr(d.name || '')}</td><td class="abi-total">${d.atk.toFixed(2)}%</td><td class="abi-total">${d.move.toFixed(2)}%</td></tr>`); });
     b.equipDetail.forEach(function(d){ rows.push(`<tr><td>장비</td><td>${escAttr(d.name || '')}</td><td class="abi-total">${d.atk.toFixed(2)}%</td><td class="abi-total">${d.move.toFixed(2)}%</td></tr>`); });
+    b.buffDetail.forEach(function(d){ rows.push(`<tr><td>버프</td><td>${escAttr(d.name || '')}</td><td class="abi-total">${d.atk.toFixed(2)}%</td><td class="abi-total">${d.move.toFixed(2)}%</td></tr>`); });
     $('eumdolSourceTable').innerHTML = `<tr><th>구분</th><th>내역</th><th>공격속도</th><th>이동속도</th></tr>${rows.join('')}`;
   }
 
