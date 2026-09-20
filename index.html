@@ -357,6 +357,12 @@
 .munga-hero-grid{margin-bottom:24px;}
 .munga-result-card.mrc-over .mrc-value{color:var(--rose);}
 .munga-result-card.mrc-under .mrc-value{color:#6fa8ff;}
+.munga-columns{display:flex;gap:20px;align-items:flex-start;}
+.munga-columns .munga-col{flex:1;min-width:0;}
+@media (max-width:900px){ .munga-columns{flex-direction:column;} }
+.munga-stat-edit-btn{margin-left:6px;font-size:10.5px;font-weight:700;color:var(--violet);background:none;border:1px solid var(--border);border-radius:6px;padding:1px 6px;cursor:pointer;font-family:inherit;}
+.munga-stat-edit-btn:hover{background:var(--surface-2);}
+.munga-stat-override-tag{color:var(--gold);font-weight:700;}
 .abi-sellprice{display:inline-block;padding:3px 10px;border-radius:10px;background:rgba(228,182,90,0.18);color:var(--gold-bright);font-weight:900;font-size:14px;}
 </style>
 </head>
@@ -473,76 +479,82 @@
     <pre class="munga-debug-pre" id="mungaDebugPre" style="display:none;"></pre>
 
     <div class="munga-body" id="mungaBody" style="display:none;">
-      <div class="munga-result-grid munga-hero-grid" id="mungaHeroGrid"></div>
+      <div class="munga-columns">
+        <div class="munga-col">
+          <div class="munga-result-grid munga-hero-grid" id="mungaHeroGrid"></div>
 
-      <div class="abi-section">
-        <div class="abi-section-title">치명타 적중률 요약 <span id="mungaCharMeta" class="munga-char-meta"></span></div>
-        <div class="abi-table-wrap"><table class="abi-table" id="mungaSourceTable"></table></div>
-        <div class="munga-manual-row">
-          <label class="abi-select-label">캐릭터 자체 시너지 직접 입력
-            <input type="number" id="mungaManualExtra" class="abi-manual-price-input" placeholder="0" value="0" step="0.1">%
-          </label>
-        </div>
-      </div>
+          <div class="abi-section">
+            <div class="abi-section-title">치명타 적중률 요약 <span id="mungaCharMeta" class="munga-char-meta"></span></div>
+            <div class="abi-table-wrap"><table class="abi-table" id="mungaSourceTable"></table></div>
+            <div class="munga-manual-row">
+              <label class="abi-select-label">캐릭터 자체 시너지 직접 입력
+                <input type="number" id="mungaManualExtra" class="abi-manual-price-input" placeholder="0" value="0" step="0.1">%
+              </label>
+            </div>
+          </div>
 
-      <div class="abi-section">
-        <div class="abi-section-title">뭉툭한 가시 효율 시뮬레이터</div>
-        <div class="toolbar">
-          <label class="abi-select-label">뭉가 레벨
-            <select id="mungaLevelSelect">
-              <option value="1">1Lv (전환율 125%)</option>
-              <option value="2" selected>2Lv (전환율 150%)</option>
-            </select>
-          </label>
-          <label class="abi-select-label">치명타 피해량(치피)
-            <select id="mungaChipiSelect">
-              <option value="200">기본 (200%)</option>
-              <option value="250">예둔 채용 (250%)</option>
-            </select>
-          </label>
+          <div class="abi-section">
+            <div class="abi-section-title">뭉툭한 가시 효율 시뮬레이터</div>
+            <div class="toolbar">
+              <label class="abi-select-label">뭉가 레벨
+                <select id="mungaLevelSelect">
+                  <option value="1">1Lv (전환율 125%)</option>
+                  <option value="2" selected>2Lv (전환율 150%)</option>
+                </select>
+              </label>
+              <label class="abi-select-label">치명타 피해량(치피)
+                <select id="mungaChipiSelect">
+                  <option value="200">기본 (200%)</option>
+                  <option value="250">예둔 채용 (250%)</option>
+                </select>
+              </label>
+            </div>
+            <div class="munga-synergy-row">
+              <span class="munga-synergy-title">파티 치적 시너지 (동일 직업 제외, 중복 체크 가능)</span>
+              <label class="munga-synergy-item"><input type="checkbox" class="munga-synergy-cb" value="10"> 배틀마스터 (+10%)</label>
+              <label class="munga-synergy-item"><input type="checkbox" class="munga-synergy-cb" value="10"> 건슬링어 (+10%)</label>
+              <label class="munga-synergy-item"><input type="checkbox" class="munga-synergy-cb" value="10"> 스트라이커 (+10%)</label>
+              <label class="munga-synergy-item"><input type="checkbox" class="munga-synergy-cb" value="10"> 데빌헌터 (+10%)</label>
+              <label class="munga-synergy-item"><input type="checkbox" class="munga-synergy-cb" value="10"> 기상술사 (+10%)</label>
+              <label class="munga-synergy-item"><input type="checkbox" class="munga-synergy-cb" value="10"> 아르카나 (+10%)</label>
+            </div>
+            <div class="munga-result-grid" id="mungaResultGrid"></div>
+          </div>
         </div>
-        <div class="munga-synergy-row">
-          <span class="munga-synergy-title">파티 치적 시너지 (동일 직업 제외, 중복 체크 가능)</span>
-          <label class="munga-synergy-item"><input type="checkbox" class="munga-synergy-cb" value="10"> 배틀마스터 (+10%)</label>
-          <label class="munga-synergy-item"><input type="checkbox" class="munga-synergy-cb" value="10"> 건슬링어 (+10%)</label>
-          <label class="munga-synergy-item"><input type="checkbox" class="munga-synergy-cb" value="10"> 스트라이커 (+10%)</label>
-          <label class="munga-synergy-item"><input type="checkbox" class="munga-synergy-cb" value="10"> 데빌헌터 (+10%)</label>
-          <label class="munga-synergy-item"><input type="checkbox" class="munga-synergy-cb" value="10"> 기상술사 (+10%)</label>
-          <label class="munga-synergy-item"><input type="checkbox" class="munga-synergy-cb" value="10"> 아르카나 (+10%)</label>
-        </div>
-        <div class="munga-result-grid" id="mungaResultGrid"></div>
-      </div>
 
-      <div class="munga-result-grid munga-hero-grid" id="eumdolHeroGrid"></div>
+        <div class="munga-col">
+          <div class="munga-result-grid munga-hero-grid" id="eumdolHeroGrid"></div>
 
-      <div class="abi-section">
-        <div class="abi-section-title">공이속 요약</div>
-        <div class="abi-table-wrap"><table class="abi-table" id="eumdolSourceTable"></table></div>
-        <div class="munga-manual-row">
-          <label class="abi-select-label">추가 공격속도 직접 입력
-            <input type="number" id="eumdolManualAtk" class="abi-manual-price-input" placeholder="0" value="0" step="0.1">%
-          </label>
-          <label class="abi-select-label">추가 이동속도 직접 입력
-            <input type="number" id="eumdolManualMove" class="abi-manual-price-input" placeholder="0" value="0" step="0.1">%
-          </label>
-        </div>
-      </div>
+          <div class="abi-section">
+            <div class="abi-section-title">공이속 요약</div>
+            <div class="abi-table-wrap"><table class="abi-table" id="eumdolSourceTable"></table></div>
+            <div class="munga-manual-row">
+              <label class="abi-select-label">추가 공격속도 직접 입력
+                <input type="number" id="eumdolManualAtk" class="abi-manual-price-input" placeholder="0" value="0" step="0.1">%
+              </label>
+              <label class="abi-select-label">추가 이동속도 직접 입력
+                <input type="number" id="eumdolManualMove" class="abi-manual-price-input" placeholder="0" value="0" step="0.1">%
+              </label>
+            </div>
+          </div>
 
-      <div class="abi-section">
-        <div class="abi-section-title">음속 돌파 효율 시뮬레이터</div>
-        <div class="toolbar">
-          <label class="abi-select-label">음돌 레벨
-            <select id="eumdolLevelSelect">
-              <option value="1">1Lv (전환율 15%)</option>
-              <option value="2" selected>2Lv (전환율 30%)</option>
-            </select>
-          </label>
+          <div class="abi-section">
+            <div class="abi-section-title">음속 돌파 효율 시뮬레이터</div>
+            <div class="toolbar">
+              <label class="abi-select-label">음돌 레벨
+                <select id="eumdolLevelSelect">
+                  <option value="1">1Lv (전환율 15%)</option>
+                  <option value="2" selected>2Lv (전환율 30%)</option>
+                </select>
+              </label>
+            </div>
+            <div class="munga-synergy-row">
+              <span class="munga-synergy-title">추가 공이속 버프 (서포터 갈망·공이속 만찬은 상시 반영됨, 중복 체크 가능)</span>
+              <label class="munga-synergy-item"><input type="checkbox" class="eumdol-buff-cb" data-atk="3" data-move="0"> 공속 음식 (+3%)</label>
+            </div>
+            <div class="munga-result-grid" id="eumdolResultGrid"></div>
+          </div>
         </div>
-        <div class="munga-synergy-row">
-          <span class="munga-synergy-title">추가 공이속 버프 (서포터 갈망·공이속 만찬은 상시 반영됨, 중복 체크 가능)</span>
-          <label class="munga-synergy-item"><input type="checkbox" class="eumdol-buff-cb" data-atk="3" data-move="0"> 공속 음식 (+3%)</label>
-        </div>
-        <div class="munga-result-grid" id="eumdolResultGrid"></div>
       </div>
     </div>
   </div>
@@ -1268,6 +1280,8 @@ return '<div class="market-card market-card-combo">'
 
   let mungaBreakdown = null; // 마지막으로 불러온 캐릭터의 치적 breakdown
   let eumdolBreakdown = null; // 마지막으로 불러온 캐릭터의 공이속 breakdown
+  let mungaCritOverride = null; // "수정" 버튼으로 직접 입력한 치명 스탯 값 (null이면 API 자동 감지값 사용)
+  let eumdolSwiftOverride = null; // "수정" 버튼으로 직접 입력한 신속 스탯 값 (null이면 API 자동 감지값 사용)
 
   // 실제 API 응답은 설명 텍스트 안에 <FONT COLOR='...'> 같은 HTML 태그가 섞여
   // 있어서(색상 코드에 숫자가 포함됨), 태그를 공백으로 치환해 순수 텍스트로 만든
@@ -1417,7 +1431,7 @@ return '<div class="market-card market-card-combo">'
 
   function mungaParseBreakdown(data){
     const profile = data.profile || {};
-    const critStat = mungaFindStat(profile, '치명');
+    const critStat = mungaCritOverride !== null ? mungaCritOverride : mungaFindStat(profile, '치명');
     const statPct = critStat / MUNGA_STAT_PER_PERCENT;
 
     const engraveEffects = (data.engravings && (data.engravings.Effects || data.engravings.ArkPassiveEffects)) || [];
@@ -1542,8 +1556,14 @@ return '<div class="market-card market-card-combo">'
     const stats = (profile && profile.Stats) || [];
     const swiftStat = stats.find(function(s){ return s.Type === '신속'; });
     const swiftTooltipText = swiftStat && Array.isArray(swiftStat.Tooltip) ? swiftStat.Tooltip.join(' ') : ((swiftStat && swiftStat.Tooltip) || '');
-    const statSpeed = mungaExtractSpeedPercents(swiftTooltipText);
-    const swiftStatValue = swiftStat ? parseFloat((swiftStat.Value || '0').toString().replace(/,/g,'')) : 0;
+    // "수정" 버튼으로 신속 스탯을 직접 입력한 경우엔 실제 툴팁 텍스트가 없으므로
+    // 신속 스탯 -> 공이속% 변환 계수(SWIFT_STAT_PER_PERCENT)로 근사해서 계산.
+    const swiftStatValue = eumdolSwiftOverride !== null
+      ? eumdolSwiftOverride
+      : (swiftStat ? parseFloat((swiftStat.Value || '0').toString().replace(/,/g,'')) : 0);
+    const statSpeed = eumdolSwiftOverride !== null
+      ? { atk: swiftStatValue / SWIFT_STAT_PER_PERCENT, move: swiftStatValue / SWIFT_STAT_PER_PERCENT }
+      : mungaExtractSpeedPercents(swiftTooltipText);
 
     const engraveEffects = (data.engravings && (data.engravings.Effects || data.engravings.ArkPassiveEffects)) || [];
     let engineAtk = 0, engineMove = 0;
@@ -1742,7 +1762,8 @@ return '<div class="market-card market-card-combo">'
   function renderMungaBreakdown(){
     const b = mungaBreakdown;
     $('mungaCharMeta').textContent = `${b.characterName} · ${b.className} · 치명 스탯 ${fmtAbi(Math.round(b.critStat))}`;
-    const rows = [`<tr><td>스탯</td><td>치명 스탯 ${fmtAbi(Math.round(b.critStat))}</td><td class="abi-total">+${b.statPct.toFixed(2)}%</td></tr>`];
+    const critOverrideTag = mungaCritOverride !== null ? ' <span class="munga-stat-override-tag">(수정됨)</span>' : '';
+    const rows = [`<tr><td>스탯</td><td>치명 스탯 ${fmtAbi(Math.round(b.critStat))}${critOverrideTag} <button type="button" class="munga-stat-edit-btn" data-kind="crit">수정</button></td><td class="abi-total">+${b.statPct.toFixed(2)}%</td></tr>`];
     b.engraveDetail.forEach(function(d){ rows.push(`<tr><td>각인</td><td>${escAttr(d.name || '')}</td><td class="abi-total">+${d.value.toFixed(2)}%</td></tr>`); });
     b.arkDetail.forEach(function(d){ rows.push(`<tr><td>아크패시브</td><td>${escAttr(d.name || '')}</td><td class="abi-total">+${d.value.toFixed(2)}%</td></tr>`); });
     b.equipDetail.forEach(function(d){ rows.push(`<tr><td>장비</td><td>${escAttr(d.name || '')}</td><td class="abi-total">+${d.value.toFixed(2)}%</td></tr>`); });
@@ -1781,7 +1802,8 @@ return '<div class="market-card market-card-combo">'
 
   function renderEumdolBreakdown(){
     const b = eumdolBreakdown;
-    const rows = [`<tr><td>스탯</td><td>신속 스탯 ${fmtAbi(Math.round(b.swiftStatValue))}</td><td class="abi-total">${b.statAtk.toFixed(2)}%</td><td class="abi-total">${b.statMove.toFixed(2)}%</td></tr>`];
+    const swiftOverrideTag = eumdolSwiftOverride !== null ? ' <span class="munga-stat-override-tag">(수정됨)</span>' : '';
+    const rows = [`<tr><td>스탯</td><td>신속 스탯 ${fmtAbi(Math.round(b.swiftStatValue))}${swiftOverrideTag} <button type="button" class="munga-stat-edit-btn" data-kind="swift">수정</button></td><td class="abi-total">${b.statAtk.toFixed(2)}%</td><td class="abi-total">${b.statMove.toFixed(2)}%</td></tr>`];
     b.engraveDetail.forEach(function(d){ rows.push(`<tr><td>각인</td><td>${escAttr(d.name || '')}</td><td class="abi-total">${d.atk.toFixed(2)}%</td><td class="abi-total">${d.move.toFixed(2)}%</td></tr>`); });
     b.arkDetail.forEach(function(d){ rows.push(`<tr><td>아크패시브</td><td>${escAttr(d.name || '')}</td><td class="abi-total">${d.atk.toFixed(2)}%</td><td class="abi-total">${d.move.toFixed(2)}%</td></tr>`); });
     b.equipDetail.forEach(function(d){ rows.push(`<tr><td>장비</td><td>${escAttr(d.name || '')}</td><td class="abi-total">${d.atk.toFixed(2)}%</td><td class="abi-total">${d.move.toFixed(2)}%</td></tr>`); });
@@ -1844,6 +1866,8 @@ return '<div class="market-card market-card-combo">'
     $('btnMungaDebug').style.display = 'none';
     $('btnMungaDebugCopy').style.display = 'none';
     $('mungaDebugPre').style.display = 'none';
+    mungaCritOverride = null; // 새 캐릭터 검색 시 이전 캐릭터의 스탯 수정값이 남지 않도록 초기화
+    eumdolSwiftOverride = null;
     try{
       const res = await fetch(`/api/armory?name=${encodeURIComponent(name)}&key=${encodeURIComponent(apiKey)}`);
       const data = await res.json();
@@ -1866,6 +1890,50 @@ return '<div class="market-card market-card-combo">'
       $('mungaStatus').textContent = '불러오기 실패: ' + err.message;
     }
   }
+
+  function mungaReparseAndRender(){
+    // 스탯 "수정" 버튼으로 override 값이 바뀐 뒤, 원본 API 응답을 다시 파싱해서
+    // 전체(치적+공이속)를 재계산/재렌더링.
+    if(!mungaLastRawData) return;
+    mungaBreakdown = mungaParseBreakdown(mungaLastRawData);
+    if(mungaBreakdown.mungaLevel && mungaBreakdown.mungaLevel.detected){
+      $('mungaLevelSelect').value = mungaBreakdown.mungaLevel.maxEvo >= 75 ? '2' : '1';
+    }
+    eumdolBreakdown = mungaParseSpeedBreakdown(mungaLastRawData);
+    if(eumdolBreakdown.eumdolLevel && eumdolBreakdown.eumdolLevel.detected){
+      $('eumdolLevelSelect').value = eumdolBreakdown.eumdolLevel.maxEvo >= 24 ? '2' : '1';
+    }
+    renderMungaAll();
+  }
+
+  document.addEventListener('click', function(e){
+    const btn = e.target.closest('.munga-stat-edit-btn');
+    if(!btn) return;
+    const kind = btn.dataset.kind;
+    if(kind === 'crit'){
+      const cur = mungaCritOverride !== null ? mungaCritOverride : (mungaBreakdown ? mungaBreakdown.critStat : 0);
+      const input = window.prompt('치명 스탯 값을 직접 입력하세요 (자동 감지값으로 되돌리려면 빈 칸으로 두고 확인)', fmtAbi(Math.round(cur)));
+      if(input === null) return;
+      if(input.trim() === ''){ mungaCritOverride = null; }
+      else{
+        const v = parseFloat(input.replace(/,/g, ''));
+        if(isNaN(v) || v < 0){ alert('올바른 숫자를 입력해주세요.'); return; }
+        mungaCritOverride = v;
+      }
+      mungaReparseAndRender();
+    } else if(kind === 'swift'){
+      const cur = eumdolSwiftOverride !== null ? eumdolSwiftOverride : (eumdolBreakdown ? eumdolBreakdown.swiftStatValue : 0);
+      const input = window.prompt('신속 스탯 값을 직접 입력하세요 (자동 감지값으로 되돌리려면 빈 칸으로 두고 확인)', fmtAbi(Math.round(cur)));
+      if(input === null) return;
+      if(input.trim() === ''){ eumdolSwiftOverride = null; }
+      else{
+        const v = parseFloat(input.replace(/,/g, ''));
+        if(isNaN(v) || v < 0){ alert('올바른 숫자를 입력해주세요.'); return; }
+        eumdolSwiftOverride = v;
+      }
+      mungaReparseAndRender();
+    }
+  });
 
   $('btnMungaSearch').addEventListener('click', mungaSearch);
   $('btnMungaDebug').addEventListener('click', function(){
