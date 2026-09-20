@@ -475,21 +475,17 @@
       <div class="munga-result-grid munga-hero-grid" id="mungaHeroGrid"></div>
 
       <div class="abi-section">
-        <div class="abi-section-title">치명타 적중률(치적) 소스 요약 <span id="mungaCharMeta" class="munga-char-meta"></span></div>
+        <div class="abi-section-title">치명타 적중률 요약 <span id="mungaCharMeta" class="munga-char-meta"></span></div>
         <div class="abi-table-wrap"><table class="abi-table" id="mungaSourceTable"></table></div>
         <div class="munga-manual-row">
           <label class="abi-select-label">캐릭터 자체 시너지 직접 입력
             <input type="number" id="mungaManualExtra" class="abi-manual-price-input" placeholder="0" value="0" step="0.1">%
           </label>
         </div>
-        <div class="munga-synergy-row">
-          <span class="munga-synergy-title">캐릭터 자체 스킬 효과 (중복 체크 가능)</span>
-          <label class="munga-synergy-item"><input type="checkbox" class="munga-skill-cb" value="30"> 용맹의 포효 (치적 +30%)</label>
-        </div>
       </div>
 
       <div class="abi-section">
-        <div class="abi-section-title">뭉툭한 가시(뭉가) 효율 시뮬레이터</div>
+        <div class="abi-section-title">뭉툭한 가시 효율 시뮬레이터</div>
         <div class="toolbar">
           <label class="abi-select-label">뭉가 레벨
             <select id="mungaLevelSelect">
@@ -517,7 +513,7 @@
       </div>
 
       <div class="abi-section">
-        <div class="abi-section-title">공이속(공격속도+이동속도) 소스 요약</div>
+        <div class="abi-section-title">공이속 요약</div>
         <div class="abi-table-wrap"><table class="abi-table" id="eumdolSourceTable"></table></div>
         <div class="munga-manual-row">
           <label class="abi-select-label">추가 공격속도 직접 입력
@@ -530,7 +526,7 @@
       </div>
 
       <div class="abi-section">
-        <div class="abi-section-title">음속 돌파(음돌) 효율 시뮬레이터</div>
+        <div class="abi-section-title">음속 돌파 효율 시뮬레이터</div>
         <div class="toolbar">
           <label class="abi-select-label">음돌 레벨
             <select id="eumdolLevelSelect">
@@ -544,10 +540,6 @@
           <label class="munga-synergy-item"><input type="checkbox" class="eumdol-buff-cb" data-atk="5" data-move="5"> 공이속 만찬 (+5%)</label>
           <label class="munga-synergy-item"><input type="checkbox" class="eumdol-buff-cb" data-atk="9" data-move="9"> 서포터 버프 갈망 (+9%)</label>
           <label class="munga-synergy-item"><input type="checkbox" class="eumdol-buff-cb" data-atk="3" data-move="0"> 공속 음식 (+3%)</label>
-        </div>
-        <div class="munga-synergy-row">
-          <span class="munga-synergy-title">캐릭터 자체 스킬 효과 (중복 체크 가능)</span>
-          <label class="munga-synergy-item"><input type="checkbox" class="eumdol-buff-cb" data-atk="20.8" data-move="16"> 바람의 속삭임 (공속 +20.8% / 이속 +16%)</label>
         </div>
         <div class="munga-result-grid munga-hero-grid" id="eumdolHeroGrid"></div>
         <div class="munga-result-grid" id="eumdolResultGrid"></div>
@@ -1258,6 +1250,9 @@ return '<div class="market-card market-card-combo">'
   // 도약 5티어의 다른 대체 노드들 - 설명에 "치명타"가 들어가도 단순 가산 보너스가
   // 아니라 캡/전환 메커니즘이라 치적 합산 시 제외해야 함
   const MUNGA_LEAP_NODE_NAMES = ['뭉툭한 가시','음속 돌파','입식 타격가','인파이팅','마나 용광로','안정된 관리자'];
+  // 칭호/문장류 장신구는 전투 스탯이 아니라 실제로는 무관한 텍스트가 섞여
+  // 있어서(오탐 방지) 장비 옵션 파싱에서 제외
+  const MUNGA_EXCLUDED_EQUIP_NAMES = ['백금 용사의 문장'];
 
   // 음속 돌파(음돌) 레벨별 계수 - 나무위키 아크패시브 진화 5티어 노드 텍스트 기준.
   // 공격속도/이동속도 "증가량" 상한은 게임 내 표시 상한(140%)에서 기본값(100%)을
@@ -1404,13 +1399,24 @@ return '<div class="market-card market-card-combo">'
       if(v > 0){ arkPct += v; arkDetail.push({ name: nodeName, value: v }); }
     });
 
+    // 클래스 고유 스킬/깨달음 효과 - API 텍스트만으로는 조건부 발동 여부를
+    // 판단할 수 없어서 클래스(+필요시 특정 노드 보유 여부)로 직접 매칭
+    const className0 = profile.CharacterClassName || '';
+    if(className0 === '배틀마스터'){
+      arkPct += 30; arkDetail.push({ name: '스킬: 용맹의 포효', value: 30 });
+    }
+    if(className0 === '기상술사' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '질풍노도'; })){
+      arkPct += 12; arkDetail.push({ name: '깨달음: 기민함', value: 12 });
+    }
+
     // 장신구 연마/팔찌 옵션의 "치명타 적중률" 수치 - Tooltip(JSON) 안의 문자열들을
     // 전부 모아 HTML 태그를 제거한 뒤 파싱 (색상 태그 안에 숫자가 섞여 있어서
-    // JSON.stringify로 그대로 합치면 정규식이 깨짐)
+    // JSON.stringify로 그대로 합치면 정규식이 깨짐). 칭호/문장류는 제외.
     const equipList = Array.isArray(data.equipment) ? data.equipment : [];
     let equipPct = 0;
     const equipDetail = [];
     equipList.forEach(function(it){
+      if(MUNGA_EXCLUDED_EQUIP_NAMES.indexOf(it.Name) !== -1) return;
       let tooltipText = '';
       try{
         const tt = typeof it.Tooltip === 'string' ? JSON.parse(it.Tooltip) : it.Tooltip;
@@ -1482,10 +1488,23 @@ return '<div class="market-card market-card-combo">'
       }
     });
 
+    // 클래스 고유 스킬/깨달음 효과 - 치적과 동일한 조건으로 매칭
+    const className0 = profile.CharacterClassName || '';
+    if(className0 === '배틀마스터'){
+      arkAtk += 20.8; arkMove += 16;
+      arkDetail.push({ name: '스킬: 바람의 속삭임 (공격 속도)', atk: 20.8, move: 0 });
+      arkDetail.push({ name: '스킬: 바람의 속삭임 (이동 속도)', atk: 0, move: 16 });
+    }
+    if(className0 === '기상술사' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '질풍노도'; })){
+      arkAtk += 12; arkMove += 12;
+      arkDetail.push({ name: '깨달음: 질풍노도', atk: 12, move: 12 });
+    }
+
     const equipList = Array.isArray(data.equipment) ? data.equipment : [];
     let equipAtk = 0, equipMove = 0;
     const equipDetail = [];
     equipList.forEach(function(it){
+      if(MUNGA_EXCLUDED_EQUIP_NAMES.indexOf(it.Name) !== -1) return;
       let tooltipText = '';
       try{
         const tt = typeof it.Tooltip === 'string' ? JSON.parse(it.Tooltip) : it.Tooltip;
@@ -1525,8 +1544,7 @@ return '<div class="market-card market-card-combo">'
   function mungaComputeResult(){
     if(!mungaBreakdown) return null;
     const manualExtra = parseFloat($('mungaManualExtra').value) || 0;
-    const skillPct = Array.from(document.querySelectorAll('.munga-skill-cb:checked')).reduce(function(sum, cb){ return sum + (parseFloat(cb.value) || 0); }, 0);
-    const baseDijeok = mungaBreakdown.statPct + mungaBreakdown.enginePct + mungaBreakdown.arkPct + mungaBreakdown.equipPct + manualExtra + skillPct;
+    const baseDijeok = mungaBreakdown.statPct + mungaBreakdown.enginePct + mungaBreakdown.arkPct + mungaBreakdown.equipPct + manualExtra;
     const synergy = Array.from(document.querySelectorAll('.munga-synergy-cb:checked')).reduce(function(sum, cb){ return sum + (parseFloat(cb.value) || 0); }, 0);
     const chipi = parseFloat($('mungaChipiSelect').value) || 200;
     const levelSel = $('mungaLevelSelect').value;
@@ -1733,9 +1751,6 @@ return '<div class="market-card market-card-combo">'
     $(id).addEventListener('change', function(){ if(mungaBreakdown) renderMungaResult(); });
   });
   document.querySelectorAll('.munga-synergy-cb').forEach(function(cb){
-    cb.addEventListener('change', function(){ if(mungaBreakdown) renderMungaResult(); });
-  });
-  document.querySelectorAll('.munga-skill-cb').forEach(function(cb){
     cb.addEventListener('change', function(){ if(mungaBreakdown) renderMungaResult(); });
   });
   ['eumdolManualAtk','eumdolManualMove','eumdolLevelSelect'].forEach(function(id){
