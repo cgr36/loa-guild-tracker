@@ -1763,11 +1763,22 @@ return '<div class="market-card market-card-combo">'
 
     const evoBonus = Math.min(lv.maxEvo, base + flat + excessBonus);
 
+    // 뭉가의 "최대 효율 대비" 카드와 동일한 개념 - 공격속도+이동속도가 각각 상한(40%)에
+    // 도달한 뒤, 초과분 전환으로 음돌 최대 진화형 피해(maxEvo)까지 채우는 데 필요한
+    // "공격속도+이동속도 합산" 기준선을 역산해서 지금 합산치가 그 기준선 대비
+    // 얼마나 초과/부족한지 계산.
+    const baseAtCap = (lv.coef / 100) * (EUMDOL_SPEED_CAP * 2);
+    const excessNeeded = (lv.maxEvo - lv.flatBonus - baseAtCap) / (lv.excessConv / 100);
+    const maxEfficiencyCombined = EUMDOL_SPEED_CAP * 2 + excessNeeded;
+    const combinedTotal = totalAtk + totalMove;
+    const efficiencyDiff = combinedTotal - maxEfficiencyCombined;
+
     return {
       totalAtk: totalAtk, totalMove: totalMove, cappedAtk: cappedAtk, cappedMove: cappedMove,
       bothOver: bothOver, excessAtk: excessAtk, excessMove: excessMove,
       base: base, flat: flat, excessBonus: excessBonus, evoBonus: evoBonus,
       levelUsed: lv, levelDetected: levelDetected,
+      maxEfficiencyCombined: maxEfficiencyCombined, efficiencyDiff: efficiencyDiff,
     };
   }
 
@@ -1822,9 +1833,15 @@ return '<div class="market-card market-card-combo">'
   function renderEumdolHero(){
     const r = eumdolComputeResult();
     if(!r) return;
+    const isOver = r.efficiencyDiff >= 0;
+    const effCls = isOver ? 'mrc-over' : 'mrc-under';
+    const effLabel = isOver
+      ? `+${r.efficiencyDiff.toFixed(2)}% 초과`
+      : `${r.efficiencyDiff.toFixed(2)}% 부족`;
     $('eumdolHeroGrid').innerHTML = `
       <div class="munga-result-card mrc-highlight"><div class="mrc-label">총 공격속도 증가량</div><div class="mrc-value">${r.totalAtk.toFixed(2)}%</div></div>
       <div class="munga-result-card mrc-highlight"><div class="mrc-label">총 이동속도 증가량</div><div class="mrc-value">${r.totalMove.toFixed(2)}%</div></div>
+      <div class="munga-result-card ${effCls}"><div class="mrc-label">음돌 효율(${r.maxEfficiencyCombined.toFixed(2)}%) 대비</div><div class="mrc-value">${effLabel}</div></div>
     `;
   }
 
