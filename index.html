@@ -541,8 +541,9 @@
         </div>
         <div class="munga-synergy-row">
           <span class="munga-synergy-title">공이속 버프 (중복 체크 가능)</span>
-          <label class="munga-synergy-item"><input type="checkbox" class="eumdol-buff-cb" data-atk="5" data-move="5"> PC방 만찬 (+5%)</label>
+          <label class="munga-synergy-item"><input type="checkbox" class="eumdol-buff-cb" data-atk="5" data-move="5"> 공이속 만찬 (+5%)</label>
           <label class="munga-synergy-item"><input type="checkbox" class="eumdol-buff-cb" data-atk="9" data-move="9"> 서포터 버프 갈망 (+9%)</label>
+          <label class="munga-synergy-item"><input type="checkbox" class="eumdol-buff-cb" data-atk="3" data-move="0"> 공속 음식 (+3%)</label>
         </div>
         <div class="munga-synergy-row">
           <span class="munga-synergy-title">캐릭터 자체 스킬 효과 (중복 체크 가능)</span>
@@ -1266,6 +1267,9 @@ return '<div class="market-card market-card-combo">'
     2: { coef: 10.0, flatBonus: 8.0, excessConv: 30.0, maxEvo: 24.0 },
   };
   const EUMDOL_SPEED_CAP = 40;
+  // 신속 스탯 -> 공격속도/이동속도 변환 계수. 실측 캐릭터 예시(신속 1827 -> 31.38%,
+  // 신속 77 -> 1.32%)로 검증한 평균값.
+  const SWIFT_STAT_PER_PERCENT = 58.22;
 
   let mungaBreakdown = null; // 마지막으로 불러온 캐릭터의 치적 breakdown
   let eumdolBreakdown = null; // 마지막으로 불러온 캐릭터의 공이속 breakdown
@@ -1638,12 +1642,21 @@ return '<div class="market-card market-card-combo">'
     $('eumdolSourceTable').innerHTML = `<tr><th>구분</th><th>내역</th><th>공격속도</th><th>이동속도</th></tr>${rows.join('')}`;
   }
 
+  function eumdolCapDiffText(total){
+    // 40% 상한 대비 부족/초과분을 신속 스탯으로도 환산해서 보여줌
+    const gap = EUMDOL_SPEED_CAP - total;
+    const statDiff = Math.abs(gap) * SWIFT_STAT_PER_PERCENT;
+    return gap > 0
+      ? `40% 도달까지 신속 스탯 약 ${fmtAbi(Math.round(statDiff))} 필요`
+      : `40% 캡 대비 신속 스탯 약 ${fmtAbi(Math.round(statDiff))} 초과 투자`;
+  }
+
   function renderEumdolHero(){
     const r = eumdolComputeResult();
     if(!r) return;
     $('eumdolHeroGrid').innerHTML = `
-      <div class="munga-result-card mrc-highlight"><div class="mrc-label">총 공격속도 증가량</div><div class="mrc-value">${r.totalAtk.toFixed(2)}%</div><div class="mrc-sub">실효: ${r.cappedAtk.toFixed(1)}% (${EUMDOL_SPEED_CAP}% 캡)</div></div>
-      <div class="munga-result-card mrc-highlight"><div class="mrc-label">총 이동속도 증가량</div><div class="mrc-value">${r.totalMove.toFixed(2)}%</div><div class="mrc-sub">실효: ${r.cappedMove.toFixed(1)}% (${EUMDOL_SPEED_CAP}% 캡)</div></div>
+      <div class="munga-result-card mrc-highlight"><div class="mrc-label">총 공격속도 증가량</div><div class="mrc-value">${r.totalAtk.toFixed(2)}%</div><div class="mrc-sub">실효: ${r.cappedAtk.toFixed(1)}% (${EUMDOL_SPEED_CAP}% 캡) · ${eumdolCapDiffText(r.totalAtk)}</div></div>
+      <div class="munga-result-card mrc-highlight"><div class="mrc-label">총 이동속도 증가량</div><div class="mrc-value">${r.totalMove.toFixed(2)}%</div><div class="mrc-sub">실효: ${r.cappedMove.toFixed(1)}% (${EUMDOL_SPEED_CAP}% 캡) · ${eumdolCapDiffText(r.totalMove)}</div></div>
     `;
   }
 
