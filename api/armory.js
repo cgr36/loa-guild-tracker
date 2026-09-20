@@ -18,7 +18,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  const endpoints = ['profiles', 'engravings', 'arkpassive', 'equipment'];
+  const endpoints = ['profiles', 'engravings', 'arkpassive', 'equipment', 'arkgrid'];
 
   try {
     const results = await Promise.all(
@@ -31,7 +31,7 @@ export default async function handler(req, res) {
       )
     );
 
-    const [profiles, engravings, arkpassive, equipment] = results;
+    const [profiles, engravings, arkpassive, equipment, arkgrid] = results;
 
     if (!profiles.ok || !profiles.data) {
       res.status(profiles.status || 500).json({
@@ -45,6 +45,7 @@ export default async function handler(req, res) {
       engravings: engravings.ok ? engravings.data : null,
       arkpassive: arkpassive.ok ? arkpassive.data : null,
       equipment: equipment.ok ? equipment.data : null,
+      arkgrid: arkgrid.ok ? arkgrid.data : null,
     });
   } catch (err) {
     res.status(500).json({ error: '서버 오류: ' + err.message });
