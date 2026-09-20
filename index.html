@@ -1430,6 +1430,16 @@ return '<div class="market-card market-card-combo">'
       if(v > 0){ equipPct += v; equipDetail.push({ name: it.Name, value: v }); }
     });
 
+    // 아크 그리드 코어 효과 - 정확한 응답 스키마를 몰라서 응답 전체에서 문자열을
+    // 재귀적으로 모아 다른 항목과 동일한 방식으로 파싱(최선 노력, 검증 필요)
+    const arkGridStrs = [];
+    mungaCollectStrings(data.arkgrid, arkGridStrs);
+    const arkGridText = arkGridStrs.join(' ');
+    let arkGridPct = 0;
+    const arkGridDetail = [];
+    const arkGridV = mungaExtractPercent(arkGridText, '치명타\\s*적중률');
+    if(arkGridV > 0){ arkGridPct += arkGridV; arkGridDetail.push({ name: '아크그리드 코어', value: arkGridV }); }
+
     // 뭉가(뭉툭한 가시) 노드 자체를 이미 장착 중이면 실측 계수를 텍스트에서 직접 파싱
     let mungaLevel = null;
     if(mungaEffectText){
@@ -1447,6 +1457,7 @@ return '<div class="market-card market-card-combo">'
       enginePct: enginePct, engraveDetail: engraveDetail,
       arkPct: arkPct, arkDetail: arkDetail,
       equipPct: equipPct, equipDetail: equipDetail,
+      arkGridPct: arkGridPct, arkGridDetail: arkGridDetail,
       mungaLevel: mungaLevel,
       className: profile.CharacterClassName || '',
       characterName: profile.CharacterName || '',
@@ -1531,6 +1542,18 @@ return '<div class="market-card market-card-combo">'
       }
     });
 
+    // 아크 그리드 코어 효과 - 정확한 응답 스키마를 몰라서 응답 전체에서 문자열을
+    // 재귀적으로 모아 다른 항목과 동일한 방식으로 파싱(최선 노력, 검증 필요)
+    const arkGridStrs2 = [];
+    mungaCollectStrings(data.arkgrid, arkGridStrs2);
+    const arkGridSpeed = mungaExtractSpeedPercents(arkGridStrs2.join(' '));
+    let arkGridAtk = 0, arkGridMove = 0;
+    const arkGridDetail = [];
+    if(arkGridSpeed.atk !== 0 || arkGridSpeed.move !== 0){
+      arkGridAtk = arkGridSpeed.atk; arkGridMove = arkGridSpeed.move;
+      arkGridDetail.push({ name: '아크그리드 코어', atk: arkGridSpeed.atk, move: arkGridSpeed.move });
+    }
+
     // 음속 돌파(음돌) 노드 자체를 이미 장착 중이면 실측 계수를 텍스트에서 직접 파싱
     let eumdolLevel = null;
     if(eumdolEffectText){
@@ -1549,6 +1572,7 @@ return '<div class="market-card market-card-combo">'
       engineAtk: engineAtk, engineMove: engineMove, engraveDetail: engraveDetail,
       arkAtk: arkAtk, arkMove: arkMove, arkDetail: arkDetail,
       equipAtk: equipAtk, equipMove: equipMove, equipDetail: equipDetail,
+      arkGridAtk: arkGridAtk, arkGridMove: arkGridMove, arkGridDetail: arkGridDetail,
       buffAtk: buffAtk, buffMove: buffMove, buffDetail: buffDetail,
       eumdolLevel: eumdolLevel,
     };
@@ -1557,7 +1581,7 @@ return '<div class="market-card market-card-combo">'
   function mungaComputeResult(){
     if(!mungaBreakdown) return null;
     const manualExtra = parseFloat($('mungaManualExtra').value) || 0;
-    const baseDijeok = mungaBreakdown.statPct + mungaBreakdown.enginePct + mungaBreakdown.arkPct + mungaBreakdown.equipPct + manualExtra;
+    const baseDijeok = mungaBreakdown.statPct + mungaBreakdown.enginePct + mungaBreakdown.arkPct + mungaBreakdown.equipPct + mungaBreakdown.arkGridPct + manualExtra;
     const synergy = Array.from(document.querySelectorAll('.munga-synergy-cb:checked')).reduce(function(sum, cb){ return sum + (parseFloat(cb.value) || 0); }, 0);
     const chipi = parseFloat($('mungaChipiSelect').value) || 200;
     const levelSel = $('mungaLevelSelect').value;
@@ -1599,8 +1623,8 @@ return '<div class="market-card market-card-combo">'
       acc.move += parseFloat(cb.dataset.move) || 0;
       return acc;
     }, { atk: 0, move: 0 });
-    const totalAtk = eumdolBreakdown.statAtk + eumdolBreakdown.engineAtk + eumdolBreakdown.arkAtk + eumdolBreakdown.equipAtk + eumdolBreakdown.buffAtk + manualAtk + buffSum.atk;
-    const totalMove = eumdolBreakdown.statMove + eumdolBreakdown.engineMove + eumdolBreakdown.arkMove + eumdolBreakdown.equipMove + eumdolBreakdown.buffMove + manualMove + buffSum.move;
+    const totalAtk = eumdolBreakdown.statAtk + eumdolBreakdown.engineAtk + eumdolBreakdown.arkAtk + eumdolBreakdown.equipAtk + eumdolBreakdown.arkGridAtk + eumdolBreakdown.buffAtk + manualAtk + buffSum.atk;
+    const totalMove = eumdolBreakdown.statMove + eumdolBreakdown.engineMove + eumdolBreakdown.arkMove + eumdolBreakdown.equipMove + eumdolBreakdown.arkGridMove + eumdolBreakdown.buffMove + manualMove + buffSum.move;
     const levelSel = $('eumdolLevelSelect').value;
     const levelDetected = !!(eumdolBreakdown.eumdolLevel && eumdolBreakdown.eumdolLevel.detected);
     const lv = levelDetected ? eumdolBreakdown.eumdolLevel : EUMDOL_LEVELS[levelSel];
@@ -1632,6 +1656,7 @@ return '<div class="market-card market-card-combo">'
     b.engraveDetail.forEach(function(d){ rows.push(`<tr><td>각인</td><td>${escAttr(d.name || '')}</td><td class="abi-total">+${d.value.toFixed(2)}%</td></tr>`); });
     b.arkDetail.forEach(function(d){ rows.push(`<tr><td>아크패시브</td><td>${escAttr(d.name || '')}</td><td class="abi-total">+${d.value.toFixed(2)}%</td></tr>`); });
     b.equipDetail.forEach(function(d){ rows.push(`<tr><td>장비</td><td>${escAttr(d.name || '')}</td><td class="abi-total">+${d.value.toFixed(2)}%</td></tr>`); });
+    b.arkGridDetail.forEach(function(d){ rows.push(`<tr><td>아크그리드</td><td>${escAttr(d.name || '')}</td><td class="abi-total">+${d.value.toFixed(2)}%</td></tr>`); });
     $('mungaSourceTable').innerHTML = `<tr><th>구분</th><th>내역</th><th>치적</th></tr>${rows.join('')}`;
   }
 
@@ -1670,6 +1695,7 @@ return '<div class="market-card market-card-combo">'
     b.engraveDetail.forEach(function(d){ rows.push(`<tr><td>각인</td><td>${escAttr(d.name || '')}</td><td class="abi-total">${d.atk.toFixed(2)}%</td><td class="abi-total">${d.move.toFixed(2)}%</td></tr>`); });
     b.arkDetail.forEach(function(d){ rows.push(`<tr><td>아크패시브</td><td>${escAttr(d.name || '')}</td><td class="abi-total">${d.atk.toFixed(2)}%</td><td class="abi-total">${d.move.toFixed(2)}%</td></tr>`); });
     b.equipDetail.forEach(function(d){ rows.push(`<tr><td>장비</td><td>${escAttr(d.name || '')}</td><td class="abi-total">${d.atk.toFixed(2)}%</td><td class="abi-total">${d.move.toFixed(2)}%</td></tr>`); });
+    b.arkGridDetail.forEach(function(d){ rows.push(`<tr><td>아크그리드</td><td>${escAttr(d.name || '')}</td><td class="abi-total">${d.atk.toFixed(2)}%</td><td class="abi-total">${d.move.toFixed(2)}%</td></tr>`); });
     b.buffDetail.forEach(function(d){ rows.push(`<tr><td>버프</td><td>${escAttr(d.name || '')}</td><td class="abi-total">${d.atk.toFixed(2)}%</td><td class="abi-total">${d.move.toFixed(2)}%</td></tr>`); });
     $('eumdolSourceTable').innerHTML = `<tr><th>구분</th><th>내역</th><th>공격속도</th><th>이동속도</th></tr>${rows.join('')}`;
   }
