@@ -362,7 +362,7 @@
 .munga-debug-btn{margin-bottom:12px;}
 .munga-debug-pre{max-height:400px;overflow:auto;background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:11px;color:var(--text-dim);white-space:pre-wrap;word-break:break-all;margin-bottom:16px;}
 .munga-hero-grid{margin-bottom:24px;}
-.munga-hero-grid .munga-result-card{min-height:130px;display:flex;flex-direction:column;justify-content:flex-start;}
+.munga-hero-grid .munga-result-card{min-height:108px;display:flex;flex-direction:column;justify-content:flex-start;}
 .munga-result-card.mrc-over .mrc-value{color:#6fa8ff;}
 .munga-result-card.mrc-under .mrc-value{color:var(--rose);}
 .munga-columns{display:flex;gap:20px;align-items:flex-start;}
@@ -1631,8 +1631,8 @@ return '<div class="market-card market-card-combo">'
     // 항상 켜져 있다고 가정하는 상시 버프 (서포터 갈망, 공이속 만찬)
     const buffAtk = 9 + 5, buffMove = 9 + 5;
     const buffDetail = [
-      { name: '버프: 서포터 갈망', atk: 9, move: 9 },
-      { name: '버프: 공이속 만찬', atk: 5, move: 5 },
+      { category: '갈망', name: '서포터 갈망', atk: 9, move: 9 },
+      { category: '만찬', name: '공이속 만찬', atk: 5, move: 5 },
     ];
 
     const equipList = Array.isArray(data.equipment) ? data.equipment : [];
@@ -1837,7 +1837,7 @@ return '<div class="market-card market-card-combo">'
     b.arkDetail.forEach(function(d){ rows.push(`<tr><td>아크패시브</td><td>${escAttr(d.name || '')}</td><td class="abi-total">${d.atk.toFixed(2)}%</td><td class="abi-total">${d.move.toFixed(2)}%</td></tr>`); });
     b.equipDetail.forEach(function(d){ rows.push(`<tr><td>장비</td><td>${escAttr(d.name || '')}</td><td class="abi-total">${d.atk.toFixed(2)}%</td><td class="abi-total">${d.move.toFixed(2)}%</td></tr>`); });
     b.arkGridDetail.forEach(function(d){ rows.push(`<tr><td>아크그리드</td><td>${escAttr(d.name || '')}</td><td class="abi-total">${d.atk.toFixed(2)}%</td><td class="abi-total">${d.move.toFixed(2)}%</td></tr>`); });
-    b.buffDetail.forEach(function(d){ rows.push(`<tr><td>버프</td><td>${escAttr(d.name || '')}</td><td class="abi-total">${d.atk.toFixed(2)}%</td><td class="abi-total">${d.move.toFixed(2)}%</td></tr>`); });
+    b.buffDetail.forEach(function(d){ rows.push(`<tr><td>${escAttr(d.category || '버프')}</td><td>${escAttr(d.name || '')}</td><td class="abi-total">${d.atk.toFixed(2)}%</td><td class="abi-total">${d.move.toFixed(2)}%</td></tr>`); });
     $('eumdolSourceTable').innerHTML = `<tr><th>구분</th><th>내역</th><th>공격속도</th><th>이동속도</th></tr>${rows.join('')}`;
   }
 
