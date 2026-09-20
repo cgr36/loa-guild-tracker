@@ -1215,26 +1215,67 @@ return '<div class="market-card market-card-combo">'
 
   let mungaBreakdown = null; // 마지막으로 불러온 캐릭터의 치적 breakdown
 
+  // 실제 API 응답은 설명 텍스트 안에 <FONT COLOR='...'> 같은 HTML 태그가 섞여
+  // 있어서(색상 코드에 숫자가 포함됨), 태그를 공백으로 치환해 순수 텍스트로 만든
+  // 뒤에 수치를 뽑아야 함 - 태그를 남겨두면 "치명타 적중률" 뒤에 태그가 끼어들어
+  // 정규식이 숫자를 못 찾거나 색상코드의 숫자를 잘못 집는 문제가 생김.
+  function mungaStripTags(s){
+    return (s || '').replace(/<[^>]+>/g, ' ');
+  }
+
   function mungaExtractPercent(text, keyword){
     // "치명타 적중률이 8.0% 증가" 같은 문구에서 keyword 뒤에 오는 숫자%를 모두 더함.
     // "~로 제한됩니다"/"~로 전환됩니다" 같은 캡/전환 문구는 가산 보너스가 아니므로 제외.
-    if(!text) return 0;
+    const clean = mungaStripTags(text);
+    if(!clean) return 0;
     let total = 0;
-    const re = new RegExp(keyword + '[^%]{0,8}?([\\d.]+)\\s*%\\s*(?:증가|만큼 증가)', 'g');
+    const re = new RegExp(keyword + '[^%]{0,16}?([\\d.]+)\\s*%\\s*(?:증가|만큼 증가)', 'g');
     let m;
-    while((m = re.exec(text))){ total += parseFloat(m[1]) || 0; }
+    while((m = re.exec(clean))){ total += parseFloat(m[1]) || 0; }
     return total;
   }
 
   function mungaExtractPercentLenient(text, keyword){
     // 장비 연마/팔찌 옵션은 "치명타 적중률 +3.10%"처럼 "증가" 없이 표기되는 경우가
     // 많아서, 이쪽은 "증가" 여부와 무관하게 keyword 뒤 첫 숫자%를 그대로 가산으로 인정.
-    if(!text) return 0;
+    const clean = mungaStripTags(text);
+    if(!clean) return 0;
     let total = 0;
-    const re = new RegExp(keyword + '[^%\\d]{0,10}?\\+?\\s*([\\d.]+)\\s*%', 'g');
+    const re = new RegExp(keyword + '[^%\\d]{0,16}?\\+?\\s*([\\d.]+)\\s*%', 'g');
     let m;
-    while((m = re.exec(text))){ total += parseFloat(m[1]) || 0; }
+    while((m = re.exec(clean))){ total += parseFloat(m[1]) || 0; }
     return total;
+  }
+
+  function mungaArkNodeName(description){
+    // arkpassive.Effects[].Description은 실제 수치가 아니라
+    // "<FONT>진화</FONT> 2티어 <FONT>예리한 감각 Lv.2</FONT>" 같은 제목 텍스트만 담고
+    // 있어서, 여기서 실제 노드 이름(예리한 감각)만 뽑아냄.
+    const m = /<FONT[^>]*>([^<]+?)\s*Lv\.\d+<\/FONT>\s*$/i.exec(description || '');
+    return m ? m[1].trim() : '';
+  }
+
+  function mungaArkEffectText(e){
+    // 실제 수치가 담긴 설명은 Description이 아니라 ToolTip(JSON 문자열) 안의
+    // MultiTextBox 타입 필드에 있음.
+    let text = '';
+    try{
+      const tt = typeof e.ToolTip === 'string' ? JSON.parse(e.ToolTip) : e.ToolTip;
+      if(tt){
+        Object.keys(tt).forEach(function(k){
+          const el = tt[k];
+          if(el && el.type === 'MultiTextBox' && typeof el.value === 'string') text += el.value + ' ';
+        });
+      }
+    }catch(err){ /* 파싱 실패 시 빈 텍스트로 처리 */ }
+    return text;
+  }
+
+  function mungaCollectStrings(obj, out){
+    if(obj == null) return;
+    if(typeof obj === 'string'){ out.push(obj); return; }
+    if(Array.isArray(obj)){ obj.forEach(function(v){ mungaCollectStrings(v, out); }); return; }
+    if(typeof obj === 'object'){ Object.keys(obj).forEach(function(k){ mungaCollectStrings(obj[k], out); }); }
   }
 
   function mungaFindStat(profile, type){
@@ -1259,27 +1300,32 @@ return '<div class="market-card market-card-combo">'
     const arkEffects = (data.arkpassive && data.arkpassive.Effects) || [];
     let arkPct = 0;
     const arkDetail = [];
-    let mungaNode = null;
+    let mungaEffectText = null;
     arkEffects.forEach(function(e){
-      if(MUNGA_LEAP_NODE_NAMES.indexOf(e.Name) !== -1){
-        if(e.Name === '뭉툭한 가시') mungaNode = e;
+      const nodeName = mungaArkNodeName(e.Description) || e.Name;
+      const effectText = mungaArkEffectText(e);
+      if(MUNGA_LEAP_NODE_NAMES.indexOf(nodeName) !== -1){
+        if(nodeName === '뭉툭한 가시') mungaEffectText = effectText;
         return; // 도약 5티어 대체 노드는 치적 가산에서 제외
       }
-      if(e.Name === '달인'){
+      if(nodeName === '달인'){
         // "치명타 적중률 +1.4% / 추가피해 +1.7%, 최대 5중첩" 처럼 스택형 텍스트라
         // 일반 "~% 증가" 패턴과 달라서 따로 파싱. 못 찾으면 확인된 실측값(최대 중첩
         // 5회 x 1.4% = 7%, 항상 유지된다고 가정)으로 폴백.
-        const perStackM = /치명타\s*적중률\s*\+?\s*([\d.]+)\s*%/.exec(e.Description || '');
-        const stacksM = /최대\s*(\d+)\s*중첩/.exec(e.Description || '');
+        const clean = mungaStripTags(effectText);
+        const perStackM = /치명타\s*적중률\s*\+?\s*([\d.]+)\s*%/.exec(clean);
+        const stacksM = /최대\s*(\d+)\s*중첩/.exec(clean);
         const v = (perStackM && stacksM) ? parseFloat(perStackM[1]) * parseInt(stacksM[1], 10) : 7;
         arkPct += v; arkDetail.push({ name: '달인 (최대 중첩 가정)', value: v });
         return;
       }
-      const v = mungaExtractPercent(e.Description || '', '치명타\\s*적중률');
-      if(v > 0){ arkPct += v; arkDetail.push({ name: e.Name, value: v }); }
+      const v = mungaExtractPercent(effectText, '치명타\\s*적중률');
+      if(v > 0){ arkPct += v; arkDetail.push({ name: nodeName, value: v }); }
     });
 
-    // 장신구 연마/팔찌 옵션의 "치명타 적중률" 수치 - Tooltip 텍스트에서 파싱
+    // 장신구 연마/팔찌 옵션의 "치명타 적중률" 수치 - Tooltip(JSON) 안의 문자열들을
+    // 전부 모아 HTML 태그를 제거한 뒤 파싱 (색상 태그 안에 숫자가 섞여 있어서
+    // JSON.stringify로 그대로 합치면 정규식이 깨짐)
     const equipList = Array.isArray(data.equipment) ? data.equipment : [];
     let equipPct = 0;
     const equipDetail = [];
@@ -1287,7 +1333,9 @@ return '<div class="market-card market-card-combo">'
       let tooltipText = '';
       try{
         const tt = typeof it.Tooltip === 'string' ? JSON.parse(it.Tooltip) : it.Tooltip;
-        tooltipText = JSON.stringify(tt || {});
+        const strs = [];
+        mungaCollectStrings(tt, strs);
+        tooltipText = strs.join(' ');
       }catch(e){ tooltipText = it.Tooltip || ''; }
       const v = mungaExtractPercentLenient(tooltipText, '치명타\\s*적중률');
       if(v > 0){ equipPct += v; equipDetail.push({ name: it.Name, value: v }); }
@@ -1295,10 +1343,11 @@ return '<div class="market-card market-card-combo">'
 
     // 뭉가(뭉툭한 가시) 노드 자체를 이미 장착 중이면 실측 계수를 텍스트에서 직접 파싱
     let mungaLevel = null;
-    if(mungaNode && mungaNode.Description){
-      const baseM = /진화형\s*피해가\s*([\d.]+)\s*%\s*증가/.exec(mungaNode.Description);
-      const convM = /([\d.]+)\s*%\s*가\s*진화형\s*피해로\s*전환/.exec(mungaNode.Description);
-      const maxM = /최대\s*([\d.]+)\s*%까지/.exec(mungaNode.Description);
+    if(mungaEffectText){
+      const clean = mungaStripTags(mungaEffectText);
+      const baseM = /진화형\s*피해가\s*([\d.]+)\s*%\s*증가/.exec(clean);
+      const convM = /([\d.]+)\s*%\s*가\s*진화형\s*피해로\s*전환/.exec(clean);
+      const maxM = /최대\s*([\d.]+)\s*%\s*까지/.exec(clean);
       if(baseM && convM && maxM){
         mungaLevel = { baseEvo: parseFloat(baseM[1]), conv: parseFloat(convM[1]) / 100, maxEvo: parseFloat(maxM[1]), detected: true };
       }
