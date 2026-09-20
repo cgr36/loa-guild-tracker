@@ -348,6 +348,10 @@
 .munga-result-card .mrc-value{font-size:20px;font-weight:900;color:var(--gold-bright);}
 .munga-result-card .mrc-sub{font-size:10.5px;color:var(--text-faint);margin-top:4px;}
 .munga-result-card.mrc-highlight .mrc-value{color:#6fa8ff;}
+.munga-synergy-row{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-bottom:16px;}
+.munga-synergy-title{font-size:12.5px;color:var(--text-dim);font-weight:700;}
+.munga-synergy-item{display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--text-dim);cursor:pointer;}
+.munga-synergy-item input{cursor:pointer;}
 .abi-sellprice{display:inline-block;padding:3px 10px;border-radius:10px;background:rgba(228,182,90,0.18);color:var(--gold-bright);font-weight:900;font-size:14px;}
 </style>
 </head>
@@ -486,13 +490,15 @@
               <option value="250">예둔 채용 (250%)</option>
             </select>
           </label>
-          <label class="abi-select-label">파티 치적 시너지
-            <select id="mungaSynergySelect">
-              <option value="0">없음 (0%)</option>
-              <option value="10">+10% (일반)</option>
-              <option value="18">+18% (치적 극대)</option>
-            </select>
-          </label>
+        </div>
+        <div class="munga-synergy-row">
+          <span class="munga-synergy-title">파티 치적 시너지 (동일 직업 제외, 중복 체크 가능)</span>
+          <label class="munga-synergy-item"><input type="checkbox" class="munga-synergy-cb" value="10"> 배틀마스터 (+10%)</label>
+          <label class="munga-synergy-item"><input type="checkbox" class="munga-synergy-cb" value="10"> 건슬링어 (+10%)</label>
+          <label class="munga-synergy-item"><input type="checkbox" class="munga-synergy-cb" value="10"> 스트라이커 (+10%)</label>
+          <label class="munga-synergy-item"><input type="checkbox" class="munga-synergy-cb" value="10"> 데빌헌터 (+10%)</label>
+          <label class="munga-synergy-item"><input type="checkbox" class="munga-synergy-cb" value="10"> 기상술사 (+10%)</label>
+          <label class="munga-synergy-item"><input type="checkbox" class="munga-synergy-cb" value="10"> 아르카나 (+10%)</label>
         </div>
         <div class="munga-result-grid" id="mungaResultGrid"></div>
       </div>
@@ -1309,7 +1315,7 @@ return '<div class="market-card market-card-combo">'
     if(!mungaBreakdown) return null;
     const manualExtra = parseFloat($('mungaManualExtra').value) || 0;
     const baseDijeok = mungaBreakdown.statPct + mungaBreakdown.enginePct + mungaBreakdown.arkPct + mungaBreakdown.equipPct + manualExtra;
-    const synergy = parseFloat($('mungaSynergySelect').value) || 0;
+    const synergy = Array.from(document.querySelectorAll('.munga-synergy-cb:checked')).reduce(function(sum, cb){ return sum + (parseFloat(cb.value) || 0); }, 0);
     const chipi = parseFloat($('mungaChipiSelect').value) || 200;
     const levelSel = $('mungaLevelSelect').value;
     const levelDetected = !!(mungaBreakdown.mungaLevel && mungaBreakdown.mungaLevel.detected);
@@ -1388,9 +1394,12 @@ return '<div class="market-card market-card-combo">'
 
   $('btnMungaSearch').addEventListener('click', mungaSearch);
   $('mungaNameInput').addEventListener('keydown', function(e){ if(e.key === 'Enter') mungaSearch(); });
-  ['mungaManualExtra','mungaLevelSelect','mungaChipiSelect','mungaSynergySelect'].forEach(function(id){
+  ['mungaManualExtra','mungaLevelSelect','mungaChipiSelect'].forEach(function(id){
     $(id).addEventListener('input', function(){ if(mungaBreakdown) renderMungaResult(); });
     $(id).addEventListener('change', function(){ if(mungaBreakdown) renderMungaResult(); });
+  });
+  document.querySelectorAll('.munga-synergy-cb').forEach(function(cb){
+    cb.addEventListener('change', function(){ if(mungaBreakdown) renderMungaResult(); });
   });
 
   function switchTab(tab){
