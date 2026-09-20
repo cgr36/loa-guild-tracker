@@ -1913,7 +1913,7 @@ return '<div class="market-card market-card-combo">'
       if(eumdolBreakdown.eumdolLevel && eumdolBreakdown.eumdolLevel.detected){
         $('eumdolLevelSelect').value = eumdolBreakdown.eumdolLevel.maxEvo >= 24 ? '2' : '1';
       }
-      $('mungaStatus').textContent = '자동으로 못 읽은 항목(클래스 고유 노드 등)이 있을 수 있어요 — 아래 표와 실제 게임 화면을 비교해 "추가 치적 직접 입력"으로 보정해주세요.';
+      $('mungaStatus').textContent = '자동으로 못 읽은 항목(클래스 고유 노드, 아크그리드 효과 등)이 있을 수 있어요 — [직접 입력]으로 보정해주세요.';
       renderMungaAll();
     }catch(err){
       $('mungaStatus').textContent = '불러오기 실패: ' + err.message;
