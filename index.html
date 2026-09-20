@@ -512,6 +512,8 @@
         <div class="munga-result-grid" id="mungaResultGrid"></div>
       </div>
 
+      <div class="munga-result-grid munga-hero-grid" id="eumdolHeroGrid"></div>
+
       <div class="abi-section">
         <div class="abi-section-title">공이속 요약</div>
         <div class="abi-table-wrap"><table class="abi-table" id="eumdolSourceTable"></table></div>
@@ -539,7 +541,6 @@
           <span class="munga-synergy-title">추가 공이속 버프 (서포터 갈망·공이속 만찬은 상시 반영됨, 중복 체크 가능)</span>
           <label class="munga-synergy-item"><input type="checkbox" class="eumdol-buff-cb" data-atk="3" data-move="0"> 공속 음식 (+3%)</label>
         </div>
-        <div class="munga-result-grid munga-hero-grid" id="eumdolHeroGrid"></div>
         <div class="munga-result-grid" id="eumdolResultGrid"></div>
       </div>
     </div>
@@ -1493,8 +1494,7 @@ return '<div class="market-card market-card-combo">'
     const className0 = profile.CharacterClassName || '';
     if(className0 === '배틀마스터'){
       arkAtk += 20.8; arkMove += 16;
-      arkDetail.push({ name: '스킬: 바람의 속삭임 (공격 속도)', atk: 20.8, move: 0 });
-      arkDetail.push({ name: '스킬: 바람의 속삭임 (이동 속도)', atk: 0, move: 16 });
+      arkDetail.push({ name: '스킬: 바람의 속삭임', atk: 20.8, move: 16 });
     }
     if(className0 === '기상술사' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '질풍노도'; })){
       arkAtk += 12; arkMove += 12;
@@ -1502,7 +1502,7 @@ return '<div class="market-card market-card-combo">'
     }
     if(className0 === '스트라이커'){
       arkAtk += 8;
-      arkDetail.push({ name: '스킬: 번개의 속삭임 (공격 속도)', atk: 8, move: 0 });
+      arkDetail.push({ name: '스킬: 번개의 속삭임', atk: 8, move: 0 });
     }
 
     // 항상 켜져 있다고 가정하는 상시 버프 (서포터 갈망, 공이속 만찬)
@@ -1659,7 +1659,7 @@ return '<div class="market-card market-card-combo">'
       ? `이만큼(치명 스탯 약 ${fmtAbi(Math.round(statDiff))})은 진화형 피해로 전환되지 않고 버려져요`
       : `치명 스탯 약 ${fmtAbi(Math.round(statDiff))}만큼 더 채우면 뭉가 최대 효율(${r.maxEfficiencyDijeok.toFixed(1)}%) 도달`;
     $('mungaHeroGrid').innerHTML = `
-      <div class="munga-result-card mrc-highlight"><div class="mrc-label">총 적용 치적(시너지 포함)</div><div class="mrc-value">${r.totalWithSynergy.toFixed(2)}%</div><div class="mrc-sub">실효 치적: ${Math.min(r.totalWithSynergy,80).toFixed(1)}% (80% 캡)</div></div>
+      <div class="munga-result-card mrc-highlight"><div class="mrc-label">총 적용 치적(시너지 포함)</div><div class="mrc-value">${r.totalWithSynergy.toFixed(2)}%</div><div class="mrc-sub">실효 치적: ${Math.min(r.totalWithSynergy,80).toFixed(1)}%</div></div>
       <div class="munga-result-card ${effCls}"><div class="mrc-label">뭉가 최대 효율(${r.maxEfficiencyDijeok.toFixed(1)}%) 대비</div><div class="mrc-value">${effLabel}</div><div class="mrc-sub">${effSub}</div></div>
     `;
   }
@@ -1679,16 +1679,16 @@ return '<div class="market-card market-card-combo">'
     const gap = EUMDOL_SPEED_CAP - total;
     const statDiff = Math.abs(gap) * SWIFT_STAT_PER_PERCENT;
     return gap > 0
-      ? `40% 도달까지 신속 스탯 약 ${fmtAbi(Math.round(statDiff))} 필요`
-      : `40% 캡 대비 신속 스탯 약 ${fmtAbi(Math.round(statDiff))} 초과 투자`;
+      ? `도달까지 신속 스탯 약 ${fmtAbi(Math.round(statDiff))} 필요`
+      : `대비 신속 스탯 약 ${fmtAbi(Math.round(statDiff))} 초과 투자`;
   }
 
   function renderEumdolHero(){
     const r = eumdolComputeResult();
     if(!r) return;
     $('eumdolHeroGrid').innerHTML = `
-      <div class="munga-result-card mrc-highlight"><div class="mrc-label">총 공격속도 증가량</div><div class="mrc-value">${r.totalAtk.toFixed(2)}%</div><div class="mrc-sub">실효: ${r.cappedAtk.toFixed(1)}% (${EUMDOL_SPEED_CAP}% 캡) · ${eumdolCapDiffText(r.totalAtk)}</div></div>
-      <div class="munga-result-card mrc-highlight"><div class="mrc-label">총 이동속도 증가량</div><div class="mrc-value">${r.totalMove.toFixed(2)}%</div><div class="mrc-sub">실효: ${r.cappedMove.toFixed(1)}% (${EUMDOL_SPEED_CAP}% 캡) · ${eumdolCapDiffText(r.totalMove)}</div></div>
+      <div class="munga-result-card mrc-highlight"><div class="mrc-label">총 공격속도 증가량</div><div class="mrc-value">${r.totalAtk.toFixed(2)}%</div><div class="mrc-sub">실효: ${r.cappedAtk.toFixed(1)}% · ${eumdolCapDiffText(r.totalAtk)}</div></div>
+      <div class="munga-result-card mrc-highlight"><div class="mrc-label">총 이동속도 증가량</div><div class="mrc-value">${r.totalMove.toFixed(2)}%</div><div class="mrc-sub">실효: ${r.cappedMove.toFixed(1)}% · ${eumdolCapDiffText(r.totalMove)}</div></div>
     `;
   }
 
