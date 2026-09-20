@@ -535,6 +535,11 @@
             </select>
           </label>
         </div>
+        <div class="munga-synergy-row">
+          <span class="munga-synergy-title">공이속 버프 (중복 체크 가능)</span>
+          <label class="munga-synergy-item"><input type="checkbox" class="eumdol-buff-cb" data-atk="5" data-move="5"> PC방 만찬 (+5%)</label>
+          <label class="munga-synergy-item"><input type="checkbox" class="eumdol-buff-cb" data-atk="9" data-move="9"> 서포터 버프 갈망 (+9%)</label>
+        </div>
         <div class="munga-result-grid munga-hero-grid" id="eumdolHeroGrid"></div>
         <div class="munga-result-grid" id="eumdolResultGrid"></div>
       </div>
@@ -1545,8 +1550,13 @@ return '<div class="market-card market-card-combo">'
     if(!eumdolBreakdown) return null;
     const manualAtk = parseFloat($('eumdolManualAtk').value) || 0;
     const manualMove = parseFloat($('eumdolManualMove').value) || 0;
-    const totalAtk = eumdolBreakdown.statAtk + eumdolBreakdown.engineAtk + eumdolBreakdown.arkAtk + eumdolBreakdown.equipAtk + manualAtk;
-    const totalMove = eumdolBreakdown.statMove + eumdolBreakdown.engineMove + eumdolBreakdown.arkMove + eumdolBreakdown.equipMove + manualMove;
+    const buffSum = Array.from(document.querySelectorAll('.eumdol-buff-cb:checked')).reduce(function(acc, cb){
+      acc.atk += parseFloat(cb.dataset.atk) || 0;
+      acc.move += parseFloat(cb.dataset.move) || 0;
+      return acc;
+    }, { atk: 0, move: 0 });
+    const totalAtk = eumdolBreakdown.statAtk + eumdolBreakdown.engineAtk + eumdolBreakdown.arkAtk + eumdolBreakdown.equipAtk + manualAtk + buffSum.atk;
+    const totalMove = eumdolBreakdown.statMove + eumdolBreakdown.engineMove + eumdolBreakdown.arkMove + eumdolBreakdown.equipMove + manualMove + buffSum.move;
     const levelSel = $('eumdolLevelSelect').value;
     const levelDetected = !!(eumdolBreakdown.eumdolLevel && eumdolBreakdown.eumdolLevel.detected);
     const lv = levelDetected ? eumdolBreakdown.eumdolLevel : EUMDOL_LEVELS[levelSel];
@@ -1706,6 +1716,9 @@ return '<div class="market-card market-card-combo">'
   ['eumdolManualAtk','eumdolManualMove','eumdolLevelSelect'].forEach(function(id){
     $(id).addEventListener('input', function(){ if(eumdolBreakdown) renderEumdolResult(); });
     $(id).addEventListener('change', function(){ if(eumdolBreakdown) renderEumdolResult(); });
+  });
+  document.querySelectorAll('.eumdol-buff-cb').forEach(function(cb){
+    cb.addEventListener('change', function(){ if(eumdolBreakdown) renderEumdolResult(); });
   });
 
   function switchTab(tab){
