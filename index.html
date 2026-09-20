@@ -347,10 +347,15 @@
 .munga-result-card .mrc-value{font-size:20px;font-weight:900;color:var(--gold-bright);}
 .munga-result-card .mrc-sub{font-size:10.5px;color:var(--text-faint);margin-top:4px;}
 .munga-result-card.mrc-highlight .mrc-value{color:#6fa8ff;}
+.munga-result-card.mrc-dual .mrc-dual-row{display:flex;gap:10px;margin-top:10px;}
+.munga-result-card.mrc-dual .mrc-dual-item{flex:1;text-align:center;background:var(--surface-2);border-radius:8px;padding:8px 6px;}
+.munga-result-card.mrc-dual .mrc-dual-label{font-size:10.5px;color:var(--text-faint);margin-bottom:3px;}
+.munga-result-card.mrc-dual .mrc-dual-value{font-size:15px;font-weight:900;color:#6fa8ff;}
 .munga-synergy-row{margin-bottom:16px;}
 .munga-synergy-title{display:block;font-size:12.5px;color:var(--text-dim);font-weight:700;margin-bottom:8px;}
 .munga-synergy-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 16px;}
 @media (max-width:520px){ .munga-synergy-grid{grid-template-columns:repeat(2,1fr);} }
+.munga-synergy-grid-1col{grid-template-columns:1fr!important;}
 .munga-synergy-item{display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--text-dim);cursor:pointer;}
 .munga-synergy-item input{cursor:pointer;}
 .munga-debug-btn{margin-bottom:12px;}
@@ -553,7 +558,7 @@
             </div>
             <div class="munga-synergy-row">
               <span class="munga-synergy-title">파티 공이속 시너지</span>
-              <div class="munga-synergy-grid">
+              <div class="munga-synergy-grid munga-synergy-grid-1col">
                 <label class="munga-synergy-item"><input type="checkbox" class="eumdol-synergy-cb" data-atk="8" data-move="16"> 배틀마스터 (공속+8% 이속+16%)</label>
                 <label class="munga-synergy-item"><input type="checkbox" class="eumdol-synergy-cb" data-atk="12.8" data-move="12.8"> 블레이드 (공속+12.8% 이속+12.8%)</label>
                 <label class="munga-synergy-item"><input type="checkbox" class="eumdol-synergy-cb" data-atk="8" data-move="0"> 스트라이커 (공속+8%)</label>
@@ -1843,8 +1848,14 @@ return '<div class="market-card market-card-combo">'
       ? `+${r.efficiencyDiff.toFixed(2)}% 초과`
       : `${r.efficiencyDiff.toFixed(2)}% 부족`;
     $('eumdolHeroGrid').innerHTML = `
-      <div class="munga-result-card mrc-highlight"><div class="mrc-label">총 공격속도 증가량</div><div class="mrc-value">${r.totalAtk.toFixed(2)}%</div></div>
-      <div class="munga-result-card mrc-highlight"><div class="mrc-label">총 이동속도 증가량</div><div class="mrc-value">${r.totalMove.toFixed(2)}%</div></div>
+      <div class="munga-result-card mrc-highlight mrc-dual">
+        <div class="mrc-label">총 공이속 증가량</div>
+        <div class="mrc-value">${(r.totalAtk + r.totalMove).toFixed(2)}%</div>
+        <div class="mrc-dual-row">
+          <div class="mrc-dual-item"><div class="mrc-dual-label">공격속도</div><div class="mrc-dual-value">${r.totalAtk.toFixed(2)}%</div></div>
+          <div class="mrc-dual-item"><div class="mrc-dual-label">이동속도</div><div class="mrc-dual-value">${r.totalMove.toFixed(2)}%</div></div>
+        </div>
+      </div>
       <div class="munga-result-card ${effCls}"><div class="mrc-label">음돌 효율(${r.maxEfficiencyCombined.toFixed(2)}%) 대비</div><div class="mrc-value">${effLabel}</div></div>
     `;
   }
