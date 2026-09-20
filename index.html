@@ -478,9 +478,13 @@
         <div class="abi-section-title">치명타 적중률(치적) 소스 요약 <span id="mungaCharMeta" class="munga-char-meta"></span></div>
         <div class="abi-table-wrap"><table class="abi-table" id="mungaSourceTable"></table></div>
         <div class="munga-manual-row">
-          <label class="abi-select-label">클래스 고유(깨달음·도약) 등 추가 치적 직접 입력
+          <label class="abi-select-label">캐릭터 자체 시너지 직접 입력
             <input type="number" id="mungaManualExtra" class="abi-manual-price-input" placeholder="0" value="0" step="0.1">%
           </label>
+        </div>
+        <div class="munga-synergy-row">
+          <span class="munga-synergy-title">캐릭터 자체 스킬 효과 (중복 체크 가능)</span>
+          <label class="munga-synergy-item"><input type="checkbox" class="munga-skill-cb" value="30"> 용맹의 포효 (치적 +30%)</label>
         </div>
       </div>
 
@@ -539,6 +543,10 @@
           <span class="munga-synergy-title">공이속 버프 (중복 체크 가능)</span>
           <label class="munga-synergy-item"><input type="checkbox" class="eumdol-buff-cb" data-atk="5" data-move="5"> PC방 만찬 (+5%)</label>
           <label class="munga-synergy-item"><input type="checkbox" class="eumdol-buff-cb" data-atk="9" data-move="9"> 서포터 버프 갈망 (+9%)</label>
+        </div>
+        <div class="munga-synergy-row">
+          <span class="munga-synergy-title">캐릭터 자체 스킬 효과 (중복 체크 가능)</span>
+          <label class="munga-synergy-item"><input type="checkbox" class="eumdol-buff-cb" data-atk="20.8" data-move="16"> 바람의 속삭임 (공속 +20.8% / 이속 +16%)</label>
         </div>
         <div class="munga-result-grid munga-hero-grid" id="eumdolHeroGrid"></div>
         <div class="munga-result-grid" id="eumdolResultGrid"></div>
@@ -1513,7 +1521,8 @@ return '<div class="market-card market-card-combo">'
   function mungaComputeResult(){
     if(!mungaBreakdown) return null;
     const manualExtra = parseFloat($('mungaManualExtra').value) || 0;
-    const baseDijeok = mungaBreakdown.statPct + mungaBreakdown.enginePct + mungaBreakdown.arkPct + mungaBreakdown.equipPct + manualExtra;
+    const skillPct = Array.from(document.querySelectorAll('.munga-skill-cb:checked')).reduce(function(sum, cb){ return sum + (parseFloat(cb.value) || 0); }, 0);
+    const baseDijeok = mungaBreakdown.statPct + mungaBreakdown.enginePct + mungaBreakdown.arkPct + mungaBreakdown.equipPct + manualExtra + skillPct;
     const synergy = Array.from(document.querySelectorAll('.munga-synergy-cb:checked')).reduce(function(sum, cb){ return sum + (parseFloat(cb.value) || 0); }, 0);
     const chipi = parseFloat($('mungaChipiSelect').value) || 200;
     const levelSel = $('mungaLevelSelect').value;
@@ -1711,6 +1720,9 @@ return '<div class="market-card market-card-combo">'
     $(id).addEventListener('change', function(){ if(mungaBreakdown) renderMungaResult(); });
   });
   document.querySelectorAll('.munga-synergy-cb').forEach(function(cb){
+    cb.addEventListener('change', function(){ if(mungaBreakdown) renderMungaResult(); });
+  });
+  document.querySelectorAll('.munga-skill-cb').forEach(function(cb){
     cb.addEventListener('change', function(){ if(mungaBreakdown) renderMungaResult(); });
   });
   ['eumdolManualAtk','eumdolManualMove','eumdolLevelSelect'].forEach(function(id){
