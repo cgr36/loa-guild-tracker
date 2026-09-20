@@ -1360,6 +1360,61 @@ return '<div class="market-card market-card-combo">'
     return found ? parseFloat((found.Value || '0').toString().replace(/,/g,'')) : 0;
   }
 
+  function mungaFindItemPartBoxText(tooltipObj, labelKeyword){
+    // 아크그리드 코어/젬 Tooltip은 Element_NNN마다 { type:'ItemPartBox', value:{Element_000: 라벨, Element_001: 본문} }
+    // 형태라, 라벨(예: "코어 옵션")로 찾아서 본문 텍스트만 뽑아냄.
+    if(!tooltipObj) return '';
+    let result = '';
+    Object.keys(tooltipObj).forEach(function(key){
+      const el = tooltipObj[key];
+      if(el && el.type === 'ItemPartBox' && el.value && typeof el.value === 'object'){
+        const label = mungaStripTags(el.value.Element_000 || '');
+        if(label.indexOf(labelKeyword) !== -1) result = el.value.Element_001 || '';
+      }
+    });
+    return result;
+  }
+
+  function mungaCoreOptionSegments(rawText, corePoint){
+    // 코어 옵션 텍스트는 "[10P] ... [14P] ... [17P] ..."처럼 포인트 구간별로 이어져
+    // 있어서, 실제 투자한 코어 포인트(corePoint) 이상을 요구하는 구간만 걸러서 반환.
+    if(!rawText) return [];
+    const re = /\[(\d+)P\]/g;
+    const marks = [];
+    let m;
+    while((m = re.exec(rawText))){ marks.push({ idx: m.index, end: re.lastIndex, point: parseInt(m[1], 10) }); }
+    if(marks.length === 0) return [rawText];
+    const segs = [];
+    for(let i = 0; i < marks.length; i++){
+      if(corePoint < marks[i].point) continue;
+      const segEnd = i + 1 < marks.length ? marks[i + 1].idx : rawText.length;
+      segs.push(rawText.slice(marks[i].end, segEnd));
+    }
+    return segs;
+  }
+
+  function mungaCoreStackSpeedBonus(segmentText){
+    // "N중첩 부여된다 ... 중첩 당 공격속도 및 이동속도가 X% 증가" 같은 스택형 코어 옵션은
+    // 달인 각인과 동일하게 최대 중첩(N) 기준으로 환산해야 실제 효율에 가까움.
+    const clean = mungaStripTags(segmentText);
+    const stackM = /(\d+)\s*중첩/.exec(clean);
+    if(!stackM || !/중첩\s*당/.test(clean)) return null;
+    const sp = mungaExtractSpeedPercents(segmentText);
+    if(sp.atk === 0 && sp.move === 0) return null;
+    const stacks = parseInt(stackM[1], 10);
+    return { atk: sp.atk * stacks, move: sp.move * stacks, stacks: stacks };
+  }
+
+  function mungaCoreStackCritBonus(segmentText){
+    const clean = mungaStripTags(segmentText);
+    const stackM = /(\d+)\s*중첩/.exec(clean);
+    if(!stackM || !/중첩\s*당/.test(clean)) return null;
+    const v = mungaExtractPercent(segmentText, '치명타\\s*적중률');
+    if(v === 0) return null;
+    const stacks = parseInt(stackM[1], 10);
+    return { value: v * stacks, stacks: stacks };
+  }
+
   function mungaParseBreakdown(data){
     const profile = data.profile || {};
     const critStat = mungaFindStat(profile, '치명');
@@ -1439,6 +1494,23 @@ return '<div class="market-card market-card-combo">'
     arkGridEffects.forEach(function(e){
       const v = mungaExtractPercent(e.Tooltip || '', '치명타\\s*적중률');
       if(v > 0){ arkGridPct += v; arkGridDetail.push({ name: '아크그리드: ' + e.Name, value: v }); }
+    });
+
+    // 아크그리드 코어의 "코어 옵션"에는 포인트 구간별([10P]/[14P] 등)로 게이트된
+    // 스택형 효과(예: 중첩 당 치명타 적중률 X%, 최대 N중첩)가 있어 Effects[]에는
+    // 안 잡히므로, 투자한 코어 포인트를 만족하는 구간만 걸러서 별도로 더함.
+    const arkGridSlots = (data.arkgrid && data.arkgrid.Slots) || [];
+    arkGridSlots.forEach(function(slot){
+      let slotTooltip = null;
+      try{ slotTooltip = typeof slot.Tooltip === 'string' ? JSON.parse(slot.Tooltip) : slot.Tooltip; }catch(e){ slotTooltip = null; }
+      const optionText = mungaFindItemPartBoxText(slotTooltip, '코어 옵션');
+      mungaCoreOptionSegments(optionText, slot.Point || 0).forEach(function(seg){
+        const bonus = mungaCoreStackCritBonus(seg);
+        if(bonus){
+          arkGridPct += bonus.value;
+          arkGridDetail.push({ name: '아크그리드 코어: ' + slot.Name + ' (최대 ' + bonus.stacks + '중첩 가정)', value: bonus.value });
+        }
+      });
     });
 
     // 뭉가(뭉툭한 가시) 노드 자체를 이미 장착 중이면 실측 계수를 텍스트에서 직접 파싱
@@ -1544,7 +1616,7 @@ return '<div class="market-card market-card-combo">'
     });
 
     // 아크 그리드 - data.arkgrid.Effects[]가 이미 합산 완료된 {Name, Tooltip} 목록이라
-    // 다른 항목과 동일하게 그 자리에서 바로 파싱(코어/젬 원본 툴팁까지 훑을 필요 없음)
+    // 다른 항목과 동일하게 그 자리에서 바로 파싱
     const arkGridEffects2 = (data.arkgrid && data.arkgrid.Effects) || [];
     let arkGridAtk = 0, arkGridMove = 0;
     const arkGridDetail = [];
@@ -1554,6 +1626,22 @@ return '<div class="market-card market-card-combo">'
         arkGridAtk += sp.atk; arkGridMove += sp.move;
         arkGridDetail.push({ name: '아크그리드: ' + e.Name, atk: sp.atk, move: sp.move });
       }
+    });
+
+    // 코어 옵션의 포인트 구간별 스택형 효과(예: [14P] 조건 만족 시 중첩 당 공격속도/이동속도
+    // X% 증가, 최대 N중첩)는 Effects[]에 안 잡히므로 Slots에서 별도로 찾아 최대 중첩 기준으로 더함.
+    const arkGridSlots2 = (data.arkgrid && data.arkgrid.Slots) || [];
+    arkGridSlots2.forEach(function(slot){
+      let slotTooltip = null;
+      try{ slotTooltip = typeof slot.Tooltip === 'string' ? JSON.parse(slot.Tooltip) : slot.Tooltip; }catch(e){ slotTooltip = null; }
+      const optionText = mungaFindItemPartBoxText(slotTooltip, '코어 옵션');
+      mungaCoreOptionSegments(optionText, slot.Point || 0).forEach(function(seg){
+        const bonus = mungaCoreStackSpeedBonus(seg);
+        if(bonus){
+          arkGridAtk += bonus.atk; arkGridMove += bonus.move;
+          arkGridDetail.push({ name: '아크그리드 코어: ' + slot.Name + ' (최대 ' + bonus.stacks + '중첩 가정)', atk: bonus.atk, move: bonus.move });
+        }
+      });
     });
 
     // 음속 돌파(음돌) 노드 자체를 이미 장착 중이면 실측 계수를 텍스트에서 직접 파싱
