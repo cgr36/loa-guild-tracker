@@ -354,6 +354,9 @@
 .munga-synergy-item input{cursor:pointer;}
 .munga-debug-btn{margin-bottom:12px;}
 .munga-debug-pre{max-height:400px;overflow:auto;background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:11px;color:var(--text-dim);white-space:pre-wrap;word-break:break-all;margin-bottom:16px;}
+.munga-hero-grid{margin-bottom:24px;}
+.munga-result-card.mrc-over .mrc-value{color:var(--rose);}
+.munga-result-card.mrc-under .mrc-value{color:#6fa8ff;}
 .abi-sellprice{display:inline-block;padding:3px 10px;border-radius:10px;background:rgba(228,182,90,0.18);color:var(--gold-bright);font-weight:900;font-size:14px;}
 </style>
 </head>
@@ -469,6 +472,8 @@
     <pre class="munga-debug-pre" id="mungaDebugPre" style="display:none;"></pre>
 
     <div class="munga-body" id="mungaBody" style="display:none;">
+      <div class="munga-result-grid munga-hero-grid" id="mungaHeroGrid"></div>
+
       <div class="abi-section">
         <div class="abi-section-title">치명타 적중률(치적) 소스 요약 <span id="mungaCharMeta" class="munga-char-meta"></span></div>
         <div class="abi-table-wrap"><table class="abi-table" id="mungaSourceTable"></table></div>
@@ -1387,10 +1392,16 @@ return '<div class="market-card market-card-combo">'
 
     const dmgIncreasePct = (withNodeMul / withoutNodeMul - 1) * 100;
 
+    // 뭉가가 최대 효율(진화형 피해 상한)을 내는 데 필요한 총 치적 기준선
+    // (2Lv면 120%, 1Lv면 116%) 대비 지금 얼마나 초과/미달인지
+    const maxEfficiencyDijeok = MUNGA_CRIT_CAP + excessCapForNode;
+    const efficiencyDiff = totalWithSynergy - maxEfficiencyDijeok;
+
     return {
       totalWithSynergy: totalWithSynergy, excessUsed: excessUsed, evoBonus: evoBonus,
       withNodeMul: withNodeMul, withoutNodeMul: withoutNodeMul,
       dmgIncreasePct: dmgIncreasePct, levelUsed: lv, levelDetected: levelDetected,
+      maxEfficiencyDijeok: maxEfficiencyDijeok, efficiencyDiff: efficiencyDiff,
     };
   }
 
@@ -1408,10 +1419,27 @@ return '<div class="market-card market-card-combo">'
     const r = mungaComputeResult();
     if(!r) return;
     $('mungaResultGrid').innerHTML = `
-      <div class="munga-result-card"><div class="mrc-label">총 적용 치적(시너지 포함)</div><div class="mrc-value">${r.totalWithSynergy.toFixed(2)}%</div><div class="mrc-sub">실효 치적: ${Math.min(r.totalWithSynergy,80).toFixed(1)}% (80% 캡)</div></div>
       <div class="munga-result-card"><div class="mrc-label">80% 초과 치적 반영분</div><div class="mrc-value">+${r.excessUsed.toFixed(2)}%p</div><div class="mrc-sub">전환율 ×${r.levelUsed.conv}</div></div>
       <div class="munga-result-card"><div class="mrc-label">총 뭉가 진화형 피해</div><div class="mrc-value">+${r.evoBonus.toFixed(2)}%</div><div class="mrc-sub">최대 ${r.levelUsed.maxEvo}%${r.levelDetected ? ' · 노드 실측치' : ' · 선택 레벨 기준(가정)'}</div></div>
       <div class="munga-result-card mrc-highlight"><div class="mrc-label">뭉가 미채용 대비 딜증율</div><div class="mrc-value">+${r.dmgIncreasePct.toFixed(2)}%</div><div class="mrc-sub">배율: ${r.withoutNodeMul.toFixed(3)}x → ${r.withNodeMul.toFixed(3)}x</div></div>
+    `;
+    renderMungaHero();
+  }
+
+  function renderMungaHero(){
+    const r = mungaComputeResult();
+    if(!r) return;
+    const isOver = r.efficiencyDiff >= 0;
+    const effCls = isOver ? 'mrc-over' : 'mrc-under';
+    const effLabel = isOver
+      ? `+${r.efficiencyDiff.toFixed(2)}%p 초과 (오버치적)`
+      : `${r.efficiencyDiff.toFixed(2)}%p 부족`;
+    const effSub = isOver
+      ? '이만큼은 진화형 피해로 전환되지 않고 버려져요'
+      : `이만큼 더 채우면 뭉가 최대 효율(${r.maxEfficiencyDijeok.toFixed(1)}%) 도달`;
+    $('mungaHeroGrid').innerHTML = `
+      <div class="munga-result-card mrc-highlight"><div class="mrc-label">총 적용 치적(시너지 포함)</div><div class="mrc-value">${r.totalWithSynergy.toFixed(2)}%</div><div class="mrc-sub">실효 치적: ${Math.min(r.totalWithSynergy,80).toFixed(1)}% (80% 캡)</div></div>
+      <div class="munga-result-card ${effCls}"><div class="mrc-label">뭉가 최대 효율(${r.maxEfficiencyDijeok.toFixed(1)}%) 대비</div><div class="mrc-value">${effLabel}</div><div class="mrc-sub">${effSub}</div></div>
     `;
   }
 
