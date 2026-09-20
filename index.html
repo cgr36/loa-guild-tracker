@@ -339,6 +339,15 @@
 .abi-select-label{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-dim);font-weight:700;}
 .abi-select-label select{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12.5px;}
 .abi-manual-price-input{width:90px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12.5px;}
+.munga-status{font-size:12.5px;color:var(--text-faint);margin-bottom:14px;}
+.munga-char-meta{font-size:11.5px;color:var(--text-faint);font-weight:400;margin-left:6px;}
+.munga-manual-row{padding:10px 12px;}
+.munga-result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}
+.munga-result-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:12px 14px;}
+.munga-result-card .mrc-label{font-size:11px;color:var(--text-faint);margin-bottom:6px;}
+.munga-result-card .mrc-value{font-size:20px;font-weight:900;color:var(--gold-bright);}
+.munga-result-card .mrc-sub{font-size:10.5px;color:var(--text-faint);margin-top:4px;}
+.munga-result-card.mrc-highlight .mrc-value{color:#6fa8ff;}
 .abi-sellprice{display:inline-block;padding:3px 10px;border-radius:10px;background:rgba(228,182,90,0.18);color:var(--gold-bright);font-weight:900;font-size:14px;}
 </style>
 </head>
@@ -369,6 +378,7 @@
   <button type="button" class="tab-btn active" data-tab="raid">레이드 체크</button>
   <button type="button" class="tab-btn" data-tab="market">거래소 시세</button>
   <button type="button" class="tab-btn" data-tab="abidos">상비도스 제작 효율</button>
+  <button type="button" class="tab-btn" data-tab="munga">캐릭터 계산기</button>
 </div>
   
   <div class="tab-panel active" id="tabRaid">
@@ -441,6 +451,52 @@
       <div class="abi-table-wrap"><table class="abi-table" id="abiCrystalTable"></table></div>
     </div>
     <div class="abi-note">생활 재료 시세·판매가는 서버가 주기적으로 갱신해 캐싱한 값입니다 (최대 5분 지연, 실패 시 스냅샷 값 표시) · 기준 시각: <span id="abiUpdatedAt"></span> · 원본: 상급 아비도스 쌀산기 ver.3</div>
+  </div>
+
+  <div class="tab-panel" id="tabMunga">
+    <div class="toolbar">
+      <input class="search" id="mungaNameInput" placeholder="캐릭터명 입력 후 검색…">
+      <button class="btn-primary" id="btnMungaSearch">검색</button>
+    </div>
+    <div class="munga-status" id="mungaStatus">캐릭터명을 입력하고 검색해주세요.</div>
+
+    <div class="munga-body" id="mungaBody" style="display:none;">
+      <div class="abi-section">
+        <div class="abi-section-title">치명타 적중률(치적) 소스 요약 <span id="mungaCharMeta" class="munga-char-meta"></span></div>
+        <div class="abi-table-wrap"><table class="abi-table" id="mungaSourceTable"></table></div>
+        <div class="munga-manual-row">
+          <label class="abi-select-label">클래스 고유(깨달음·도약) 등 추가 치적 직접 입력
+            <input type="number" id="mungaManualExtra" class="abi-manual-price-input" placeholder="0" value="0" step="0.1">%
+          </label>
+        </div>
+      </div>
+
+      <div class="abi-section">
+        <div class="abi-section-title">뭉툭한 가시(뭉가) 효율 시뮬레이터</div>
+        <div class="toolbar">
+          <label class="abi-select-label">뭉가 레벨
+            <select id="mungaLevelSelect">
+              <option value="1">1Lv (전환율 125%)</option>
+              <option value="2" selected>2Lv (전환율 150%)</option>
+            </select>
+          </label>
+          <label class="abi-select-label">치명타 피해량(치피)
+            <select id="mungaChipiSelect">
+              <option value="200">기본 (200%)</option>
+              <option value="250">예둔 채용 (250%)</option>
+            </select>
+          </label>
+          <label class="abi-select-label">파티 치적 시너지
+            <select id="mungaSynergySelect">
+              <option value="0">없음 (0%)</option>
+              <option value="10">+10% (일반)</option>
+              <option value="18">+18% (치적 극대)</option>
+            </select>
+          </label>
+        </div>
+        <div class="munga-result-grid" id="mungaResultGrid"></div>
+      </div>
+    </div>
   </div>
 
 
@@ -1131,12 +1187,219 @@ return '<div class="market-card market-card-combo">'
     `;
   }
 
+  // ---------- 캐릭터 계산기: 뭉가(뭉툭한 가시) 효율 계산 ----------
+  // 치명 스탯 -> 치적(%) 변환 계수. 커뮤니티 검증 공식(치명 27.944당 1%)이며
+  // 실제 캐릭터 예시(치명 576 -> +20.62%)와 일치함을 확인함.
+  const MUNGA_STAT_PER_PERCENT = 27.944;
+  // 뭉가(뭉툭한 가시) 레벨별 계수 - 2025-12-10 패치 기준(나무위키로 검증).
+  // 캐릭터가 이미 이 노드를 장착 중이면 API 텍스트에서 실측값을 직접 파싱해서 쓰고,
+  // 아직 장착 전(가정 시뮬레이션)이면 이 표를 그대로 사용함.
+  const MUNGA_LEVELS = {
+    1: { baseEvo: 7.5, conv: 1.25, maxEvo: 52.5 },
+    2: { baseEvo: 15.0, conv: 1.50, maxEvo: 75.0 },
+  };
+  const MUNGA_CRIT_CAP = 80; // 뭉가 장착 시 실제 치명타 발생 확률 상한
+  // 도약 5티어의 다른 대체 노드들 - 설명에 "치명타"가 들어가도 단순 가산 보너스가
+  // 아니라 캡/전환 메커니즘이라 치적 합산 시 제외해야 함
+  const MUNGA_LEAP_NODE_NAMES = ['뭉툭한 가시','음속 돌파','입식 타격가','인파이팅','마나 용광로','안정된 관리자'];
+
+  let mungaBreakdown = null; // 마지막으로 불러온 캐릭터의 치적 breakdown
+
+  function mungaExtractPercent(text, keyword){
+    // "치명타 적중률이 8.0% 증가" 같은 문구에서 keyword 뒤에 오는 숫자%를 모두 더함.
+    // "~로 제한됩니다"/"~로 전환됩니다" 같은 캡/전환 문구는 가산 보너스가 아니므로 제외.
+    if(!text) return 0;
+    let total = 0;
+    const re = new RegExp(keyword + '[^%]{0,8}?([\\d.]+)\\s*%\\s*(?:증가|만큼 증가)', 'g');
+    let m;
+    while((m = re.exec(text))){ total += parseFloat(m[1]) || 0; }
+    return total;
+  }
+
+  function mungaExtractPercentLenient(text, keyword){
+    // 장비 연마/팔찌 옵션은 "치명타 적중률 +3.10%"처럼 "증가" 없이 표기되는 경우가
+    // 많아서, 이쪽은 "증가" 여부와 무관하게 keyword 뒤 첫 숫자%를 그대로 가산으로 인정.
+    if(!text) return 0;
+    let total = 0;
+    const re = new RegExp(keyword + '[^%\\d]{0,10}?\\+?\\s*([\\d.]+)\\s*%', 'g');
+    let m;
+    while((m = re.exec(text))){ total += parseFloat(m[1]) || 0; }
+    return total;
+  }
+
+  function mungaFindStat(profile, type){
+    const stats = (profile && profile.Stats) || [];
+    const found = stats.find(function(s){ return s.Type === type; });
+    return found ? parseFloat((found.Value || '0').toString().replace(/,/g,'')) : 0;
+  }
+
+  function mungaParseBreakdown(data){
+    const profile = data.profile || {};
+    const critStat = mungaFindStat(profile, '치명');
+    const statPct = critStat / MUNGA_STAT_PER_PERCENT;
+
+    const engraveEffects = (data.engravings && (data.engravings.Effects || data.engravings.ArkPassiveEffects)) || [];
+    let enginePct = 0;
+    const engraveDetail = [];
+    engraveEffects.forEach(function(e){
+      const v = mungaExtractPercent(e.Description || '', '치명타\\s*적중률');
+      if(v > 0){ enginePct += v; engraveDetail.push({ name: e.Name, value: v }); }
+    });
+
+    const arkEffects = (data.arkpassive && data.arkpassive.Effects) || [];
+    let arkPct = 0;
+    const arkDetail = [];
+    let mungaNode = null;
+    arkEffects.forEach(function(e){
+      if(MUNGA_LEAP_NODE_NAMES.indexOf(e.Name) !== -1){
+        if(e.Name === '뭉툭한 가시') mungaNode = e;
+        return; // 도약 5티어 대체 노드는 치적 가산에서 제외
+      }
+      if(e.Name === '달인'){
+        // "치명타 적중률 +1.4% / 추가피해 +1.7%, 최대 5중첩" 처럼 스택형 텍스트라
+        // 일반 "~% 증가" 패턴과 달라서 따로 파싱. 못 찾으면 확인된 실측값(최대 중첩
+        // 5회 x 1.4% = 7%, 항상 유지된다고 가정)으로 폴백.
+        const perStackM = /치명타\s*적중률\s*\+?\s*([\d.]+)\s*%/.exec(e.Description || '');
+        const stacksM = /최대\s*(\d+)\s*중첩/.exec(e.Description || '');
+        const v = (perStackM && stacksM) ? parseFloat(perStackM[1]) * parseInt(stacksM[1], 10) : 7;
+        arkPct += v; arkDetail.push({ name: '달인 (최대 중첩 가정)', value: v });
+        return;
+      }
+      const v = mungaExtractPercent(e.Description || '', '치명타\\s*적중률');
+      if(v > 0){ arkPct += v; arkDetail.push({ name: e.Name, value: v }); }
+    });
+
+    // 장신구 연마/팔찌 옵션의 "치명타 적중률" 수치 - Tooltip 텍스트에서 파싱
+    const equipList = Array.isArray(data.equipment) ? data.equipment : [];
+    let equipPct = 0;
+    const equipDetail = [];
+    equipList.forEach(function(it){
+      let tooltipText = '';
+      try{
+        const tt = typeof it.Tooltip === 'string' ? JSON.parse(it.Tooltip) : it.Tooltip;
+        tooltipText = JSON.stringify(tt || {});
+      }catch(e){ tooltipText = it.Tooltip || ''; }
+      const v = mungaExtractPercentLenient(tooltipText, '치명타\\s*적중률');
+      if(v > 0){ equipPct += v; equipDetail.push({ name: it.Name, value: v }); }
+    });
+
+    // 뭉가(뭉툭한 가시) 노드 자체를 이미 장착 중이면 실측 계수를 텍스트에서 직접 파싱
+    let mungaLevel = null;
+    if(mungaNode && mungaNode.Description){
+      const baseM = /진화형\s*피해가\s*([\d.]+)\s*%\s*증가/.exec(mungaNode.Description);
+      const convM = /([\d.]+)\s*%\s*가\s*진화형\s*피해로\s*전환/.exec(mungaNode.Description);
+      const maxM = /최대\s*([\d.]+)\s*%까지/.exec(mungaNode.Description);
+      if(baseM && convM && maxM){
+        mungaLevel = { baseEvo: parseFloat(baseM[1]), conv: parseFloat(convM[1]) / 100, maxEvo: parseFloat(maxM[1]), detected: true };
+      }
+    }
+
+    return {
+      statPct: statPct, critStat: critStat,
+      enginePct: enginePct, engraveDetail: engraveDetail,
+      arkPct: arkPct, arkDetail: arkDetail,
+      equipPct: equipPct, equipDetail: equipDetail,
+      mungaLevel: mungaLevel,
+      className: profile.CharacterClassName || '',
+      characterName: profile.CharacterName || '',
+    };
+  }
+
+  function mungaComputeResult(){
+    if(!mungaBreakdown) return null;
+    const manualExtra = parseFloat($('mungaManualExtra').value) || 0;
+    const baseDijeok = mungaBreakdown.statPct + mungaBreakdown.enginePct + mungaBreakdown.arkPct + mungaBreakdown.equipPct + manualExtra;
+    const synergy = parseFloat($('mungaSynergySelect').value) || 0;
+    const chipi = parseFloat($('mungaChipiSelect').value) || 200;
+    const levelSel = $('mungaLevelSelect').value;
+    const levelDetected = !!(mungaBreakdown.mungaLevel && mungaBreakdown.mungaLevel.detected);
+    const lv = levelDetected ? mungaBreakdown.mungaLevel : MUNGA_LEVELS[levelSel];
+
+    const totalWithSynergy = baseDijeok + synergy;
+    const excess = Math.max(0, totalWithSynergy - MUNGA_CRIT_CAP);
+    const excessCapForNode = (lv.maxEvo - lv.baseEvo) / lv.conv;
+    const excessUsed = Math.min(excess, excessCapForNode);
+    const evoBonus = lv.baseEvo + excessUsed * lv.conv;
+
+    const chipiMul = chipi / 100;
+    const withNodeMul = ((1 - MUNGA_CRIT_CAP / 100) * 1 + (MUNGA_CRIT_CAP / 100) * chipiMul) * (1 + evoBonus / 100);
+    const rawCritForBaseline = Math.min(totalWithSynergy, 100);
+    const withoutNodeMul = (1 - rawCritForBaseline / 100) * 1 + (rawCritForBaseline / 100) * chipiMul;
+
+    const dmgIncreasePct = (withNodeMul / withoutNodeMul - 1) * 100;
+
+    return {
+      totalWithSynergy: totalWithSynergy, excessUsed: excessUsed, evoBonus: evoBonus,
+      withNodeMul: withNodeMul, withoutNodeMul: withoutNodeMul,
+      dmgIncreasePct: dmgIncreasePct, levelUsed: lv, levelDetected: levelDetected,
+    };
+  }
+
+  function renderMungaBreakdown(){
+    const b = mungaBreakdown;
+    $('mungaCharMeta').textContent = `${b.characterName} · ${b.className} · 치명 스탯 ${fmtAbi(Math.round(b.critStat))}`;
+    const rows = [`<tr><td>스탯</td><td>치명 스탯 ${fmtAbi(Math.round(b.critStat))}</td><td class="abi-total">+${b.statPct.toFixed(2)}%</td></tr>`];
+    b.engraveDetail.forEach(function(d){ rows.push(`<tr><td>각인</td><td>${escAttr(d.name || '')}</td><td class="abi-total">+${d.value.toFixed(2)}%</td></tr>`); });
+    b.arkDetail.forEach(function(d){ rows.push(`<tr><td>아크패시브</td><td>${escAttr(d.name || '')}</td><td class="abi-total">+${d.value.toFixed(2)}%</td></tr>`); });
+    b.equipDetail.forEach(function(d){ rows.push(`<tr><td>장비</td><td>${escAttr(d.name || '')}</td><td class="abi-total">+${d.value.toFixed(2)}%</td></tr>`); });
+    $('mungaSourceTable').innerHTML = `<tr><th>구분</th><th>내역</th><th>치적</th></tr>${rows.join('')}`;
+  }
+
+  function renderMungaResult(){
+    const r = mungaComputeResult();
+    if(!r) return;
+    $('mungaResultGrid').innerHTML = `
+      <div class="munga-result-card"><div class="mrc-label">총 적용 치적(시너지 포함)</div><div class="mrc-value">${r.totalWithSynergy.toFixed(2)}%</div><div class="mrc-sub">실효 치적: ${Math.min(r.totalWithSynergy,80).toFixed(1)}% (80% 캡)</div></div>
+      <div class="munga-result-card"><div class="mrc-label">80% 초과 치적 반영분</div><div class="mrc-value">+${r.excessUsed.toFixed(2)}%p</div><div class="mrc-sub">전환율 ×${r.levelUsed.conv}</div></div>
+      <div class="munga-result-card"><div class="mrc-label">총 뭉가 진화형 피해</div><div class="mrc-value">+${r.evoBonus.toFixed(2)}%</div><div class="mrc-sub">최대 ${r.levelUsed.maxEvo}%${r.levelDetected ? ' · 노드 실측치' : ' · 선택 레벨 기준(가정)'}</div></div>
+      <div class="munga-result-card mrc-highlight"><div class="mrc-label">뭉가 미채용 대비 딜증율</div><div class="mrc-value">+${r.dmgIncreasePct.toFixed(2)}%</div><div class="mrc-sub">배율: ${r.withoutNodeMul.toFixed(3)}x → ${r.withNodeMul.toFixed(3)}x</div></div>
+    `;
+  }
+
+  function renderMungaAll(){
+    renderMungaBreakdown();
+    renderMungaResult();
+  }
+
+  async function mungaSearch(){
+    const name = $('mungaNameInput').value.trim();
+    if(!name) return;
+    if(!apiKey){
+      $('mungaStatus').textContent = 'API 키가 없어요 — "레이드 체크" 탭의 "API 키 설정"에서 먼저 등록해주세요.';
+      return;
+    }
+    $('mungaStatus').textContent = '캐릭터 정보를 불러오는 중…';
+    $('mungaBody').style.display = 'none';
+    try{
+      const res = await fetch(`/api/armory?name=${encodeURIComponent(name)}&key=${encodeURIComponent(apiKey)}`);
+      const data = await res.json();
+      if(!res.ok || !data || !data.profile) throw new Error((data && data.error) || '캐릭터를 찾을 수 없습니다.');
+      mungaBreakdown = mungaParseBreakdown(data);
+      if(mungaBreakdown.mungaLevel && mungaBreakdown.mungaLevel.detected){
+        $('mungaLevelSelect').value = mungaBreakdown.mungaLevel.maxEvo >= 75 ? '2' : '1';
+      }
+      $('mungaStatus').textContent = '자동으로 못 읽은 항목(클래스 고유 노드 등)이 있을 수 있어요 — 아래 표와 실제 게임 화면을 비교해 "추가 치적 직접 입력"으로 보정해주세요.';
+      $('mungaBody').style.display = '';
+      renderMungaAll();
+    }catch(err){
+      $('mungaStatus').textContent = '불러오기 실패: ' + err.message;
+    }
+  }
+
+  $('btnMungaSearch').addEventListener('click', mungaSearch);
+  $('mungaNameInput').addEventListener('keydown', function(e){ if(e.key === 'Enter') mungaSearch(); });
+  ['mungaManualExtra','mungaLevelSelect','mungaChipiSelect','mungaSynergySelect'].forEach(function(id){
+    $(id).addEventListener('input', function(){ if(mungaBreakdown) renderMungaResult(); });
+    $(id).addEventListener('change', function(){ if(mungaBreakdown) renderMungaResult(); });
+  });
+
   function switchTab(tab){
     try { localStorage.setItem('la-active-tab', tab); } catch(e){}
     document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.tab===tab); });
     $('tabRaid').classList.toggle('active', tab==='raid');
     $('tabMarket').classList.toggle('active', tab==='market');
     $('tabAbidos').classList.toggle('active', tab==='abidos');
+    $('tabMunga').classList.toggle('active', tab==='munga');
     if(tab === 'market' && !marketTabLoaded){
       marketTabLoaded = true;
       loadMarketTab();
