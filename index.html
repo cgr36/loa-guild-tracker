@@ -1767,10 +1767,14 @@ return '<div class="market-card market-card-combo">'
     // 도달한 뒤, 초과분 전환으로 음돌 최대 진화형 피해(maxEvo)까지 채우는 데 필요한
     // "공격속도+이동속도 합산" 기준선을 역산해서 지금 합산치가 그 기준선 대비
     // 얼마나 초과/부족한지 계산.
+    // 게임 화면에 표시되는 공격속도/이동속도는 증가량이 아니라 기본값(100%) +
+    // 증가량이라, 두 스탯 합산 기준선도 기본값 200%(스탯 2개 × 100%)를 더해서
+    // 표시해야 실제 게임 화면 표기와 맞음(예: 공속 40%/이속 66.67% 증가 시
+    // 화면 표시는 140%/166.67%, 합계 306.67%).
     const baseAtCap = (lv.coef / 100) * (EUMDOL_SPEED_CAP * 2);
     const excessNeeded = (lv.maxEvo - lv.flatBonus - baseAtCap) / (lv.excessConv / 100);
-    const maxEfficiencyCombined = EUMDOL_SPEED_CAP * 2 + excessNeeded;
-    const combinedTotal = totalAtk + totalMove;
+    const maxEfficiencyCombined = 200 + EUMDOL_SPEED_CAP * 2 + excessNeeded;
+    const combinedTotal = 200 + totalAtk + totalMove;
     const efficiencyDiff = combinedTotal - maxEfficiencyCombined;
 
     return {
