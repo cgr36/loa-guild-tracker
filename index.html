@@ -376,7 +376,11 @@
 .munga-result-card.mrc-under .mrc-value{color:var(--rose);}
 .munga-columns{display:flex;gap:20px;align-items:flex-start;}
 .munga-columns .munga-col{flex:1;min-width:0;}
-@media (max-width:900px){ .munga-columns{flex-direction:column;align-items:stretch;} }
+@media (max-width:900px){
+  .munga-columns{flex-direction:column;align-items:stretch;}
+  .munga-columns .munga-col + .munga-col{margin-top:32px;padding-top:26px;border-top:3px solid var(--gold);position:relative;}
+  .munga-columns .munga-col + .munga-col::before{content:'공이속';position:absolute;top:-11px;left:16px;background:var(--bg);color:var(--gold-bright);font-size:11px;font-weight:900;letter-spacing:1px;padding:0 10px;border-radius:8px;border:1px solid var(--gold);}
+}
 .munga-stat-input{width:80px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-family:inherit;font-size:12.5px;text-align:right;}
 .munga-stat-input-overridden{border-color:var(--gold);color:var(--gold-bright);}
 .abi-sellprice{display:inline-block;padding:3px 10px;border-radius:10px;background:rgba(228,182,90,0.18);color:var(--gold-bright);font-weight:900;font-size:14px;}
@@ -497,10 +501,9 @@
     <div class="munga-body" id="mungaBody">
       <div class="munga-columns">
         <div class="munga-col">
-          <div class="munga-result-grid munga-hero-grid" id="mungaHeroGrid"></div>
-
           <div class="abi-section">
             <div class="abi-section-title">치명타 적중률 요약</div>
+            <div class="munga-result-grid munga-hero-grid" id="mungaHeroGrid"></div>
             <div class="abi-table-wrap"><table class="abi-table" id="mungaSourceTable"></table></div>
             <div class="munga-manual-row">
               <label class="abi-select-label">치적 보정
@@ -535,10 +538,9 @@
         </div>
 
         <div class="munga-col">
-          <div class="munga-result-grid munga-hero-grid" id="eumdolHeroGrid"></div>
-
           <div class="abi-section">
             <div class="abi-section-title">공이속 요약</div>
+            <div class="munga-result-grid munga-hero-grid" id="eumdolHeroGrid"></div>
             <div class="abi-table-wrap"><table class="abi-table" id="eumdolSourceTable"></table></div>
             <div class="munga-manual-row">
               <label class="abi-select-label">공속 보정
