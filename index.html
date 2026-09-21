@@ -353,9 +353,13 @@
 .mrc-v2-top{display:flex;flex-direction:column;gap:4px;min-width:0;}
 .mrc-v2-top .mrc-label{margin-bottom:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .mrc-hint{font-size:11px;color:var(--text-faint);text-align:right;white-space:nowrap;}
-.mrc-subrow{display:flex;justify-content:space-between;gap:8px;margin-top:2px;font-size:12px;white-space:nowrap;}
+.mrc-subrow{display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:12px;white-space:nowrap;}
 .mrc-sublabel{color:var(--text-faint);}
 .mrc-subvalue{color:#6fa8ff;font-weight:900;}
+.munga-hero-grid .munga-result-card.mrc-multi{display:flex;flex-direction:column;justify-content:flex-start;}
+.mrc-v2-header{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+.mrc-v2-header .mrc-label{margin-bottom:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mrc-v2-header .mrc-value{white-space:nowrap;}
 .munga-synergy-row{margin-bottom:16px;}
 .munga-synergy-title{display:block;font-size:12.5px;color:var(--text-dim);font-weight:700;margin-bottom:8px;}
 .munga-synergy-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 16px;}
@@ -366,7 +370,7 @@
 .munga-debug-btn{margin-bottom:12px;}
 .munga-debug-pre{max-height:400px;overflow:auto;background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:11px;color:var(--text-dim);white-space:pre-wrap;word-break:break-all;margin-bottom:16px;}
 .munga-hero-grid{margin-bottom:24px;}
-.munga-hero-grid .munga-result-card{min-height:110px;display:flex;flex-direction:column;justify-content:flex-start;}
+.munga-hero-grid .munga-result-card{min-height:95px;display:flex;flex-direction:column;justify-content:flex-start;}
 .munga-result-card.mrc-over .mrc-value{color:#6fa8ff;}
 .munga-result-card.mrc-under .mrc-value{color:var(--rose);}
 .munga-columns{display:flex;gap:20px;align-items:flex-start;}
@@ -1867,13 +1871,10 @@ return '<div class="market-card market-card-combo">'
     const statDiff = Math.abs(r.efficiencyDiff) * SWIFT_STAT_PER_PERCENT;
     const hintLabel = isOver ? '오버 신속 스탯' : '필요 신속 스탯';
     $('eumdolHeroGrid').innerHTML = `
-      <div class="munga-result-card mrc-highlight mrc-v2">
-        <div class="mrc-v2-top">
-          <div class="mrc-label">총 공이속 합산</div>
-          <div class="mrc-subrow"><span class="mrc-sublabel">공격속도 증가량</span><span class="mrc-subvalue">${r.totalAtk.toFixed(2)}%</span></div>
-          <div class="mrc-subrow"><span class="mrc-sublabel">이동속도 증가량</span><span class="mrc-subvalue">${r.totalMove.toFixed(2)}%</span></div>
-        </div>
-        <div class="mrc-value">${(r.totalAtk + r.totalMove).toFixed(2)}%</div>
+      <div class="munga-result-card mrc-highlight mrc-multi">
+        <div class="mrc-v2-header"><div class="mrc-label">총 공이속 합산</div><div class="mrc-value">${(r.totalAtk + r.totalMove).toFixed(2)}%</div></div>
+        <div class="mrc-subrow"><span class="mrc-sublabel">공격속도 증가량</span><span class="mrc-subvalue">${r.totalAtk.toFixed(2)}%</span></div>
+        <div class="mrc-subrow"><span class="mrc-sublabel">이동속도 증가량</span><span class="mrc-subvalue">${r.totalMove.toFixed(2)}%</span></div>
       </div>
       <div class="munga-result-card ${effCls} mrc-v2">
         <div class="mrc-v2-top">
