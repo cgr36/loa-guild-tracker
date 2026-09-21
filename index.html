@@ -517,12 +517,6 @@
                   <option value="2" selected>2Lv (전환율 150%)</option>
                 </select>
               </label>
-              <label class="abi-select-label">치명타 피해량(치피)
-                <select id="mungaChipiSelect">
-                  <option value="200">기본 (200%)</option>
-                  <option value="250">예둔 채용 (250%)</option>
-                </select>
-              </label>
             </div>
             <div class="munga-synergy-row">
               <span class="munga-synergy-title">파티 치적 시너지</span>
@@ -1719,7 +1713,6 @@ return '<div class="market-card market-card-combo">'
     const manualExtra = parseFloat($('mungaManualExtra').value) || 0;
     const baseDijeok = mungaBreakdown.statPct + mungaBreakdown.enginePct + mungaBreakdown.arkPct + mungaBreakdown.equipPct + mungaBreakdown.arkGridPct + manualExtra;
     const synergy = Array.from(document.querySelectorAll('.munga-synergy-cb:checked')).reduce(function(sum, cb){ return sum + (parseFloat(cb.value) || 0); }, 0);
-    const chipi = parseFloat($('mungaChipiSelect').value) || 200;
     const levelSel = $('mungaLevelSelect').value;
     const levelDetected = !!(mungaBreakdown.mungaLevel && mungaBreakdown.mungaLevel.detected);
     const lv = levelDetected ? mungaBreakdown.mungaLevel : MUNGA_LEVELS[levelSel];
@@ -1730,13 +1723,6 @@ return '<div class="market-card market-card-combo">'
     const excessUsed = Math.min(excess, excessCapForNode);
     const evoBonus = lv.baseEvo + excessUsed * lv.conv;
 
-    const chipiMul = chipi / 100;
-    const withNodeMul = ((1 - MUNGA_CRIT_CAP / 100) * 1 + (MUNGA_CRIT_CAP / 100) * chipiMul) * (1 + evoBonus / 100);
-    const rawCritForBaseline = Math.min(totalWithSynergy, 100);
-    const withoutNodeMul = (1 - rawCritForBaseline / 100) * 1 + (rawCritForBaseline / 100) * chipiMul;
-
-    const dmgIncreasePct = (withNodeMul / withoutNodeMul - 1) * 100;
-
     // 뭉가가 최대 효율(진화형 피해 상한)을 내는 데 필요한 총 치적 기준선
     // (2Lv면 120%, 1Lv면 116%) 대비 지금 얼마나 초과/미달인지
     const maxEfficiencyDijeok = MUNGA_CRIT_CAP + excessCapForNode;
@@ -1744,8 +1730,7 @@ return '<div class="market-card market-card-combo">'
 
     return {
       totalWithSynergy: totalWithSynergy, excessUsed: excessUsed, evoBonus: evoBonus,
-      withNodeMul: withNodeMul, withoutNodeMul: withoutNodeMul,
-      dmgIncreasePct: dmgIncreasePct, levelUsed: lv, levelDetected: levelDetected,
+      levelUsed: lv,
       maxEfficiencyDijeok: maxEfficiencyDijeok, efficiencyDiff: efficiencyDiff,
     };
   }
@@ -1792,10 +1777,9 @@ return '<div class="market-card market-card-combo">'
     const efficiencyDiff = combinedTotal - maxEfficiencyCombined;
 
     return {
-      totalAtk: totalAtk, totalMove: totalMove, cappedAtk: cappedAtk, cappedMove: cappedMove,
-      bothOver: bothOver, excessAtk: excessAtk, excessMove: excessMove,
-      base: base, flat: flat, excessBonus: excessBonus, evoBonus: evoBonus,
-      levelUsed: lv, levelDetected: levelDetected,
+      totalAtk: totalAtk, totalMove: totalMove,
+      base: base, evoBonus: evoBonus,
+      levelUsed: lv,
       maxEfficiencyCombined: maxEfficiencyCombined, efficiencyDiff: efficiencyDiff,
     };
   }
@@ -1816,8 +1800,7 @@ return '<div class="market-card market-card-combo">'
     if(!r) return;
     $('mungaResultGrid').innerHTML = `
       <div class="munga-result-card"><div class="mrc-label">80% 초과 치적 반영분</div><div class="mrc-value">+${r.excessUsed.toFixed(2)}%</div><div class="mrc-sub">전환율 ×${r.levelUsed.conv}</div></div>
-      <div class="munga-result-card"><div class="mrc-label">총 뭉가 진화형 피해</div><div class="mrc-value">+${r.evoBonus.toFixed(2)}%</div><div class="mrc-sub">최대 ${r.levelUsed.maxEvo}%${r.levelDetected ? ' · 노드 실측치' : ' · 선택 레벨 기준(가정)'}</div></div>
-      <div class="munga-result-card mrc-highlight"><div class="mrc-label">뭉가 효율</div><div class="mrc-value">+${r.dmgIncreasePct.toFixed(2)}%</div><div class="mrc-sub">배율: ${r.withoutNodeMul.toFixed(3)}x → ${r.withNodeMul.toFixed(3)}x</div></div>
+      <div class="munga-result-card mrc-highlight"><div class="mrc-label">메인노드 효율 [뭉툭한 가시]</div><div class="mrc-value">${r.evoBonus.toFixed(2)}% <span class="mrc-value-suffix">/ ${r.levelUsed.maxEvo.toFixed(2)}%</span></div></div>
     `;
     renderMungaHero();
   }
@@ -1890,8 +1873,7 @@ return '<div class="market-card market-card-combo">'
     if(!r) return;
     $('eumdolResultGrid').innerHTML = `
       <div class="munga-result-card"><div class="mrc-label">기본 진화형 피해</div><div class="mrc-value">+${r.base.toFixed(2)}%</div><div class="mrc-sub">계수 ${r.levelUsed.coef}% × (공속+이속 실효치)</div></div>
-      <div class="munga-result-card"><div class="mrc-label">둘 다 상한 초과 보너스</div><div class="mrc-value">${r.bothOver ? '+' + r.flat.toFixed(2) + '%' : '미달성'}</div><div class="mrc-sub">${r.bothOver ? `초과분 전환 +${r.excessBonus.toFixed(2)}% 포함` : '공속·이속 모두 ' + EUMDOL_SPEED_CAP + '% 초과 시 활성화'}</div></div>
-      <div class="munga-result-card mrc-highlight"><div class="mrc-label">음돌 효율</div><div class="mrc-value">+${r.evoBonus.toFixed(2)}%</div><div class="mrc-sub">최대 ${r.levelUsed.maxEvo}%${r.levelDetected ? ' · 노드 실측치' : ' · 선택 레벨 기준(가정)'}</div></div>
+      <div class="munga-result-card mrc-highlight"><div class="mrc-label">메인노드 효율 [음속 돌파]</div><div class="mrc-value">${r.evoBonus.toFixed(2)}% <span class="mrc-value-suffix">/ ${r.levelUsed.maxEvo.toFixed(2)}%</span></div></div>
     `;
     renderEumdolHero();
   }
@@ -2016,7 +1998,7 @@ return '<div class="market-card market-card-combo">'
     setTimeout(function(){ btn.textContent = '📋 전체 복사'; }, 1500);
   });
   $('mungaNameInput').addEventListener('keydown', function(e){ if(e.key === 'Enter') mungaSearch(); });
-  ['mungaManualExtra','mungaLevelSelect','mungaChipiSelect'].forEach(function(id){
+  ['mungaManualExtra','mungaLevelSelect'].forEach(function(id){
     $(id).addEventListener('input', function(){ if(mungaBreakdown) renderMungaResult(); });
     $(id).addEventListener('change', function(){ if(mungaBreakdown) renderMungaResult(); });
   });
