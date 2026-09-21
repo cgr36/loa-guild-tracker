@@ -1817,7 +1817,7 @@ return '<div class="market-card market-card-combo">'
     $('mungaResultGrid').innerHTML = `
       <div class="munga-result-card"><div class="mrc-label">80% 초과 치적 반영분</div><div class="mrc-value">+${r.excessUsed.toFixed(2)}%</div><div class="mrc-sub">전환율 ×${r.levelUsed.conv}</div></div>
       <div class="munga-result-card"><div class="mrc-label">총 뭉가 진화형 피해</div><div class="mrc-value">+${r.evoBonus.toFixed(2)}%</div><div class="mrc-sub">최대 ${r.levelUsed.maxEvo}%${r.levelDetected ? ' · 노드 실측치' : ' · 선택 레벨 기준(가정)'}</div></div>
-      <div class="munga-result-card mrc-highlight"><div class="mrc-label">뭉가 미채용 대비 딜증율</div><div class="mrc-value">+${r.dmgIncreasePct.toFixed(2)}%</div><div class="mrc-sub">배율: ${r.withoutNodeMul.toFixed(3)}x → ${r.withNodeMul.toFixed(3)}x</div></div>
+      <div class="munga-result-card mrc-highlight"><div class="mrc-label">뭉가 효율</div><div class="mrc-value">+${r.dmgIncreasePct.toFixed(2)}%</div><div class="mrc-sub">배율: ${r.withoutNodeMul.toFixed(3)}x → ${r.withNodeMul.toFixed(3)}x</div></div>
     `;
     renderMungaHero();
   }
@@ -1891,7 +1891,7 @@ return '<div class="market-card market-card-combo">'
     $('eumdolResultGrid').innerHTML = `
       <div class="munga-result-card"><div class="mrc-label">기본 진화형 피해</div><div class="mrc-value">+${r.base.toFixed(2)}%</div><div class="mrc-sub">계수 ${r.levelUsed.coef}% × (공속+이속 실효치)</div></div>
       <div class="munga-result-card"><div class="mrc-label">둘 다 상한 초과 보너스</div><div class="mrc-value">${r.bothOver ? '+' + r.flat.toFixed(2) + '%' : '미달성'}</div><div class="mrc-sub">${r.bothOver ? `초과분 전환 +${r.excessBonus.toFixed(2)}% 포함` : '공속·이속 모두 ' + EUMDOL_SPEED_CAP + '% 초과 시 활성화'}</div></div>
-      <div class="munga-result-card mrc-highlight"><div class="mrc-label">음돌 미채용 대비 딜증율</div><div class="mrc-value">+${r.evoBonus.toFixed(2)}%</div><div class="mrc-sub">최대 ${r.levelUsed.maxEvo}%${r.levelDetected ? ' · 노드 실측치' : ' · 선택 레벨 기준(가정)'}</div></div>
+      <div class="munga-result-card mrc-highlight"><div class="mrc-label">음돌 효율</div><div class="mrc-value">+${r.evoBonus.toFixed(2)}%</div><div class="mrc-sub">최대 ${r.levelUsed.maxEvo}%${r.levelDetected ? ' · 노드 실측치' : ' · 선택 레벨 기준(가정)'}</div></div>
     `;
     renderEumdolHero();
   }
