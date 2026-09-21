@@ -376,9 +376,8 @@
 .munga-columns{display:flex;gap:20px;align-items:flex-start;}
 .munga-columns .munga-col{flex:1;min-width:0;}
 @media (max-width:900px){ .munga-columns{flex-direction:column;} }
-.munga-stat-edit-btn{margin-left:6px;font-size:10.5px;font-weight:700;color:var(--violet);background:none;border:1px solid var(--border);border-radius:6px;padding:1px 6px;cursor:pointer;font-family:inherit;}
-.munga-stat-edit-btn:hover{background:var(--surface-2);}
-.munga-stat-override-tag{color:var(--gold);font-weight:700;}
+.munga-stat-input{width:80px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-family:inherit;font-size:12.5px;text-align:right;}
+.munga-stat-input-overridden{border-color:var(--gold);color:var(--gold-bright);}
 .abi-sellprice{display:inline-block;padding:3px 10px;border-radius:10px;background:rgba(228,182,90,0.18);color:var(--gold-bright);font-weight:900;font-size:14px;}
 </style>
 </head>
@@ -1803,8 +1802,8 @@ return '<div class="market-card market-card-combo">'
 
   function renderMungaBreakdown(){
     const b = mungaBreakdown;
-    const critOverrideTag = mungaCritOverride !== null ? ' <span class="munga-stat-override-tag">(수정됨)</span>' : '';
-    const rows = [`<tr><td>치명 스탯</td><td>${fmtAbi(Math.round(b.critStat))}${critOverrideTag} <button type="button" class="munga-stat-edit-btn" data-kind="crit">수정</button></td><td class="abi-total">+${b.statPct.toFixed(2)}%</td></tr>`];
+    const critInputCls = mungaCritOverride !== null ? 'munga-stat-input munga-stat-input-overridden' : 'munga-stat-input';
+    const rows = [`<tr><td>치명 스탯</td><td><input type="number" class="${critInputCls}" data-kind="crit" value="${Math.round(b.critStat)}" step="1"></td><td class="abi-total">+${b.statPct.toFixed(2)}%</td></tr>`];
     b.engraveDetail.forEach(function(d){ rows.push(`<tr><td>각인</td><td>${escAttr(d.name || '')}</td><td class="abi-total">+${d.value.toFixed(2)}%</td></tr>`); });
     b.arkDetail.forEach(function(d){ rows.push(`<tr><td>아크패시브</td><td>${escAttr(d.name || '')}</td><td class="abi-total">+${d.value.toFixed(2)}%</td></tr>`); });
     b.equipDetail.forEach(function(d){ rows.push(`<tr><td>장비</td><td>${escAttr(d.name || '')}</td><td class="abi-total">+${d.value.toFixed(2)}%</td></tr>`); });
@@ -1850,8 +1849,8 @@ return '<div class="market-card market-card-combo">'
 
   function renderEumdolBreakdown(){
     const b = eumdolBreakdown;
-    const swiftOverrideTag = eumdolSwiftOverride !== null ? ' <span class="munga-stat-override-tag">(수정됨)</span>' : '';
-    const rows = [`<tr><td>신속 스탯</td><td>${fmtAbi(Math.round(b.swiftStatValue))}${swiftOverrideTag} <button type="button" class="munga-stat-edit-btn" data-kind="swift">수정</button></td><td class="abi-total">${b.statAtk.toFixed(2)}%</td><td class="abi-total">${b.statMove.toFixed(2)}%</td></tr>`];
+    const swiftInputCls = eumdolSwiftOverride !== null ? 'munga-stat-input munga-stat-input-overridden' : 'munga-stat-input';
+    const rows = [`<tr><td>신속 스탯</td><td><input type="number" class="${swiftInputCls}" data-kind="swift" value="${Math.round(b.swiftStatValue)}" step="1"></td><td class="abi-total">${b.statAtk.toFixed(2)}%</td><td class="abi-total">${b.statMove.toFixed(2)}%</td></tr>`];
     b.engraveDetail.forEach(function(d){ rows.push(`<tr><td>각인</td><td>${escAttr(d.name || '')}</td><td class="abi-total">${d.atk.toFixed(2)}%</td><td class="abi-total">${d.move.toFixed(2)}%</td></tr>`); });
     b.arkDetail.forEach(function(d){ rows.push(`<tr><td>아크패시브</td><td>${escAttr(d.name || '')}</td><td class="abi-total">${d.atk.toFixed(2)}%</td><td class="abi-total">${d.move.toFixed(2)}%</td></tr>`); });
     b.equipDetail.forEach(function(d){ rows.push(`<tr><td>장비</td><td>${escAttr(d.name || '')}</td><td class="abi-total">${d.atk.toFixed(2)}%</td><td class="abi-total">${d.move.toFixed(2)}%</td></tr>`); });
@@ -1960,33 +1959,34 @@ return '<div class="market-card market-card-combo">'
     renderMungaAll();
   }
 
-  document.addEventListener('click', function(e){
-    const btn = e.target.closest('.munga-stat-edit-btn');
-    if(!btn) return;
-    const kind = btn.dataset.kind;
+  // 스탯 값 입력칸(치명/신속 스탯)은 표가 다시 그려질 때마다 새로 생성되므로
+  // document에 위임해서 change(포커스 아웃/엔터) 시점에 override를 갱신.
+  // 빈 칸으로 두면 override를 해제해서 자동 감지값으로 되돌아감.
+  document.addEventListener('change', function(e){
+    const input = e.target.closest('.munga-stat-input');
+    if(!input) return;
+    const kind = input.dataset.kind;
+    const raw = input.value.trim();
     if(kind === 'crit'){
-      const cur = mungaCritOverride !== null ? mungaCritOverride : (mungaBreakdown ? mungaBreakdown.critStat : 0);
-      const input = window.prompt('치명 스탯 값을 직접 입력하세요 (자동 감지값으로 되돌리려면 빈 칸으로 두고 확인)', fmtAbi(Math.round(cur)));
-      if(input === null) return;
-      if(input.trim() === ''){ mungaCritOverride = null; }
+      if(raw === ''){ mungaCritOverride = null; }
       else{
-        const v = parseFloat(input.replace(/,/g, ''));
-        if(isNaN(v) || v < 0){ alert('올바른 숫자를 입력해주세요.'); return; }
+        const v = parseFloat(raw);
+        if(isNaN(v) || v < 0) return;
         mungaCritOverride = v;
       }
       mungaReparseAndRender();
     } else if(kind === 'swift'){
-      const cur = eumdolSwiftOverride !== null ? eumdolSwiftOverride : (eumdolBreakdown ? eumdolBreakdown.swiftStatValue : 0);
-      const input = window.prompt('신속 스탯 값을 직접 입력하세요 (자동 감지값으로 되돌리려면 빈 칸으로 두고 확인)', fmtAbi(Math.round(cur)));
-      if(input === null) return;
-      if(input.trim() === ''){ eumdolSwiftOverride = null; }
+      if(raw === ''){ eumdolSwiftOverride = null; }
       else{
-        const v = parseFloat(input.replace(/,/g, ''));
-        if(isNaN(v) || v < 0){ alert('올바른 숫자를 입력해주세요.'); return; }
+        const v = parseFloat(raw);
+        if(isNaN(v) || v < 0) return;
         eumdolSwiftOverride = v;
       }
       mungaReparseAndRender();
     }
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Enter' && e.target.closest('.munga-stat-input')) e.target.blur();
   });
 
   // 검색 전에도 기본 레이아웃(0 값 기준)이 바로 보이도록 빈 데이터로 한 번 렌더링
