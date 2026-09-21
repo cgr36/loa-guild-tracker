@@ -348,6 +348,7 @@
 .munga-result-card .mrc-sub{font-size:10.5px;color:var(--text-faint);margin-top:4px;}
 .munga-result-card.mrc-highlight .mrc-value{color:#6fa8ff;}
 .mrc-value .mrc-value-suffix{font-size:14px;font-weight:700;}
+.mrc-value .mrc-value-max{font-weight:400;color:var(--text-faint);}
 .munga-hero-grid .munga-result-card.mrc-v2{display:flex;flex-direction:column;justify-content:space-between;}
 .munga-result-card.mrc-v2 .mrc-value{text-align:right;white-space:nowrap;}
 .mrc-v2-top{display:flex;flex-direction:column;gap:4px;min-width:0;}
@@ -1800,7 +1801,7 @@ return '<div class="market-card market-card-combo">'
     if(!r) return;
     $('mungaResultGrid').innerHTML = `
       <div class="munga-result-card"><div class="mrc-label">80% 초과 치적 반영분</div><div class="mrc-value">+${r.excessUsed.toFixed(2)}%</div><div class="mrc-sub">전환율 ×${r.levelUsed.conv}</div></div>
-      <div class="munga-result-card mrc-highlight"><div class="mrc-label">메인노드 효율 [뭉툭한 가시]</div><div class="mrc-value">${r.evoBonus.toFixed(2)}% <span class="mrc-value-suffix">/ ${r.levelUsed.maxEvo.toFixed(2)}%</span></div></div>
+      <div class="munga-result-card mrc-highlight"><div class="mrc-label">메인노드 효율 [뭉툭한 가시]</div><div class="mrc-value">${r.evoBonus.toFixed(2)}% <span class="mrc-value-max">/ ${r.levelUsed.maxEvo.toFixed(2)}%</span></div></div>
     `;
     renderMungaHero();
   }
@@ -1873,7 +1874,7 @@ return '<div class="market-card market-card-combo">'
     if(!r) return;
     $('eumdolResultGrid').innerHTML = `
       <div class="munga-result-card"><div class="mrc-label">기본 진화형 피해</div><div class="mrc-value">+${r.base.toFixed(2)}%</div><div class="mrc-sub">계수 ${r.levelUsed.coef}% × (공속+이속 실효치)</div></div>
-      <div class="munga-result-card mrc-highlight"><div class="mrc-label">메인노드 효율 [음속 돌파]</div><div class="mrc-value">${r.evoBonus.toFixed(2)}% <span class="mrc-value-suffix">/ ${r.levelUsed.maxEvo.toFixed(2)}%</span></div></div>
+      <div class="munga-result-card mrc-highlight"><div class="mrc-label">메인노드 효율 [음속 돌파]</div><div class="mrc-value">${r.evoBonus.toFixed(2)}% <span class="mrc-value-max">/ ${r.levelUsed.maxEvo.toFixed(2)}%</span></div></div>
     `;
     renderEumdolHero();
   }
