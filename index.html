@@ -347,14 +347,18 @@
 .munga-result-card .mrc-value{font-size:20px;font-weight:900;color:var(--gold-bright);}
 .munga-result-card .mrc-sub{font-size:10.5px;color:var(--text-faint);margin-top:4px;}
 .munga-result-card.mrc-highlight .mrc-value{color:#6fa8ff;}
-.munga-result-card.mrc-dual .mrc-dual-header{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
-.munga-result-card.mrc-dual .mrc-dual-header .mrc-label{margin-bottom:0;}
-.munga-result-card.mrc-dual .mrc-dual-row{display:flex;align-items:center;gap:10px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
-.munga-result-card.mrc-dual .mrc-dual-divider-inner{align-self:stretch;width:1px;background:var(--border);}
-.munga-result-card.mrc-dual .mrc-dual-item{flex:1;text-align:center;min-width:0;}
-.munga-result-card.mrc-dual .mrc-dual-label{font-size:9px;color:var(--text-faint);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.munga-result-card.mrc-dual .mrc-dual-value{font-size:13px;font-weight:900;color:#6fa8ff;}
 .mrc-value .mrc-value-suffix{font-size:14px;font-weight:700;}
+.munga-result-card.mrc-v2{display:flex;flex-direction:column;justify-content:space-between;}
+.munga-result-card.mrc-v2 .mrc-value{text-align:right;}
+.mrc-v2-top{display:flex;flex-direction:column;gap:4px;}
+.mrc-v2-top .mrc-label{margin-bottom:0;}
+.mrc-hint{font-size:11px;color:var(--text-faint);text-align:right;}
+.munga-result-card.mrc-v2-multi{justify-content:flex-start;}
+.mrc-v2-header{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+.mrc-v2-header .mrc-label{margin-bottom:0;}
+.mrc-subrow{display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:12px;}
+.mrc-sublabel{color:var(--text-faint);}
+.mrc-subvalue{color:#6fa8ff;font-weight:900;}
 .munga-synergy-row{margin-bottom:16px;}
 .munga-synergy-title{display:block;font-size:12.5px;color:var(--text-dim);font-weight:700;margin-bottom:8px;}
 .munga-synergy-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 16px;}
@@ -1270,9 +1274,9 @@ return '<div class="market-card market-card-combo">'
   }
 
   // ---------- 캐릭터 계산기: 뭉가(뭉툭한 가시) 효율 계산 ----------
-  // 치명 스탯 -> 치적(%) 변환 계수. 커뮤니티 검증 공식(치명 27.944당 1%)이며
-  // 실제 캐릭터 예시(치명 576 -> +20.62%)와 일치함을 확인함.
-  const MUNGA_STAT_PER_PERCENT = 27.944;
+  // 치명 스탯 -> 치적(%) 변환 계수. 사용자 실측치(치명 스탯 100당 치적 3.578%)로
+  // 검증됨 - 기존 커뮤니티 공식(치명 27.944당 1%)과도 거의 일치.
+  const MUNGA_STAT_PER_PERCENT = 100 / 3.578;
   // 뭉가(뭉툭한 가시) 레벨별 계수 - 2025-12-10 패치 기준(나무위키로 검증).
   // 캐릭터가 이미 이 노드를 장착 중이면 API 텍스트에서 실측값을 직접 파싱해서 쓰고,
   // 아직 장착 전(가정 시뮬레이션)이면 이 표를 그대로 사용함.
@@ -1296,9 +1300,9 @@ return '<div class="market-card market-card-combo">'
     2: { coef: 10.0, flatBonus: 8.0, excessConv: 30.0, maxEvo: 24.0 },
   };
   const EUMDOL_SPEED_CAP = 40;
-  // 신속 스탯 -> 공격속도/이동속도 변환 계수. 실측 캐릭터 예시(신속 1827 -> 31.38%,
-  // 신속 77 -> 1.32%)로 검증한 평균값.
-  const SWIFT_STAT_PER_PERCENT = 58.22;
+  // 신속 스탯 -> 공격속도/이동속도 변환 계수. 사용자 실측치(신속 스탯 100당
+  // 공이속 1.717%)로 검증됨 - 기존 실측 평균값(58.22)과도 거의 일치.
+  const SWIFT_STAT_PER_PERCENT = 100 / 1.717;
 
   let mungaBreakdown = null; // 마지막으로 불러온 캐릭터의 치적 breakdown
   let eumdolBreakdown = null; // 마지막으로 불러온 캐릭터의 공이속 breakdown
@@ -1826,9 +1830,20 @@ return '<div class="market-card market-card-combo">'
     const effLabel = isOver
       ? `+${r.efficiencyDiff.toFixed(2)}% <span class="mrc-value-suffix">초과 (오버치적)</span>`
       : `${r.efficiencyDiff.toFixed(2)}% <span class="mrc-value-suffix">부족</span>`;
+    const statDiff = Math.abs(r.efficiencyDiff) * MUNGA_STAT_PER_PERCENT;
+    const hintLabel = isOver ? '오버 치명 스탯' : '추가 치명 스탯';
     $('mungaHeroGrid').innerHTML = `
-      <div class="munga-result-card mrc-highlight"><div class="mrc-label">총 적용 치적(시너지 포함)</div><div class="mrc-value">${r.totalWithSynergy.toFixed(2)}%</div></div>
-      <div class="munga-result-card ${effCls}"><div class="mrc-label">뭉가 최대 효율(${r.maxEfficiencyDijeok.toFixed(1)}%) 대비</div><div class="mrc-value">${effLabel}</div></div>
+      <div class="munga-result-card mrc-highlight mrc-v2">
+        <div class="mrc-v2-top"><div class="mrc-label">총 적용 치적(시너지 포함)</div></div>
+        <div class="mrc-value">${r.totalWithSynergy.toFixed(2)}%</div>
+      </div>
+      <div class="munga-result-card ${effCls} mrc-v2">
+        <div class="mrc-v2-top">
+          <div class="mrc-label">뭉가 최대 효율(${r.maxEfficiencyDijeok.toFixed(1)}%) 대비</div>
+          <div class="mrc-hint">${hintLabel} ${fmtAbi(Math.round(statDiff))}</div>
+        </div>
+        <div class="mrc-value">${effLabel}</div>
+      </div>
     `;
   }
 
@@ -1852,19 +1867,21 @@ return '<div class="market-card market-card-combo">'
     const effLabel = isOver
       ? `+${r.efficiencyDiff.toFixed(2)}% <span class="mrc-value-suffix">초과</span>`
       : `${r.efficiencyDiff.toFixed(2)}% <span class="mrc-value-suffix">부족</span>`;
+    const statDiff = Math.abs(r.efficiencyDiff) * SWIFT_STAT_PER_PERCENT;
+    const hintLabel = isOver ? '오버 신속 스탯' : '추가 신속 스탯';
     $('eumdolHeroGrid').innerHTML = `
-      <div class="munga-result-card mrc-highlight mrc-dual">
-        <div class="mrc-dual-header">
-          <div class="mrc-label">총 공이속 합산</div>
-          <div class="mrc-value">${(r.totalAtk + r.totalMove).toFixed(2)}%</div>
-        </div>
-        <div class="mrc-dual-row">
-          <div class="mrc-dual-item"><div class="mrc-dual-label">공격속도 증가량</div><div class="mrc-dual-value">${r.totalAtk.toFixed(2)}%</div></div>
-          <div class="mrc-dual-divider-inner"></div>
-          <div class="mrc-dual-item"><div class="mrc-dual-label">이동속도 증가량</div><div class="mrc-dual-value">${r.totalMove.toFixed(2)}%</div></div>
-        </div>
+      <div class="munga-result-card mrc-highlight mrc-v2 mrc-v2-multi">
+        <div class="mrc-v2-header"><div class="mrc-label">총 공이속 합산</div><div class="mrc-value">${(r.totalAtk + r.totalMove).toFixed(2)}%</div></div>
+        <div class="mrc-subrow"><span class="mrc-sublabel">공격속도 증가량</span><span class="mrc-subvalue">${r.totalAtk.toFixed(2)}%</span></div>
+        <div class="mrc-subrow"><span class="mrc-sublabel">이동속도 증가량</span><span class="mrc-subvalue">${r.totalMove.toFixed(2)}%</span></div>
       </div>
-      <div class="munga-result-card ${effCls}"><div class="mrc-label">음돌 효율(${r.maxEfficiencyCombined.toFixed(2)}%) 대비</div><div class="mrc-value">${effLabel}</div></div>
+      <div class="munga-result-card ${effCls} mrc-v2">
+        <div class="mrc-v2-top">
+          <div class="mrc-label">음돌 최대 효율(${r.maxEfficiencyCombined.toFixed(2)}%) 대비</div>
+          <div class="mrc-hint">${hintLabel} ${fmtAbi(Math.round(statDiff))}</div>
+        </div>
+        <div class="mrc-value">${effLabel}</div>
+      </div>
     `;
   }
 
