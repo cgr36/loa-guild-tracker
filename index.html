@@ -1796,6 +1796,32 @@ return '<div class="market-card market-card-combo">'
     $('mungaSourceTable').innerHTML = `<tr><th>구분</th><th>내역</th><th>치적</th></tr>${rows.join('')}`;
   }
 
+  // 치적/공이속 두 열의 카드들은 내용 줄 수가 서로 달라서(힌트 유무, 서브 행 유무 등)
+  // CSS만으로는 나란히 있을 때만 grid가 자동으로 높이를 맞춰주고, 모바일처럼
+  // 1열로 쌓이면 카드마다 자연 높이가 제각각이 됨. 그래서 렌더링할 때마다
+  // 실제 DOM 높이를 재서 그룹별 최댓값으로 명시적으로 맞춰줌.
+  function equalizeCardGroup(selectors){
+    const els = [];
+    selectors.forEach(function(sel){
+      document.querySelectorAll(sel).forEach(function(el){ els.push(el); });
+    });
+    if(els.length < 2) return;
+    els.forEach(function(el){ el.style.height = 'auto'; });
+    const maxH = els.reduce(function(m, el){ return Math.max(m, el.offsetHeight); }, 0);
+    els.forEach(function(el){ el.style.height = maxH + 'px'; });
+  }
+
+  function equalizeMungaCardHeights(){
+    equalizeCardGroup(['#mungaHeroGrid > .munga-result-card', '#eumdolHeroGrid > .munga-result-card']);
+    equalizeCardGroup(['#mungaResultGrid > .munga-result-card', '#eumdolResultGrid > .munga-result-card']);
+  }
+
+  let equalizeResizeTimer = null;
+  window.addEventListener('resize', function(){
+    clearTimeout(equalizeResizeTimer);
+    equalizeResizeTimer = setTimeout(function(){ if(mungaBreakdown) equalizeMungaCardHeights(); }, 150);
+  });
+
   function renderMungaResult(){
     const r = mungaComputeResult();
     if(!r) return;
@@ -1804,6 +1830,7 @@ return '<div class="market-card market-card-combo">'
       <div class="munga-result-card mrc-highlight"><div class="mrc-label">메인노드 효율 [뭉툭한 가시]</div><div class="mrc-value">${r.evoBonus.toFixed(2)}% <span class="mrc-value-max">/ ${r.levelUsed.maxEvo.toFixed(2)}%</span></div></div>
     `;
     renderMungaHero();
+    equalizeMungaCardHeights();
   }
 
   function renderMungaHero(){
@@ -1877,6 +1904,7 @@ return '<div class="market-card market-card-combo">'
       <div class="munga-result-card mrc-highlight"><div class="mrc-label">메인노드 효율 [음속 돌파]</div><div class="mrc-value">${r.evoBonus.toFixed(2)}% <span class="mrc-value-max">/ ${r.levelUsed.maxEvo.toFixed(2)}%</span></div></div>
     `;
     renderEumdolHero();
+    equalizeMungaCardHeights();
   }
 
   function renderEumdolAll(){
