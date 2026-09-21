@@ -347,11 +347,10 @@
 .munga-result-card .mrc-value{font-size:20px;font-weight:900;color:var(--gold-bright);}
 .munga-result-card .mrc-sub{font-size:10.5px;color:var(--text-faint);margin-top:4px;}
 .munga-result-card.mrc-highlight .mrc-value{color:#6fa8ff;}
-.munga-hero-grid .munga-result-card.mrc-dual{flex-direction:row;align-items:center;gap:14px;}
-.munga-result-card.mrc-dual .mrc-dual-main{flex:0 0 auto;}
-.munga-result-card.mrc-dual .mrc-dual-divider{align-self:stretch;width:1px;background:var(--border);flex:0 0 auto;}
-.munga-result-card.mrc-dual .mrc-dual-row{flex:1;display:flex;align-items:center;gap:10px;min-width:0;}
-.munga-result-card.mrc-dual .mrc-dual-divider-inner{height:32px;align-self:center;}
+.munga-result-card.mrc-dual .mrc-dual-header{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+.munga-result-card.mrc-dual .mrc-dual-header .mrc-label{margin-bottom:0;}
+.munga-result-card.mrc-dual .mrc-dual-row{display:flex;align-items:center;gap:10px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
+.munga-result-card.mrc-dual .mrc-dual-divider-inner{align-self:stretch;width:1px;background:var(--border);}
 .munga-result-card.mrc-dual .mrc-dual-item{flex:1;text-align:center;min-width:0;}
 .munga-result-card.mrc-dual .mrc-dual-label{font-size:9px;color:var(--text-faint);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .munga-result-card.mrc-dual .mrc-dual-value{font-size:13px;font-weight:900;color:#6fa8ff;}
@@ -366,7 +365,7 @@
 .munga-debug-btn{margin-bottom:12px;}
 .munga-debug-pre{max-height:400px;overflow:auto;background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:11px;color:var(--text-dim);white-space:pre-wrap;word-break:break-all;margin-bottom:16px;}
 .munga-hero-grid{margin-bottom:24px;}
-.munga-hero-grid .munga-result-card{min-height:70px;display:flex;flex-direction:column;justify-content:flex-start;}
+.munga-hero-grid .munga-result-card{min-height:96px;display:flex;flex-direction:column;justify-content:flex-start;}
 .munga-result-card.mrc-over .mrc-value{color:#6fa8ff;}
 .munga-result-card.mrc-under .mrc-value{color:var(--rose);}
 .munga-columns{display:flex;gap:20px;align-items:flex-start;}
@@ -1855,14 +1854,13 @@ return '<div class="market-card market-card-combo">'
       : `${r.efficiencyDiff.toFixed(2)}% <span class="mrc-value-suffix">부족</span>`;
     $('eumdolHeroGrid').innerHTML = `
       <div class="munga-result-card mrc-highlight mrc-dual">
-        <div class="mrc-dual-main">
+        <div class="mrc-dual-header">
           <div class="mrc-label">총 공이속 합산</div>
           <div class="mrc-value">${(r.totalAtk + r.totalMove).toFixed(2)}%</div>
         </div>
-        <div class="mrc-dual-divider"></div>
         <div class="mrc-dual-row">
           <div class="mrc-dual-item"><div class="mrc-dual-label">공격속도 증가량</div><div class="mrc-dual-value">${r.totalAtk.toFixed(2)}%</div></div>
-          <div class="mrc-dual-divider mrc-dual-divider-inner"></div>
+          <div class="mrc-dual-divider-inner"></div>
           <div class="mrc-dual-item"><div class="mrc-dual-label">이동속도 증가량</div><div class="mrc-dual-value">${r.totalMove.toFixed(2)}%</div></div>
         </div>
       </div>
