@@ -342,7 +342,7 @@
 .munga-status{font-size:12.5px;color:var(--text-faint);margin-bottom:14px;}
 .munga-manual-row{padding:10px 12px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;}
 .munga-result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}
-.munga-result-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:12px 14px;}
+.munga-result-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:12px 14px;min-width:0;}
 .munga-result-card .mrc-label{font-size:11px;color:var(--text-faint);margin-bottom:6px;}
 .munga-result-card .mrc-value{font-size:20px;font-weight:900;color:var(--gold-bright);}
 .munga-result-card .mrc-sub{font-size:10.5px;color:var(--text-faint);margin-top:4px;}
@@ -354,12 +354,12 @@
 .mrc-v2-top{display:flex;flex-direction:column;gap:4px;min-width:0;}
 .mrc-v2-top .mrc-label{margin-bottom:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .mrc-hint{font-size:11px;color:var(--text-faint);text-align:right;white-space:nowrap;}
-.mrc-subrow{display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:10px;white-space:nowrap;}
+.mrc-subrow{display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:10px;white-space:nowrap;min-width:0;}
 .mrc-sublabel{color:var(--text-faint);}
 .mrc-subvalue{color:#6fa8ff;font-weight:900;}
 .munga-hero-grid .munga-result-card.mrc-multi{display:flex;flex-direction:column;justify-content:flex-start;}
-.mrc-v2-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
-.mrc-v2-header .mrc-label{margin-bottom:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mrc-v2-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;min-width:0;}
+.mrc-v2-header .mrc-label{margin-bottom:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
 .mrc-v2-header .mrc-value{white-space:nowrap;}
 .munga-synergy-row{margin-bottom:16px;}
 .munga-synergy-title{display:block;font-size:12.5px;color:var(--text-dim);font-weight:700;margin-bottom:8px;}
@@ -376,7 +376,7 @@
 .munga-result-card.mrc-under .mrc-value{color:var(--rose);}
 .munga-columns{display:flex;gap:20px;align-items:flex-start;}
 .munga-columns .munga-col{flex:1;min-width:0;}
-@media (max-width:900px){ .munga-columns{flex-direction:column;} }
+@media (max-width:900px){ .munga-columns{flex-direction:column;align-items:stretch;} }
 .munga-stat-input{width:80px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-family:inherit;font-size:12.5px;text-align:right;}
 .munga-stat-input-overridden{border-color:var(--gold);color:var(--gold-bright);}
 .abi-sellprice{display:inline-block;padding:3px 10px;border-radius:10px;background:rgba(228,182,90,0.18);color:var(--gold-bright);font-weight:900;font-size:14px;}
