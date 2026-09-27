@@ -1854,6 +1854,10 @@ return '<div class="market-card market-card-combo">'
       arkAtk += 12.8; arkMove += 12.8;
       arkDetail.push({ name: '스킬: 마엘스톰', atk: 12.8, move: 12.8 });
     }
+    if(className0 === '블레이드' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '버스트 강화'; })){
+      arkAtk += 20; arkMove += 10;
+      arkDetail.push({ name: '블레이드 아츠', atk: 20, move: 10 });
+    }
     if(className0 === '버서커' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '광전사의 비기'; })){
       const berserkAmp = mungaBerserkAmp(profile);
       const berserkAtk = 20 * (1 + berserkAmp / 100);
