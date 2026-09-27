@@ -1502,6 +1502,16 @@ return '<div class="market-card market-card-combo">'
     return { atk: sp.atk * stacks, move: sp.move * stacks, stacks: stacks };
   }
 
+  function mungaCoreFlatSpeedBonus(segmentText){
+    // "공격 속도가 X% 증가한다"처럼 중첩 없이 고정으로 붙는 코어 옵션 - 예: '재빠른 공격'
+    // 코어의 [10P]/[17P] 구간이 각각 독립적으로 공격 속도를 더해주는 케이스.
+    const clean = mungaStripTags(segmentText);
+    if(/중첩/.test(clean)) return null;
+    const sp = mungaExtractSpeedPercents(segmentText);
+    if(sp.atk === 0 && sp.move === 0) return null;
+    return { atk: sp.atk, move: sp.move };
+  }
+
   function mungaCoreStackCritBonus(segmentText){
     const clean = mungaStripTags(segmentText);
     const stackM = /(\d+)\s*중첩/.exec(clean);
@@ -1807,6 +1817,12 @@ return '<div class="market-card market-card-combo">'
         if(bonus){
           arkGridAtk += bonus.atk; arkGridMove += bonus.move;
           arkGridDetail.push({ name: '아크그리드 코어: ' + slot.Name + ' (최대 ' + bonus.stacks + '중첩 가정)', atk: bonus.atk, move: bonus.move });
+          return;
+        }
+        const flat = mungaCoreFlatSpeedBonus(seg);
+        if(flat){
+          arkGridAtk += flat.atk; arkGridMove += flat.move;
+          arkGridDetail.push({ name: '아크그리드 코어: ' + slot.Name, atk: flat.atk, move: flat.move });
         }
       });
     });
