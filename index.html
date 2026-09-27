@@ -1744,6 +1744,12 @@ return '<div class="market-card market-card-combo">'
       arkMove += 20;
       arkDetail.push({ name: '스킬: 악마화 (멈출 수 없는 충동)', atk: 0, move: 20 });
     }
+    if(className0 === '발키리' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '빛의 기사'; })){
+      // '빛의 기사' 노드 원문 툴팁에는 이동 속도 언급이 없음(스킬 변경/버프 텍스트만 존재).
+      // 성흔/전진 찌르기/계시의 검 스킬 자체의 이동 속도 +30%는 노드 텍스트 밖의 스킬 고유 효과라 하드코딩으로 추가.
+      arkMove += 30;
+      arkDetail.push({ name: '스킬: 성흔/전진 찌르기/계시의 검 (빛의 기사)', atk: 0, move: 30 });
+    }
 
     // 항상 켜져 있다고 가정하는 상시 버프 (서포터 갈망, 공이속 만찬)
     const buffAtk = 9 + 5, buffMove = 9 + 5;
