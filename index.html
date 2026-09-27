@@ -1411,6 +1411,27 @@ return '<div class="market-card market-card-combo">'
     return { atk: atk, move: move };
   }
 
+  function mungaExtractSpeedPercentsGlobalOnly(text){
+    // 아크패시브 노드 중 "오의 스킬의 공격속도가 10.0% 증가한다"처럼 특정 스킬군에만
+    // 적용되는 공이속 보너스는 캐릭터 전체 공이속이 아니므로 제외. 매치 직전 구간에
+    // "스킬"이라는 단어가 있으면 특정 스킬 한정 보너스로 간주해 건너뜀.
+    const clean = mungaStripTags(text);
+    let atk = 0, move = 0;
+    if(!clean) return { atk: atk, move: move };
+    const re = /(공격\s*속도\s*및\s*이동\s*속도|공격\s*속도\s*와\s*이동\s*속도|공격\s*및\s*이동\s*속도|공격\s*속도|이동\s*속도)[^%]{0,16}?([\d.]+)\s*%\s*(증가|감소)/g;
+    let m;
+    while((m = re.exec(clean))){
+      const before = clean.slice(Math.max(0, m.index - 40), m.index);
+      if(/스킬/.test(before)) continue;
+      const which = m[1].replace(/\s+/g, '');
+      const v = parseFloat(m[2]) || 0;
+      const signed = m[3] === '감소' ? -v : v;
+      if(which.indexOf('공격') !== -1) atk += signed;
+      if(which.indexOf('이동') !== -1) move += signed;
+    }
+    return { atk: atk, move: move };
+  }
+
   function mungaFindStat(profile, type){
     const stats = (profile && profile.Stats) || [];
     const found = stats.find(function(s){ return s.Type === type; });
@@ -1630,7 +1651,7 @@ return '<div class="market-card market-card-combo">'
         if(nodeName === '음속 돌파') eumdolEffectText = effectText;
         return; // 도약 5티어 대체 노드는 단순 스탯 가산이 아니므로 제외
       }
-      const sp = mungaExtractSpeedPercents(effectText);
+      const sp = mungaExtractSpeedPercentsGlobalOnly(effectText);
       if(sp.atk !== 0 || sp.move !== 0){
         arkAtk += sp.atk; arkMove += sp.move;
         arkDetail.push({ name: nodeName, atk: sp.atk, move: sp.move });
