@@ -1438,6 +1438,17 @@ return '<div class="market-card market-card-combo">'
     return found ? parseFloat((found.Value || '0').toString().replace(/,/g,'')) : 0;
   }
 
+  function mungaBerserkAmp(profile){
+    // 버서커 '광전사의 비기'는 폭주 상태 보너스가 고정값이 아니라 특화 스탯에 비례해서
+    // 증폭되며, 그 증폭률은 특화 스탯 툴팁에 "폭주 효과가 X% 증폭됩니다"로 직접 노출됨.
+    const stats = (profile && profile.Stats) || [];
+    const specStat = stats.find(function(s){ return s.Type === '특화'; });
+    const tooltipText = specStat && Array.isArray(specStat.Tooltip) ? specStat.Tooltip.join(' ') : '';
+    const clean = mungaStripTags(tooltipText);
+    const m = /폭주\s*효과가?\s*([\d.]+)\s*%\s*증폭/.exec(clean);
+    return m ? parseFloat(m[1]) : 0;
+  }
+
   function mungaFindItemPartBoxText(tooltipObj, labelKeyword){
     // 아크그리드 코어/젬 Tooltip은 Element_NNN마다 { type:'ItemPartBox', value:{Element_000: 라벨, Element_001: 본문} }
     // 형태라, 라벨(예: "코어 옵션")로 찾아서 본문 텍스트만 뽑아냄.
@@ -1567,6 +1578,12 @@ return '<div class="market-card market-card-combo">'
     }
     if(className0 === '건슬링어'){
       arkPct += 10; arkDetail.push({ name: '스킬: 본인 치적 스킬(나선의 추적자/민첩한 사격/이퀄라이저)', value: 10 });
+    }
+    if(className0 === '버서커'){
+      const berserkAmp = mungaBerserkAmp(profile);
+      const berserkCrit = 30 * (1 + berserkAmp / 100);
+      arkPct += berserkCrit;
+      arkDetail.push({ name: '아크패시브: 광전사의 비기 (폭주, 특화 증폭 ' + berserkAmp.toFixed(2) + '%)', value: berserkCrit });
     }
 
     // 장신구 연마/팔찌 옵션의 "치명타 적중률" 수치 - Tooltip(JSON) 안의 문자열들을
@@ -1709,6 +1726,13 @@ return '<div class="market-card market-card-combo">'
     if(className0 === '블레이드'){
       arkAtk += 12.8; arkMove += 12.8;
       arkDetail.push({ name: '스킬: 마엘스톰', atk: 12.8, move: 12.8 });
+    }
+    if(className0 === '버서커'){
+      const berserkAmp = mungaBerserkAmp(profile);
+      const berserkAtk = 20 * (1 + berserkAmp / 100);
+      const berserkMove = 20 * (1 + berserkAmp / 100);
+      arkAtk += berserkAtk; arkMove += berserkMove;
+      arkDetail.push({ name: '아크패시브: 광전사의 비기 (폭주, 특화 증폭 ' + berserkAmp.toFixed(2) + '%)', atk: berserkAtk, move: berserkMove });
     }
 
     // 항상 켜져 있다고 가정하는 상시 버프 (서포터 갈망, 공이속 만찬)
