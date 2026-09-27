@@ -1293,6 +1293,9 @@ return '<div class="market-card market-card-combo">'
   // 있어서(오탐 방지) 장비 옵션 파싱에서 제외. "황금 용사의 문장"은 PVP 모드에서만
   // 반영되는 효과라 레이드(PVE) 기준 합산에서는 제외.
   const MUNGA_EXCLUDED_EQUIP_NAMES = ['백금 용사의 문장', '황금 용사의 문장'];
+  // "질서의 별 코어 : 파괴의 바람"의 [10P] 이동 속도 +30%는 허리케인 소드 스킬
+  // 사용에만 적용되는 조건부 효과라 상시 공이속으로 합산하면 과대 계산되므로 제외.
+  const MUNGA_EXCLUDED_ARKGRID_CORE_NAMES = ['질서의 별 코어 : 파괴의 바람'];
 
   // 음속 돌파(음돌) 레벨별 계수 - 나무위키 아크패시브 진화 5티어 노드 텍스트 기준.
   // 공격속도/이동속도 "증가량" 상한은 게임 내 표시 상한(140%)에서 기본값(100%)을
@@ -1866,6 +1869,7 @@ return '<div class="market-card market-card-combo">'
     // X% 증가, 최대 N중첩)는 Effects[]에 안 잡히므로 Slots에서 별도로 찾아 최대 중첩 기준으로 더함.
     const arkGridSlots2 = (data.arkgrid && data.arkgrid.Slots) || [];
     arkGridSlots2.forEach(function(slot){
+      if(MUNGA_EXCLUDED_ARKGRID_CORE_NAMES.indexOf(slot.Name) !== -1) return;
       let slotTooltip = null;
       try{ slotTooltip = typeof slot.Tooltip === 'string' ? JSON.parse(slot.Tooltip) : slot.Tooltip; }catch(e){ slotTooltip = null; }
       const optionText = mungaFindItemPartBoxText(slotTooltip, '코어 옵션');
