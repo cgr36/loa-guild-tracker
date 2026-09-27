@@ -1326,6 +1326,25 @@ return '<div class="market-card market-card-combo">'
     return total;
   }
 
+  function mungaExtractPercentGlobalOnly(text, keyword){
+    // 아크패시브 노드 중 "'권왕십이식 : 풍랑' 스킬의 치명타 적중률이 15.0% 증가"나
+    // "성운멸쇄권 스킬 시전 시 치명타 적중률이 20.0% 증가"처럼 특정 스킬 한정 보너스는
+    // 캐릭터 전체 치적이 아니므로 제외해야 함. "치명 Lv.10"(스탯 증가)이나 "예리한 감각"/
+    // "혼신의 강타"(치명타 적중률이 X% 증가하고, 진화형 피해가 Y% 증가합니다) 같은 전체
+    // 적용 보너스는 매치 직전에 "스킬"이라는 단어가 없으므로, 이 단어의 존재 여부로 구분.
+    const clean = mungaStripTags(text);
+    if(!clean) return 0;
+    let total = 0;
+    const re = new RegExp(keyword + '[^%]{0,16}?([\\d.]+)\\s*%\\s*(?:증가|만큼 증가)', 'g');
+    let m;
+    while((m = re.exec(clean))){
+      const before = clean.slice(Math.max(0, m.index - 40), m.index);
+      if(/스킬/.test(before)) continue;
+      total += parseFloat(m[1]) || 0;
+    }
+    return total;
+  }
+
   function mungaExtractPercentLenient(text, keyword){
     // 장비 연마/팔찌 옵션은 "치명타 적중률 +3.10%"처럼 "증가" 없이 표기되는 경우가
     // 많아서, 이쪽은 "증가" 여부와 무관하게 keyword 뒤 첫 숫자%를 그대로 가산으로 인정.
@@ -1487,7 +1506,7 @@ return '<div class="market-card market-card-combo">'
         arkPct += v; arkDetail.push({ name: '달인 (최대 중첩 가정)', value: v });
         return;
       }
-      const v = mungaExtractPercent(effectText, '치명타\\s*적중률');
+      const v = mungaExtractPercentGlobalOnly(effectText, '치명타\\s*적중률');
       if(v > 0){ arkPct += v; arkDetail.push({ name: nodeName, value: v }); }
     });
 
