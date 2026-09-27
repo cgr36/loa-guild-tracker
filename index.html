@@ -1639,6 +1639,14 @@ return '<div class="market-card market-card-combo">'
     if(className0 === '창술사'){
       arkPct += 20; arkDetail.push({ name: '스킬: 청룡진', value: 20 });
     }
+    if(className0 === '데빌헌터'){
+      arkPct += 10; arkDetail.push({ name: '스킬: 나선의 추적자', value: 10 });
+    }
+    if(className0 === '데빌헌터' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '정밀 사격 훈련'; })){
+      // 노드 원문이 "치명타 적중률이 24.0%, 치명타 피해량이 14.0% 증가한다"처럼
+      // 증가 서술어를 뒤에서 공유하는 구조라 일반 파서가 24%를 못 잡아서 하드코딩으로 추가.
+      arkPct += 24; arkDetail.push({ name: '진화: 정밀 사격 훈련', value: 24 });
+    }
     if(className0 === '환수사' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '깨어난 잠재력'; })){
       // 노드 원문에 "둔갑 스킬"이라는 표현이 있어 스킬 특정 문구로 오인해 자동 파싱에서
       // 제외됐지만, 실제로는 둔갑 스킬 전체(곰/여우 공용)에 적용되는 상시 효과라 하드코딩으로 추가.
