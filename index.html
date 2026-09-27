@@ -1397,8 +1397,9 @@ return '<div class="market-card market-card-combo">'
     const clean = mungaStripTags(text);
     let atk = 0, move = 0;
     if(!clean) return { atk: atk, move: move };
-    // "공격 및 이동 속도"처럼 공격 쪽 "속도"가 생략된 표현도 흔해서 별도 대안으로 처리
-    const re = /(공격\s*속도\s*및\s*이동\s*속도|공격\s*및\s*이동\s*속도|공격\s*속도|이동\s*속도)[^%]{0,16}?([\d.]+)\s*%\s*(증가|감소)/g;
+    // "공격 및 이동 속도"처럼 공격 쪽 "속도"가 생략된 표현이나 "공격속도와 이동속도"처럼
+    // 접속사가 "및"이 아니라 "와"인 표현도 흔해서 별도 대안으로 처리
+    const re = /(공격\s*속도\s*및\s*이동\s*속도|공격\s*속도\s*와\s*이동\s*속도|공격\s*및\s*이동\s*속도|공격\s*속도|이동\s*속도)[^%]{0,16}?([\d.]+)\s*%\s*(증가|감소)/g;
     let m;
     while((m = re.exec(clean))){
       const which = m[1].replace(/\s+/g, '');
@@ -1653,6 +1654,10 @@ return '<div class="market-card market-card-combo">'
     if(className0 === '가디언나이트'){
       arkAtk += 15;
       arkDetail.push({ name: '깨달음: 초월 (가디언 피어)', atk: 15, move: 0 });
+    }
+    if(className0 === '블레이드'){
+      arkAtk += 12.8; arkMove += 12.8;
+      arkDetail.push({ name: '스킬: 마엘스톰', atk: 12.8, move: 12.8 });
     }
 
     // 항상 켜져 있다고 가정하는 상시 버프 (서포터 갈망, 공이속 만찬)
