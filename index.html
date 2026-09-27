@@ -1557,6 +1557,13 @@ return '<div class="market-card market-card-combo">'
     if(className0 === '리퍼'){
       arkPct += 23; arkDetail.push({ name: '아크패시브: 피냄새', value: 23 });
     }
+    if(className0 === '건슬링어'){
+      const gunslingerCritNode = arkEffects.map(function(e){ return mungaArkNodeName(e.Description) || e.Name; })
+        .find(function(nm){ return nm === '나선의 추적자' || nm === '민첩한 사격' || nm === '이퀄라이저'; });
+      if(gunslingerCritNode){
+        arkPct += 10; arkDetail.push({ name: '아크패시브: ' + gunslingerCritNode + ' (본인 치적)', value: 10 });
+      }
+    }
 
     // 장신구 연마/팔찌 옵션의 "치명타 적중률" 수치 - Tooltip(JSON) 안의 문자열들을
     // 전부 모아 HTML 태그를 제거한 뒤 파싱 (색상 태그 안에 숫자가 섞여 있어서
@@ -1682,10 +1689,6 @@ return '<div class="market-card market-card-combo">'
     if(className0 === '배틀마스터'){
       arkAtk += 20.8; arkMove += 16;
       arkDetail.push({ name: '스킬: 바람의 속삭임', atk: 20.8, move: 16 });
-    }
-    if(className0 === '기상술사' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '질풍노도'; })){
-      arkAtk += 12; arkMove += 12;
-      arkDetail.push({ name: '깨달음: 질풍노도', atk: 12, move: 12 });
     }
     if(className0 === '스트라이커'){
       arkAtk += 8;
