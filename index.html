@@ -1285,9 +1285,10 @@ return '<div class="market-card market-card-combo">'
   // 도약 5티어의 다른 대체 노드들 - 설명에 "치명타"가 들어가도 단순 가산 보너스가
   // 아니라 캡/전환 메커니즘이라 치적 합산 시 제외해야 함
   const MUNGA_LEAP_NODE_NAMES = ['뭉툭한 가시','음속 돌파','입식 타격가','인파이팅','마나 용광로','안정된 관리자'];
-  // 디스트로이어 "중력 수련"(중력 가중 모드에서만)/"중력 가속"(중력 가중영역·해방 모드일 때만)은
+  // 디스트로이어 "중력 수련"(중력 가중 모드에서만)/"중력 가속"(중력 가중영역·해방 모드일 때만),
+  // 환수사 "깨어난 잠재력"의 공격 속도 20%(여우 둔갑 상태에서만)는
   // 특정 모드/상태 조건부 효과라 상시 적용으로 합산하면 과대 계산되므로 자동 파싱에서 제외
-  const MUNGA_CONDITIONAL_NODE_NAMES = ['중력 수련','중력 가속'];
+  const MUNGA_CONDITIONAL_NODE_NAMES = ['중력 수련','중력 가속','깨어난 잠재력'];
   // 칭호/문장류 장신구는 전투 스탯이 아니라 실제로는 무관한 텍스트가 섞여
   // 있어서(오탐 방지) 장비 옵션 파싱에서 제외
   const MUNGA_EXCLUDED_EQUIP_NAMES = ['백금 용사의 문장'];
@@ -1592,6 +1593,11 @@ return '<div class="market-card market-card-combo">'
     }
     if(className0 === '건슬링어'){
       arkPct += 10; arkDetail.push({ name: '스킬: 본인 치적 스킬(나선의 추적자/민첩한 사격/이퀄라이저)', value: 10 });
+    }
+    if(className0 === '환수사' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '깨어난 잠재력'; })){
+      // 노드 원문에 "둔갑 스킬"이라는 표현이 있어 스킬 특정 문구로 오인해 자동 파싱에서
+      // 제외됐지만, 실제로는 둔갑 스킬 전체(곰/여우 공용)에 적용되는 상시 효과라 하드코딩으로 추가.
+      arkPct += 30; arkDetail.push({ name: '깨달음: 깨어난 잠재력 (둔갑 스킬)', value: 30 });
     }
     if(className0 === '버서커'){
       const berserkAmp = mungaBerserkAmp(profile);
