@@ -1289,9 +1289,10 @@ return '<div class="market-card market-card-combo">'
   // 치명타 적중률 +30%, 공격/이동 속도 +20%씩을 받음(노드 텍스트에는 없는 상태 고유 효과).
   const MUNGA_SLAYER_RAGE_NODE_NAMES = ['포식자', '처단자'];
   // 디스트로이어 "중력 수련"(중력 가중 모드에서만)/"중력 가속"/"영역 강화"(중력 가중영역·
-  // 해방 모드일 때만), 환수사 "깨어난 잠재력"의 공격 속도 20%(여우 둔갑 상태에서만)는
+  // 해방 모드일 때만), 환수사 "깨어난 잠재력"의 공격 속도 20%(여우 둔갑 상태에서만),
+  // 슬레이어 "막을 수 없는 분노"의 공격 속도 20%(폭주 상태 등 조건부)는
   // 특정 모드/상태 조건부 효과라 상시 적용으로 합산하면 과대 계산되므로 자동 파싱에서 제외
-  const MUNGA_CONDITIONAL_NODE_NAMES = ['중력 수련','중력 가속','깨어난 잠재력','영역 강화'];
+  const MUNGA_CONDITIONAL_NODE_NAMES = ['중력 수련','중력 가속','깨어난 잠재력','영역 강화','막을 수 없는 분노'];
   // 칭호/문장류 장신구는 전투 스탯이 아니라 실제로는 무관한 텍스트가 섞여
   // 있어서(오탐 방지) 장비 옵션 파싱에서 제외. "OO 용사의 문장" 계열(백금/황금/순은 등)은
   // 전부 PVP 모드에서만 반영되는 효과라 레이드(PVE) 기준 합산에서는 등급 상관없이 제외.
@@ -1304,7 +1305,9 @@ return '<div class="market-card market-card-combo">'
   }
   // "질서의 별 코어 : 파괴의 바람"의 [10P] 이동 속도 +30%는 허리케인 소드 스킬
   // 사용에만 적용되는 조건부 효과라 상시 공이속으로 합산하면 과대 계산되므로 제외.
-  const MUNGA_EXCLUDED_ARKGRID_CORE_NAMES = ['질서의 별 코어 : 파괴의 바람'];
+  // "질서의 해 코어 : 충격파"의 [17P] 치명타 적중률 +100%는 '운명: 충격파' 효과
+  // 보유 중 풍신권 사용 시에만 얻는 '운명: 연파' 조건부 효과라 상시 치적 합산에서 제외.
+  const MUNGA_EXCLUDED_ARKGRID_CORE_NAMES = ['질서의 별 코어 : 파괴의 바람', '질서의 해 코어 : 충격파'];
 
   // 음속 돌파(음돌) 레벨별 계수 - 나무위키 아크패시브 진화 5티어 노드 텍스트 기준.
   // 공격속도/이동속도 "증가량" 상한은 게임 내 표시 상한(140%)에서 기본값(100%)을
@@ -1704,6 +1707,7 @@ return '<div class="market-card market-card-combo">'
     // 안 잡히므로, 투자한 코어 포인트를 만족하는 구간만 걸러서 별도로 더함.
     const arkGridSlots = (data.arkgrid && data.arkgrid.Slots) || [];
     arkGridSlots.forEach(function(slot){
+      if(MUNGA_EXCLUDED_ARKGRID_CORE_NAMES.indexOf(slot.Name) !== -1) return;
       let slotTooltip = null;
       try{ slotTooltip = typeof slot.Tooltip === 'string' ? JSON.parse(slot.Tooltip) : slot.Tooltip; }catch(e){ slotTooltip = null; }
       const optionText = mungaFindItemPartBoxText(slotTooltip, '코어 옵션');
