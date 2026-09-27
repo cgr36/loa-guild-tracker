@@ -1311,7 +1311,13 @@ return '<div class="market-card market-card-combo">'
   // 보유 중 풍신권 사용 시에만 얻는 '운명: 연파' 조건부 효과라 상시 치적 합산에서 제외.
   // "질서의 달 코어 : 불릿 무빙"의 [17P] 이동 속도 +28%는 레인 오브 불릿 스킬 사용
   // 중에만 적용되는 조건부 효과라 상시 공이속 합산에서 제외.
-  const MUNGA_EXCLUDED_ARKGRID_CORE_NAMES = ['질서의 별 코어 : 파괴의 바람', '질서의 해 코어 : 충격파', '질서의 달 코어 : 불릿 무빙'];
+  // "질서의 X 코어 : " 접두어 표기가 캐릭터/API 응답마다 띄어쓰기가 다를 수 있어
+  // 전체 이름이 아니라 코어 고유 이름(접미어) 포함 여부로 판단.
+  const MUNGA_EXCLUDED_ARKGRID_CORE_NAMES = ['파괴의 바람', '충격파', '불릿 무빙'];
+  function mungaIsExcludedArkgridCore(name){
+    if(!name) return false;
+    return MUNGA_EXCLUDED_ARKGRID_CORE_NAMES.some(function(keyword){ return name.indexOf(keyword) !== -1; });
+  }
 
   // 음속 돌파(음돌) 레벨별 계수 - 나무위키 아크패시브 진화 5티어 노드 텍스트 기준.
   // 공격속도/이동속도 "증가량" 상한은 게임 내 표시 상한(140%)에서 기본값(100%)을
@@ -1722,7 +1728,7 @@ return '<div class="market-card market-card-combo">'
     // 안 잡히므로, 투자한 코어 포인트를 만족하는 구간만 걸러서 별도로 더함.
     const arkGridSlots = (data.arkgrid && data.arkgrid.Slots) || [];
     arkGridSlots.forEach(function(slot){
-      if(MUNGA_EXCLUDED_ARKGRID_CORE_NAMES.indexOf(slot.Name) !== -1) return;
+      if(mungaIsExcludedArkgridCore(slot.Name)) return;
       let slotTooltip = null;
       try{ slotTooltip = typeof slot.Tooltip === 'string' ? JSON.parse(slot.Tooltip) : slot.Tooltip; }catch(e){ slotTooltip = null; }
       const optionText = mungaFindItemPartBoxText(slotTooltip, '코어 옵션');
@@ -1927,7 +1933,7 @@ return '<div class="market-card market-card-combo">'
     // X% 증가, 최대 N중첩)는 Effects[]에 안 잡히므로 Slots에서 별도로 찾아 최대 중첩 기준으로 더함.
     const arkGridSlots2 = (data.arkgrid && data.arkgrid.Slots) || [];
     arkGridSlots2.forEach(function(slot){
-      if(MUNGA_EXCLUDED_ARKGRID_CORE_NAMES.indexOf(slot.Name) !== -1) return;
+      if(mungaIsExcludedArkgridCore(slot.Name)) return;
       let slotTooltip = null;
       try{ slotTooltip = typeof slot.Tooltip === 'string' ? JSON.parse(slot.Tooltip) : slot.Tooltip; }catch(e){ slotTooltip = null; }
       const optionText = mungaFindItemPartBoxText(slotTooltip, '코어 옵션');
