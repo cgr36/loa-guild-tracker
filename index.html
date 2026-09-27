@@ -1285,6 +1285,9 @@ return '<div class="market-card market-card-combo">'
   // 도약 5티어의 다른 대체 노드들 - 설명에 "치명타"가 들어가도 단순 가산 보너스가
   // 아니라 캡/전환 메커니즘이라 치적 합산 시 제외해야 함
   const MUNGA_LEAP_NODE_NAMES = ['뭉툭한 가시','음속 돌파','입식 타격가','인파이팅','마나 용광로','안정된 관리자'];
+  // 슬레이어 1티어 대체 노드 두 가지('포식자'/'처단자') 모두 폭주 상태에서 동일하게
+  // 치명타 적중률 +30%, 공격/이동 속도 +20%씩을 받음(노드 텍스트에는 없는 상태 고유 효과).
+  const MUNGA_SLAYER_RAGE_NODE_NAMES = ['포식자', '처단자'];
   // 디스트로이어 "중력 수련"(중력 가중 모드에서만)/"중력 가속"/"영역 강화"(중력 가중영역·
   // 해방 모드일 때만), 환수사 "깨어난 잠재력"의 공격 속도 20%(여우 둔갑 상태에서만)는
   // 특정 모드/상태 조건부 효과라 상시 적용으로 합산하면 과대 계산되므로 자동 파싱에서 제외
@@ -1654,11 +1657,11 @@ return '<div class="market-card market-card-combo">'
       // 채용 여부를 확인할 방법이 없어 배틀마스터/스트라이커 등과 동일하게 강제로 추가.
       arkPct += 11.8; arkDetail.push({ name: '스킬: 슈르디 (빛의 성장 트라이포드)', value: 11.8 });
     }
-    if(className0 === '슬레이어' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '포식자'; })){
-      // '포식자' 노드 원문 툴팁에는 치명타 적중률 언급이 전혀 없음(혈기 흡수로 분노 게이지/
-      // 마나 회복 텍스트만 존재). 폭주 상태의 치명타 적중률 +30%는 노드 텍스트 밖의
-      // 폭주 상태 고유 효과라 하드코딩으로 추가.
-      arkPct += 30; arkDetail.push({ name: '아크패시브: 포식자 (폭주 상태)', value: 30 });
+    if(className0 === '슬레이어' && arkEffects.some(function(e){ return MUNGA_SLAYER_RAGE_NODE_NAMES.indexOf(mungaArkNodeName(e.Description) || e.Name) !== -1; })){
+      // '포식자'/'처단자' 노드 모두 원문 툴팁에 치명타 적중률 언급이 전혀 없음.
+      // 폭주 상태의 치명타 적중률 +30%는 노드 텍스트 밖의 폭주 상태 고유 효과라
+      // 두 대체 노드(슬레이어 1티어) 공통으로 하드코딩으로 추가.
+      arkPct += 30; arkDetail.push({ name: '아크패시브: 포식자/처단자 (폭주 상태)', value: 30 });
     }
     if(className0 === '디스트로이어' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '날카로운 해머'; })){
       // 노드 원문("해방 스킬 사용 중 소모한 코어 당 치명타 적중률이 6.0% 증가한다")에
@@ -1843,12 +1846,12 @@ return '<div class="market-card market-card-combo">'
       arkAtk += 15; arkMove += 30;
       arkDetail.push({ name: '아크패시브: 하이퍼 싱크 (진화의 유산)', atk: 15, move: 30 });
     }
-    if(className0 === '슬레이어' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '포식자'; })){
-      // '포식자' 노드 원문 툴팁에는 공격/이동 속도 언급이 전혀 없음(혈기 흡수 텍스트만
-      // 존재). 폭주 상태의 공격/이동 속도 +20%씩은 노드 텍스트 밖의 폭주 상태 고유
-      // 효과라 하드코딩으로 추가.
+    if(className0 === '슬레이어' && arkEffects.some(function(e){ return MUNGA_SLAYER_RAGE_NODE_NAMES.indexOf(mungaArkNodeName(e.Description) || e.Name) !== -1; })){
+      // '포식자'/'처단자' 노드 모두 원문 툴팁에 공격/이동 속도 언급이 전혀 없음.
+      // 폭주 상태의 공격/이동 속도 +20%씩은 노드 텍스트 밖의 폭주 상태 고유 효과라
+      // 두 대체 노드(슬레이어 1티어) 공통으로 하드코딩으로 추가.
       arkAtk += 20; arkMove += 20;
-      arkDetail.push({ name: '아크패시브: 포식자 (폭주 상태)', atk: 20, move: 20 });
+      arkDetail.push({ name: '아크패시브: 포식자/처단자 (폭주 상태)', atk: 20, move: 20 });
     }
 
     // 항상 켜져 있다고 가정하는 상시 버프 (서포터 갈망, 공이속 만찬)
