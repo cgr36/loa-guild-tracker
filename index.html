@@ -1441,16 +1441,21 @@ return '<div class="market-card market-card-combo">'
   function mungaFindItemPartBoxText(tooltipObj, labelKeyword){
     // 아크그리드 코어/젬 Tooltip은 Element_NNN마다 { type:'ItemPartBox', value:{Element_000: 라벨, Element_001: 본문} }
     // 형태라, 라벨(예: "코어 옵션")로 찾아서 본문 텍스트만 뽑아냄.
+    // "코어 옵션"은 "코어 옵션 발동 조건"의 부분 문자열이기도 해서, 단순 indexOf 매칭에
+    // "마지막으로 매칭된 항목"이 이겨버리면 엉뚱하게 발동 조건 텍스트를 가져오게 된다.
+    // 정확히 일치하는 라벨을 최우선으로 쓰고, 없을 때만 부분 일치(첫 매칭)로 대체한다.
     if(!tooltipObj) return '';
-    let result = '';
+    let exactResult = null;
+    let fallbackResult = null;
     Object.keys(tooltipObj).forEach(function(key){
       const el = tooltipObj[key];
       if(el && el.type === 'ItemPartBox' && el.value && typeof el.value === 'object'){
         const label = mungaStripTags(el.value.Element_000 || '');
-        if(label.indexOf(labelKeyword) !== -1) result = el.value.Element_001 || '';
+        if(exactResult === null && label === labelKeyword) exactResult = el.value.Element_001 || '';
+        if(fallbackResult === null && label.indexOf(labelKeyword) !== -1) fallbackResult = el.value.Element_001 || '';
       }
     });
-    return result;
+    return exactResult !== null ? exactResult : (fallbackResult || '');
   }
 
   function mungaCoreOptionSegments(rawText, corePoint){
@@ -1507,6 +1512,10 @@ return '<div class="market-card market-card-combo">'
     const profile = data.profile || {};
     const critStat = mungaCritOverride !== null ? mungaCritOverride : mungaFindStat(profile, '치명');
     const statPct = critStat / MUNGA_STAT_PER_PERCENT;
+    // 나선의 추적자/돌개바람 같은 자체 치적 스킬은 아크패시브 노드가 아니라 실제 전투
+    // 스킬(스킬 탭)이라 arkpassive.Effects에는 안 나오고, 별도의 combat-skills API로만 확인 가능.
+    const skillList = Array.isArray(data.skills) ? data.skills : [];
+    const hasSkill = function(names){ return skillList.some(function(s){ return names.indexOf(s.Name) !== -1; }); };
 
     const engraveEffects = (data.engravings && (data.engravings.Effects || data.engravings.ArkPassiveEffects)) || [];
     let enginePct = 0;
@@ -1551,12 +1560,8 @@ return '<div class="market-card market-card-combo">'
     if(className0 === '기상술사' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '질풍노도'; })){
       arkPct += 12; arkDetail.push({ name: '깨달음: 기민함', value: 12 });
     }
-    if(className0 === '기상술사'){
-      const aeromancerCritNode = arkEffects.map(function(e){ return mungaArkNodeName(e.Description) || e.Name; })
-        .find(function(nm){ return nm === '돌개바람' || nm === '짙은안개'; });
-      if(aeromancerCritNode){
-        arkPct += 10; arkDetail.push({ name: '아크패시브: ' + aeromancerCritNode + ' (본인 치적)', value: 10 });
-      }
+    if(className0 === '기상술사' && hasSkill(['돌개바람', '짙은안개'])){
+      arkPct += 10; arkDetail.push({ name: '스킬: 본인 치적 스킬(돌개바람/짙은안개)', value: 10 });
     }
     if(className0 === '스트라이커'){
       arkPct += 20; arkDetail.push({ name: '스킬: 번개의 속삭임', value: 20 });
@@ -1564,12 +1569,8 @@ return '<div class="market-card market-card-combo">'
     if(className0 === '리퍼'){
       arkPct += 23; arkDetail.push({ name: '아크패시브: 피냄새', value: 23 });
     }
-    if(className0 === '건슬링어'){
-      const gunslingerCritNode = arkEffects.map(function(e){ return mungaArkNodeName(e.Description) || e.Name; })
-        .find(function(nm){ return nm === '나선의 추적자' || nm === '민첩한 사격' || nm === '이퀄라이저'; });
-      if(gunslingerCritNode){
-        arkPct += 10; arkDetail.push({ name: '아크패시브: ' + gunslingerCritNode + ' (본인 치적)', value: 10 });
-      }
+    if(className0 === '건슬링어' && hasSkill(['나선의 추적자', '민첩한 사격', '이퀄라이저'])){
+      arkPct += 10; arkDetail.push({ name: '스킬: 본인 치적 스킬(나선의 추적자/민첩한 사격/이퀄라이저)', value: 10 });
     }
 
     // 장신구 연마/팔찌 옵션의 "치명타 적중률" 수치 - Tooltip(JSON) 안의 문자열들을
