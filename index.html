@@ -533,6 +533,10 @@
                 <label class="munga-synergy-item"><input type="checkbox" class="munga-synergy-cb" value="10"> 아르카나 (+10%)</label>
               </div>
             </div>
+            <div class="munga-synergy-row">
+              <span class="munga-synergy-title">추가 치적 버프</span>
+              <label class="munga-synergy-item"><input type="checkbox" class="munga-buff-cb" value="18"> 날카로운 해머 (디스트로이어, 코어 3개 소모 시 +18%)</label>
+            </div>
             <div class="munga-result-grid" id="mungaResultGrid"></div>
           </div>
         </div>
@@ -1929,7 +1933,7 @@ return '<div class="market-card market-card-combo">'
     if(!mungaBreakdown) return null;
     const manualExtra = parseFloat($('mungaManualExtra').value) || 0;
     const baseDijeok = mungaBreakdown.statPct + mungaBreakdown.enginePct + mungaBreakdown.arkPct + mungaBreakdown.equipPct + mungaBreakdown.arkGridPct + manualExtra;
-    const synergy = Array.from(document.querySelectorAll('.munga-synergy-cb:checked')).reduce(function(sum, cb){ return sum + (parseFloat(cb.value) || 0); }, 0);
+    const synergy = Array.from(document.querySelectorAll('.munga-synergy-cb:checked, .munga-buff-cb:checked')).reduce(function(sum, cb){ return sum + (parseFloat(cb.value) || 0); }, 0);
     const levelSel = $('mungaLevelSelect').value;
     const levelDetected = !!(mungaBreakdown.mungaLevel && mungaBreakdown.mungaLevel.detected);
     const lv = levelDetected ? mungaBreakdown.mungaLevel : MUNGA_LEVELS[levelSel];
@@ -2247,7 +2251,7 @@ return '<div class="market-card market-card-combo">'
     $(id).addEventListener('input', function(){ if(mungaBreakdown) renderMungaResult(); });
     $(id).addEventListener('change', function(){ if(mungaBreakdown) renderMungaResult(); });
   });
-  document.querySelectorAll('.munga-synergy-cb').forEach(function(cb){
+  document.querySelectorAll('.munga-synergy-cb, .munga-buff-cb').forEach(function(cb){
     cb.addEventListener('change', function(){ if(mungaBreakdown) renderMungaResult(); });
   });
   ['eumdolManualAtk','eumdolManualMove','eumdolLevelSelect'].forEach(function(id){
