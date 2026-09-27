@@ -1416,6 +1416,30 @@ return '<div class="market-card market-card-combo">'
     return { atk: atk, move: move };
   }
 
+  function mungaExtractSpeedPercentsStacked(text){
+    // 팔찌 부여 효과 중 "공격 적중 시 매 초마다 ... 공격 및 이동 속도가 X% 증가한다.
+    // (최대 N중첩)"처럼 스택형으로 붙는 경우, 각 매치 바로 뒤에 "최대 N중첩"이 있으면
+    // 최대 중첩 기준으로 곱해서 반영(달인 각인과 동일한 처리 방식). 중첩 표기가 없는
+    // 일반 속도 옵션은 기존과 동일하게 1배로 처리.
+    const clean = mungaStripTags(text);
+    let atk = 0, move = 0;
+    if(!clean) return { atk: atk, move: move };
+    const re = /(공격\s*속도\s*및\s*이동\s*속도|공격\s*속도\s*와\s*이동\s*속도|공격\s*및\s*이동\s*속도|공격\s*속도|이동\s*속도)[^%]{0,16}?([\d.]+)\s*%\s*(증가|감소)/g;
+    let m;
+    while((m = re.exec(clean))){
+      const which = m[1].replace(/\s+/g, '');
+      const v = parseFloat(m[2]) || 0;
+      const signed = m[3] === '감소' ? -v : v;
+      const after = clean.slice(re.lastIndex, re.lastIndex + 30);
+      const stackM = /최대\s*(\d+)\s*중첩/.exec(after);
+      const mult = stackM ? parseInt(stackM[1], 10) : 1;
+      const total = signed * mult;
+      if(which.indexOf('공격') !== -1) atk += total;
+      if(which.indexOf('이동') !== -1) move += total;
+    }
+    return { atk: atk, move: move };
+  }
+
   function mungaExtractSpeedPercentsGlobalOnly(text){
     // 아크패시브 노드 중 "오의 스킬의 공격속도가 10.0% 증가한다"처럼 특정 스킬군에만
     // 적용되는 공이속 보너스는 캐릭터 전체 공이속이 아니므로 제외. 매치 직전 구간에
@@ -1791,6 +1815,13 @@ return '<div class="market-card market-card-combo">'
       arkMove += 30;
       arkDetail.push({ name: '스킬: 성흔/전진 찌르기/계시의 검 (빛의 기사)', atk: 0, move: 30 });
     }
+    if(className0 === '스카우터' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '진화의 유산'; })){
+      // '진화의 유산' 노드 원문 툴팁에는 공격/이동 속도 언급이 전혀 없음(하이퍼 싱크 변신 및
+      // 스킬 활성화 텍스트만 존재). 하이퍼 싱크 상태의 이동 속도 +30%/공격 속도 +15%는
+      // 노드 텍스트 밖의 모드 고유 효과라 하드코딩으로 추가.
+      arkAtk += 15; arkMove += 30;
+      arkDetail.push({ name: '아크패시브: 하이퍼 싱크 (진화의 유산)', atk: 15, move: 30 });
+    }
 
     // 항상 켜져 있다고 가정하는 상시 버프 (서포터 갈망, 공이속 만찬)
     const buffAtk = 9 + 5, buffMove = 9 + 5;
@@ -1811,7 +1842,7 @@ return '<div class="market-card market-card-combo">'
         mungaCollectStrings(tt, strs);
         tooltipText = strs.join(' ');
       }catch(e){ tooltipText = it.Tooltip || ''; }
-      const sp = mungaExtractSpeedPercents(tooltipText);
+      const sp = mungaExtractSpeedPercentsStacked(tooltipText);
       if(sp.atk !== 0 || sp.move !== 0){
         equipAtk += sp.atk; equipMove += sp.move;
         equipDetail.push({ name: it.Name, atk: sp.atk, move: sp.move });
