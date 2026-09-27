@@ -1648,6 +1648,12 @@ return '<div class="market-card market-card-combo">'
       // 채용 여부를 확인할 방법이 없어 배틀마스터/스트라이커 등과 동일하게 강제로 추가.
       arkPct += 11.8; arkDetail.push({ name: '스킬: 슈르디 (빛의 성장 트라이포드)', value: 11.8 });
     }
+    if(className0 === '슬레이어' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '포식자'; })){
+      // '포식자' 노드 원문 툴팁에는 치명타 적중률 언급이 전혀 없음(혈기 흡수로 분노 게이지/
+      // 마나 회복 텍스트만 존재). 폭주 상태의 치명타 적중률 +30%는 노드 텍스트 밖의
+      // 폭주 상태 고유 효과라 하드코딩으로 추가.
+      arkPct += 30; arkDetail.push({ name: '아크패시브: 포식자 (폭주 상태)', value: 30 });
+    }
 
     // 장신구 연마/팔찌 옵션의 "치명타 적중률" 수치 - Tooltip(JSON) 안의 문자열들을
     // 전부 모아 HTML 태그를 제거한 뒤 파싱 (색상 태그 안에 숫자가 섞여 있어서
@@ -1824,6 +1830,13 @@ return '<div class="market-card market-card-combo">'
       // 노드 텍스트 밖의 모드 고유 효과라 하드코딩으로 추가.
       arkAtk += 15; arkMove += 30;
       arkDetail.push({ name: '아크패시브: 하이퍼 싱크 (진화의 유산)', atk: 15, move: 30 });
+    }
+    if(className0 === '슬레이어' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '포식자'; })){
+      // '포식자' 노드 원문 툴팁에는 공격/이동 속도 언급이 전혀 없음(혈기 흡수 텍스트만
+      // 존재). 폭주 상태의 공격/이동 속도 +20%씩은 노드 텍스트 밖의 폭주 상태 고유
+      // 효과라 하드코딩으로 추가.
+      arkAtk += 20; arkMove += 20;
+      arkDetail.push({ name: '아크패시브: 포식자 (폭주 상태)', atk: 20, move: 20 });
     }
 
     // 항상 켜져 있다고 가정하는 상시 버프 (서포터 갈망, 공이속 만찬)
