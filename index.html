@@ -1645,7 +1645,7 @@ return '<div class="market-card market-card-combo">'
     if(className0 === '스트라이커'){
       arkPct += 20; arkDetail.push({ name: '스킬: 번개의 속삭임', value: 20 });
     }
-    if(className0 === '리퍼'){
+    if(className0 === '리퍼' && !arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '달의 소리'; })){
       arkPct += 23; arkDetail.push({ name: '아크패시브: 피냄새', value: 23 });
     }
     if(className0 === '건슬링어'){
