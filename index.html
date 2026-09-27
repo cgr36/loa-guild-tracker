@@ -1512,10 +1512,6 @@ return '<div class="market-card market-card-combo">'
     const profile = data.profile || {};
     const critStat = mungaCritOverride !== null ? mungaCritOverride : mungaFindStat(profile, '치명');
     const statPct = critStat / MUNGA_STAT_PER_PERCENT;
-    // 나선의 추적자/돌개바람 같은 자체 치적 스킬은 아크패시브 노드가 아니라 실제 전투
-    // 스킬(스킬 탭)이라 arkpassive.Effects에는 안 나오고, 별도의 combat-skills API로만 확인 가능.
-    const skillList = Array.isArray(data.skills) ? data.skills : [];
-    const hasSkill = function(names){ return skillList.some(function(s){ return names.indexOf(s.Name) !== -1; }); };
 
     const engraveEffects = (data.engravings && (data.engravings.Effects || data.engravings.ArkPassiveEffects)) || [];
     let enginePct = 0;
@@ -1560,7 +1556,7 @@ return '<div class="market-card market-card-combo">'
     if(className0 === '기상술사' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '질풍노도'; })){
       arkPct += 12; arkDetail.push({ name: '깨달음: 기민함', value: 12 });
     }
-    if(className0 === '기상술사' && hasSkill(['돌개바람', '짙은안개'])){
+    if(className0 === '기상술사'){
       arkPct += 10; arkDetail.push({ name: '스킬: 본인 치적 스킬(돌개바람/짙은안개)', value: 10 });
     }
     if(className0 === '스트라이커'){
@@ -1569,7 +1565,7 @@ return '<div class="market-card market-card-combo">'
     if(className0 === '리퍼'){
       arkPct += 23; arkDetail.push({ name: '아크패시브: 피냄새', value: 23 });
     }
-    if(className0 === '건슬링어' && hasSkill(['나선의 추적자', '민첩한 사격', '이퀄라이저'])){
+    if(className0 === '건슬링어'){
       arkPct += 10; arkDetail.push({ name: '스킬: 본인 치적 스킬(나선의 추적자/민첩한 사격/이퀄라이저)', value: 10 });
     }
 
