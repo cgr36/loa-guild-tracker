@@ -1611,6 +1611,16 @@ return '<div class="market-card market-card-combo">'
     if(className0 === '블래스터' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '포격 출력 강화'; })){
       arkPct += 40; arkDetail.push({ name: '깨달음: 포격 출력 강화', value: 40 });
     }
+    if(className0 === '서머너' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '고대의 힘'; })){
+      // 노드 원문에 "정령 스킬"이라는 표현이 있어 스킬 특정 문구로 오인해 자동 파싱에서
+      // 제외됐지만, 실제로는 일반/고대 정령 스킬 전체에 적용되는 상시 효과라 하드코딩으로 추가.
+      arkPct += 16; arkDetail.push({ name: '진화: 고대의 힘 (정령 스킬)', value: 16 });
+    }
+    if(className0 === '서머너'){
+      // 슈르디 소환 트라이포드 '빛의 성장'의 치명타 적중률 +11.8%는 API로 트라이포드
+      // 채용 여부를 확인할 방법이 없어 배틀마스터/스트라이커 등과 동일하게 강제로 추가.
+      arkPct += 11.8; arkDetail.push({ name: '스킬: 슈르디 (빛의 성장 트라이포드)', value: 11.8 });
+    }
 
     // 장신구 연마/팔찌 옵션의 "치명타 적중률" 수치 - Tooltip(JSON) 안의 문자열들을
     // 전부 모아 HTML 태그를 제거한 뒤 파싱 (색상 태그 안에 숫자가 섞여 있어서
