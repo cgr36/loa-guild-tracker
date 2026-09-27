@@ -533,10 +533,6 @@
                 <label class="munga-synergy-item"><input type="checkbox" class="munga-synergy-cb" value="10"> 아르카나 (+10%)</label>
               </div>
             </div>
-            <div class="munga-synergy-row">
-              <span class="munga-synergy-title">추가 치적 버프</span>
-              <label class="munga-synergy-item"><input type="checkbox" class="munga-buff-cb" value="18"> 날카로운 해머 (디스트로이어, 코어 3개 소모 시 +18%)</label>
-            </div>
             <div class="munga-result-grid" id="mungaResultGrid"></div>
           </div>
         </div>
@@ -1294,9 +1290,15 @@ return '<div class="market-card market-card-combo">'
   // 특정 모드/상태 조건부 효과라 상시 적용으로 합산하면 과대 계산되므로 자동 파싱에서 제외
   const MUNGA_CONDITIONAL_NODE_NAMES = ['중력 수련','중력 가속','깨어난 잠재력','영역 강화'];
   // 칭호/문장류 장신구는 전투 스탯이 아니라 실제로는 무관한 텍스트가 섞여
-  // 있어서(오탐 방지) 장비 옵션 파싱에서 제외. "황금 용사의 문장"은 PVP 모드에서만
-  // 반영되는 효과라 레이드(PVE) 기준 합산에서는 제외.
-  const MUNGA_EXCLUDED_EQUIP_NAMES = ['백금 용사의 문장', '황금 용사의 문장'];
+  // 있어서(오탐 방지) 장비 옵션 파싱에서 제외. "OO 용사의 문장" 계열(백금/황금/순은 등)은
+  // 전부 PVP 모드에서만 반영되는 효과라 레이드(PVE) 기준 합산에서는 등급 상관없이 제외.
+  const MUNGA_EXCLUDED_EQUIP_NAMES = [];
+  function mungaIsExcludedEquip(name){
+    if(!name) return false;
+    if(MUNGA_EXCLUDED_EQUIP_NAMES.indexOf(name) !== -1) return true;
+    if(name.indexOf('용사의 문장') !== -1) return true;
+    return false;
+  }
   // "질서의 별 코어 : 파괴의 바람"의 [10P] 이동 속도 +30%는 허리케인 소드 스킬
   // 사용에만 적용되는 조건부 효과라 상시 공이속으로 합산하면 과대 계산되므로 제외.
   const MUNGA_EXCLUDED_ARKGRID_CORE_NAMES = ['질서의 별 코어 : 파괴의 바람'];
@@ -1658,6 +1660,12 @@ return '<div class="market-card market-card-combo">'
       // 폭주 상태 고유 효과라 하드코딩으로 추가.
       arkPct += 30; arkDetail.push({ name: '아크패시브: 포식자 (폭주 상태)', value: 30 });
     }
+    if(className0 === '디스트로이어' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '날카로운 해머'; })){
+      // 노드 원문("해방 스킬 사용 중 소모한 코어 당 치명타 적중률이 6.0% 증가한다")에
+      // "스킬"이라는 단어가 있어 스킬 특정 문구로 오인해 자동 파싱에서 제외됐음.
+      // 실전에서 대부분 코어 3개를 소모하는 것을 기본값으로 가정해 3개 x 6% = 18%를 하드코딩으로 추가.
+      arkPct += 18; arkDetail.push({ name: '깨달음: 날카로운 해머 (코어 3개 소모 가정)', value: 18 });
+    }
 
     // 장신구 연마/팔찌 옵션의 "치명타 적중률" 수치 - Tooltip(JSON) 안의 문자열들을
     // 전부 모아 HTML 태그를 제거한 뒤 파싱 (색상 태그 안에 숫자가 섞여 있어서
@@ -1666,7 +1674,7 @@ return '<div class="market-card market-card-combo">'
     let equipPct = 0;
     const equipDetail = [];
     equipList.forEach(function(it){
-      if(MUNGA_EXCLUDED_EQUIP_NAMES.indexOf(it.Name) !== -1) return;
+      if(mungaIsExcludedEquip(it.Name)) return;
       let tooltipText = '';
       try{
         const tt = typeof it.Tooltip === 'string' ? JSON.parse(it.Tooltip) : it.Tooltip;
@@ -1854,7 +1862,7 @@ return '<div class="market-card market-card-combo">'
     let equipAtk = 0, equipMove = 0;
     const equipDetail = [];
     equipList.forEach(function(it){
-      if(MUNGA_EXCLUDED_EQUIP_NAMES.indexOf(it.Name) !== -1) return;
+      if(mungaIsExcludedEquip(it.Name)) return;
       let tooltipText = '';
       try{
         const tt = typeof it.Tooltip === 'string' ? JSON.parse(it.Tooltip) : it.Tooltip;
@@ -1933,7 +1941,7 @@ return '<div class="market-card market-card-combo">'
     if(!mungaBreakdown) return null;
     const manualExtra = parseFloat($('mungaManualExtra').value) || 0;
     const baseDijeok = mungaBreakdown.statPct + mungaBreakdown.enginePct + mungaBreakdown.arkPct + mungaBreakdown.equipPct + mungaBreakdown.arkGridPct + manualExtra;
-    const synergy = Array.from(document.querySelectorAll('.munga-synergy-cb:checked, .munga-buff-cb:checked')).reduce(function(sum, cb){ return sum + (parseFloat(cb.value) || 0); }, 0);
+    const synergy = Array.from(document.querySelectorAll('.munga-synergy-cb:checked')).reduce(function(sum, cb){ return sum + (parseFloat(cb.value) || 0); }, 0);
     const levelSel = $('mungaLevelSelect').value;
     const levelDetected = !!(mungaBreakdown.mungaLevel && mungaBreakdown.mungaLevel.detected);
     const lv = levelDetected ? mungaBreakdown.mungaLevel : MUNGA_LEVELS[levelSel];
@@ -2251,7 +2259,7 @@ return '<div class="market-card market-card-combo">'
     $(id).addEventListener('input', function(){ if(mungaBreakdown) renderMungaResult(); });
     $(id).addEventListener('change', function(){ if(mungaBreakdown) renderMungaResult(); });
   });
-  document.querySelectorAll('.munga-synergy-cb, .munga-buff-cb').forEach(function(cb){
+  document.querySelectorAll('.munga-synergy-cb').forEach(function(cb){
     cb.addEventListener('change', function(){ if(mungaBreakdown) renderMungaResult(); });
   });
   ['eumdolManualAtk','eumdolManualMove','eumdolLevelSelect'].forEach(function(id){
