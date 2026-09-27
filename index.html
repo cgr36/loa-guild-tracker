@@ -1544,6 +1544,9 @@ return '<div class="market-card market-card-combo">'
     if(className0 === '스트라이커'){
       arkPct += 20; arkDetail.push({ name: '스킬: 번개의 속삭임', value: 20 });
     }
+    if(className0 === '리퍼'){
+      arkPct += 23; arkDetail.push({ name: '아크패시브: 피냄새', value: 23 });
+    }
 
     // 장신구 연마/팔찌 옵션의 "치명타 적중률" 수치 - Tooltip(JSON) 안의 문자열들을
     // 전부 모아 HTML 태그를 제거한 뒤 파싱 (색상 태그 안에 숫자가 섞여 있어서
@@ -1671,6 +1674,10 @@ return '<div class="market-card market-card-combo">'
     if(className0 === '스트라이커'){
       arkAtk += 8;
       arkDetail.push({ name: '스킬: 번개의 속삭임', atk: 8, move: 0 });
+    }
+    if(className0 === '리퍼'){
+      arkAtk += 10; arkMove += 10;
+      arkDetail.push({ name: '아크패시브: 갈증 (혼돈 상태)', atk: 10, move: 10 });
     }
     if(className0 === '가디언나이트'){
       arkAtk += 15;
