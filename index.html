@@ -1650,6 +1650,10 @@ return '<div class="market-card market-card-combo">'
       arkAtk += 8;
       arkDetail.push({ name: '스킬: 번개의 속삭임', atk: 8, move: 0 });
     }
+    if(className0 === '가디언나이트'){
+      arkAtk += 15;
+      arkDetail.push({ name: '깨달음: 초월 (가디언 피어)', atk: 15, move: 0 });
+    }
 
     // 항상 켜져 있다고 가정하는 상시 버프 (서포터 갈망, 공이속 만찬)
     const buffAtk = 9 + 5, buffMove = 9 + 5;
