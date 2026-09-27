@@ -1493,6 +1493,16 @@ return '<div class="market-card market-card-combo">'
     return { value: v * stacks, stacks: stacks };
   }
 
+  function mungaCoreFlatCritBonus(segmentText){
+    // "'운명' 발동 시 ... 효과를 획득한다. '운명: X' : 치명타 적중률이 Y% 증가한다"처럼
+    // 중첩 없이 고정으로 붙는 코어 옵션 - mungaCoreStackCritBonus(중첩형)가 못 잡는 케이스.
+    const clean = mungaStripTags(segmentText);
+    if(/중첩/.test(clean)) return null;
+    const v = mungaExtractPercent(segmentText, '치명타\\s*적중률');
+    if(v === 0) return null;
+    return { value: v };
+  }
+
   function mungaParseBreakdown(data){
     const profile = data.profile || {};
     const critStat = mungaCritOverride !== null ? mungaCritOverride : mungaFindStat(profile, '치명');
@@ -1590,6 +1600,12 @@ return '<div class="market-card market-card-combo">'
         if(bonus){
           arkGridPct += bonus.value;
           arkGridDetail.push({ name: '아크그리드 코어: ' + slot.Name + ' (최대 ' + bonus.stacks + '중첩 가정)', value: bonus.value });
+          return;
+        }
+        const flat = mungaCoreFlatCritBonus(seg);
+        if(flat){
+          arkGridPct += flat.value;
+          arkGridDetail.push({ name: '아크그리드 코어: ' + slot.Name, value: flat.value });
         }
       });
     });
