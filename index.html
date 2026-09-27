@@ -1387,6 +1387,13 @@ return '<div class="market-card market-card-combo">'
     return total;
   }
 
+  // 노드 원문 이름이 길거나 부제가 붙어있어 표 표시용으로 줄여 부르는 이름 매핑.
+  // 예: 건슬링어 "피스메이커 - 핸드건" -> "피스메이커"
+  const MUNGA_NODE_DISPLAY_NAME_OVERRIDES = { '피스메이커 - 핸드건': '피스메이커' };
+  function mungaNodeDisplayName(nodeName){
+    return MUNGA_NODE_DISPLAY_NAME_OVERRIDES[nodeName] || nodeName;
+  }
+
   function mungaArkNodeName(description){
     // arkpassive.Effects[].Description은 실제 수치가 아니라
     // "<FONT>진화</FONT> 2티어 <FONT>예리한 감각 Lv.2</FONT>" 같은 제목 텍스트만 담고
@@ -1620,7 +1627,7 @@ return '<div class="market-card market-card-combo">'
         return;
       }
       const v = mungaExtractPercentGlobalOnly(effectText, '치명타\\s*적중률');
-      if(v > 0){ arkPct += v; arkDetail.push({ name: nodeName, value: v }); }
+      if(v > 0){ arkPct += v; arkDetail.push({ name: mungaNodeDisplayName(nodeName), value: v }); }
     });
 
     // 클래스 고유 스킬/깨달음 효과 - API 텍스트만으로는 조건부 발동 여부를
@@ -1642,7 +1649,13 @@ return '<div class="market-card market-card-combo">'
       arkPct += 23; arkDetail.push({ name: '아크패시브: 피냄새', value: 23 });
     }
     if(className0 === '건슬링어'){
-      arkPct += 10; arkDetail.push({ name: '스킬: 본인 치적 스킬(나선의 추적자/민첩한 사격/이퀄라이저)', value: 10 });
+      arkPct += 10; arkDetail.push({ name: '스킬 : 나선의 추격자', value: 10 });
+    }
+    if(className0 === '건슬링어' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '평화주의자'; })){
+      // 원문: "공격 속도 16.0%, 치명타 적중률 15.0%, 적에게 주는 피해가 50.0% 증가..." - 쉼표로 나열되어
+      // 자동 파싱이 마지막 값만 잡음. 공격 속도 16%는 '피스메이커' 노드와 동일 효과라 중복 방지를 위해
+      // 추가하지 않고, 치명타 적중률 15%만 추가.
+      arkPct += 15; arkDetail.push({ name: '깨달음: 평화주의자', value: 15 });
     }
     if(className0 === '창술사'){
       arkPct += 20; arkDetail.push({ name: '스킬: 청룡진', value: 20 });
@@ -1811,7 +1824,7 @@ return '<div class="market-card market-card-combo">'
       const sp = mungaExtractSpeedPercentsGlobalOnly(effectText);
       if(sp.atk !== 0 || sp.move !== 0){
         arkAtk += sp.atk; arkMove += sp.move;
-        arkDetail.push({ name: nodeName, atk: sp.atk, move: sp.move });
+        arkDetail.push({ name: mungaNodeDisplayName(nodeName), atk: sp.atk, move: sp.move });
       }
     });
 
