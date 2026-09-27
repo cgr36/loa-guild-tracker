@@ -1313,7 +1313,7 @@ return '<div class="market-card market-card-combo">'
   // 중에만 적용되는 조건부 효과라 상시 공이속 합산에서 제외.
   // "질서의 X 코어 : " 접두어 표기가 캐릭터/API 응답마다 띄어쓰기가 다를 수 있어
   // 전체 이름이 아니라 코어 고유 이름(접미어) 포함 여부로 판단.
-  const MUNGA_EXCLUDED_ARKGRID_CORE_NAMES = ['파괴의 바람', '충격파', '불릿 무빙'];
+  const MUNGA_EXCLUDED_ARKGRID_CORE_NAMES = ['파괴의 바람', '충격파', '불릿 무빙', '파괴 광선'];
   function mungaIsExcludedArkgridCore(name){
     if(!name) return false;
     return MUNGA_EXCLUDED_ARKGRID_CORE_NAMES.some(function(keyword){ return name.indexOf(keyword) !== -1; });
