@@ -1551,6 +1551,13 @@ return '<div class="market-card market-card-combo">'
     if(className0 === '기상술사' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '질풍노도'; })){
       arkPct += 12; arkDetail.push({ name: '깨달음: 기민함', value: 12 });
     }
+    if(className0 === '기상술사'){
+      const aeromancerCritNode = arkEffects.map(function(e){ return mungaArkNodeName(e.Description) || e.Name; })
+        .find(function(nm){ return nm === '돌개바람' || nm === '짙은안개'; });
+      if(aeromancerCritNode){
+        arkPct += 10; arkDetail.push({ name: '아크패시브: ' + aeromancerCritNode + ' (본인 치적)', value: 10 });
+      }
+    }
     if(className0 === '스트라이커'){
       arkPct += 20; arkDetail.push({ name: '스킬: 번개의 속삭임', value: 20 });
     }
