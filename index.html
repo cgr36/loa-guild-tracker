@@ -608,7 +608,7 @@
           <input type="number" id="aucBidInput" class="abi-manual-price-input" min="0" step="1">
         </label>
       </div>
-      <div class="abi-note">거래소 수수료 5% 반영 · 손익분기점 = 거래소가격 × 0.95 × (인원-1) ÷ 인원 · 입찰 추천가는 손익분기점에 약 9% 안전마진을 둔 값입니다 · 낙찰가는 인원수만큼 균등 분배되며 낙찰자는 아이템을 가져갑니다.</div>
+      <div class="abi-note">거래소 수수료 5% 반영 · 손익분기점 = 거래소가격 × 0.95 × (인원-1) ÷ 인원 · 입찰 추천가는 손익분기점에 약 9% 안전마진을 둔 값입니다 · 낙찰가는 낙찰자를 제외한 나머지 인원에게 균등 분배되며, 낙찰자는 아이템만 가져가고 낙찰가 전액을 부담합니다.</div>
     </div>
   </div>
 
@@ -2405,11 +2405,12 @@ return '<div class="market-card market-card-combo">'
     btn.addEventListener('click', function(){ switchTab(btn.dataset.tab); });
   });
 
-  // 경매 쌀산기: 길드 내부 아이템 경매(낙찰 시 낙찰가를 인원수만큼 균등 분배,
-  // 낙찰자는 아이템을 가져감) 손익 계산. 손익분기점 = 거래소가격을 거래소 수수료(5%)
-  // 반영해 팔았을 때 받는 금액에서, 낙찰가 중 본인 몫(1/인원)을 뺀 실부담액이
-  // 같아지는 낙찰가. 입찰 추천가는 그보다 약 9% 낮춰 안전마진을 둔 값(필요 시
-  // AUC_BID_SAFETY_MARGIN 값을 조정).
+  // 경매 쌀산기: 길드 내부 아이템 경매(낙찰 시 낙찰가는 낙찰자를 제외한 나머지
+  // 인원에게 균등 분배되고, 낙찰자는 낙찰가 전액을 부담하는 대신 아이템을 가져감)
+  // 손익 계산. 손익분기점은 거래소가격을 수수료(5%) 반영해 팔았을 때 받는 금액에서,
+  // 낙찰가 중 본인 몫(1/인원)을 뺀 실부담액이 같아지는 낙찰가(참고용 기준선이며
+  // 실제 순이익/분배금 계산과는 별도 모델). 입찰 추천가는 그보다 약 9% 낮춰 안전마진을
+  // 둔 값(필요 시 AUC_BID_SAFETY_MARGIN 값을 조정).
   const AUC_MARKET_FEE = 0.05;
   const AUC_BID_SAFETY_MARGIN = 0.91;
   let aucBidManuallyEdited = false;
@@ -2430,8 +2431,8 @@ return '<div class="market-card market-card-combo">'
       $('aucBidInput').value = Math.round(recBid);
     }
     const bid = parseFloat($('aucBidInput').value) || 0;
-    const myNet = price * (1 - AUC_MARKET_FEE) - bid * (people - 1) / people;
-    const perPerson = bid / people;
+    const myNet = price * (1 - AUC_MARKET_FEE) - bid;
+    const perPerson = people > 1 ? bid / (people - 1) : 0;
     const netCls = myNet >= 0 ? 'mrc-over' : 'mrc-under';
     $('aucResultGrid').innerHTML = `
       <div class="munga-result-card mrc-highlight mrc-v2">
