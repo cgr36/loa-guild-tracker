@@ -1604,6 +1604,7 @@ return '<div class="market-card market-card-combo">'
     });
 
     const arkEffects = (data.arkpassive && data.arkpassive.Effects) || [];
+    const hasMoonVoice = arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '달의 소리'; });
     let arkPct = 0;
     const arkDetail = [];
     let mungaEffectText = null;
@@ -1615,6 +1616,7 @@ return '<div class="market-card market-card-combo">'
         return; // 도약 5티어 대체 노드는 치적 가산에서 제외
       }
       if(MUNGA_CONDITIONAL_NODE_NAMES.indexOf(nodeName) !== -1) return; // 특정 모드 조건부 효과는 상시 합산에서 제외
+      if(nodeName === '일격' && hasMoonVoice) return; // 달의 소리 채용 시 일격 노드 효과가 다른 효과로 대체됨
       if(nodeName === '달인'){
         // "치명타 적중률 +1.4% / 추가피해 +1.7%, 최대 5중첩" 처럼 스택형 텍스트라
         // 일반 "~% 증가" 패턴과 달라서 따로 파싱. 못 찾으면 확인된 실측값(최대 중첩
@@ -1645,7 +1647,7 @@ return '<div class="market-card market-card-combo">'
     if(className0 === '스트라이커'){
       arkPct += 20; arkDetail.push({ name: '스킬: 번개의 속삭임', value: 20 });
     }
-    if(className0 === '리퍼' && !arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '달의 소리'; })){
+    if(className0 === '리퍼' && !hasMoonVoice){
       arkPct += 23; arkDetail.push({ name: '아크패시브: 피냄새', value: 23 });
     }
     if(className0 === '건슬링어'){
