@@ -1668,6 +1668,9 @@ return '<div class="market-card market-card-combo">'
     if(className0 === '소울이터' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '만월의 집행자'; })){
       arkPct += 20; arkDetail.push({ name: '깨달음: 사신화', value: 20 });
     }
+    if(className0 === '가디언나이트' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '깨어나는 힘'; })){
+      arkPct += 20; arkDetail.push({ name: '깨달음: 깨어나는 힘', value: 20 });
+    }
     if(className0 === '데빌헌터' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '정밀 사격 훈련'; })){
       // 노드 원문이 "치명타 적중률이 24.0%, 치명타 피해량이 14.0% 증가한다"처럼
       // 증가 서술어를 뒤에서 공유하는 구조라 일반 파서가 24%를 못 잡아서 하드코딩으로 추가.
@@ -1815,6 +1818,7 @@ return '<div class="market-card market-card-combo">'
     });
 
     const arkEffects = (data.arkpassive && data.arkpassive.Effects) || [];
+    const hasEophwaSuccessor = arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '업화의 계승자'; });
     let arkAtk = 0, arkMove = 0;
     const arkDetail = [];
     let eumdolEffectText = null;
@@ -1826,6 +1830,7 @@ return '<div class="market-card market-card-combo">'
         return; // 도약 5티어 대체 노드는 단순 스탯 가산이 아니므로 제외
       }
       if(MUNGA_CONDITIONAL_NODE_NAMES.indexOf(nodeName) !== -1) return; // 특정 모드 조건부 효과는 상시 합산에서 제외
+      if(nodeName === '잔불' && hasEophwaSuccessor) return; // 업화의 계승자 채용 시 잔불 효과가 조건부로 변경되어 제외
       const sp = mungaExtractSpeedPercentsGlobalOnly(effectText);
       if(sp.atk !== 0 || sp.move !== 0){
         arkAtk += sp.atk; arkMove += sp.move;
@@ -1849,7 +1854,7 @@ return '<div class="market-card market-card-combo">'
     }
     if(className0 === '리퍼'){
       arkAtk += 10; arkMove += 10;
-      arkDetail.push({ name: '아크패시브: 갈증 (혼돈 상태)', atk: 10, move: 10 });
+      arkDetail.push({ name: '혼돈 상태', atk: 10, move: 10 });
     }
     if(className0 === '가디언나이트'){
       arkAtk += 15;
