@@ -1671,6 +1671,10 @@ return '<div class="market-card market-card-combo">'
     if(className0 === '가디언나이트' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '깨어나는 힘'; })){
       arkPct += 20; arkDetail.push({ name: '깨달음: 깨어나는 힘', value: 20 });
     }
+    if(className0 === '아르카나'){
+      arkPct += 10; arkDetail.push({ name: '스킬: 스크래치 딜러', value: 10 });
+      arkPct += 27.6; arkDetail.push({ name: '스킬: 스트림 오브 엣지', value: 27.6 });
+    }
     if(className0 === '데빌헌터' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '정밀 사격 훈련'; })){
       // 노드 원문이 "치명타 적중률이 24.0%, 치명타 피해량이 14.0% 증가한다"처럼
       // 증가 서술어를 뒤에서 공유하는 구조라 일반 파서가 24%를 못 잡아서 하드코딩으로 추가.
@@ -1859,6 +1863,10 @@ return '<div class="market-card market-card-combo">'
     if(className0 === '가디언나이트'){
       arkAtk += 15;
       arkDetail.push({ name: '깨달음: 초월 (가디언 피어)', atk: 15, move: 0 });
+    }
+    if(className0 === '아르카나'){
+      arkAtk += 19.2; arkMove += 30;
+      arkDetail.push({ name: '스킬: 스크래치 딜러', atk: 19.2, move: 30 });
     }
     if(className0 === '블레이드'){
       arkAtk += 12.8; arkMove += 12.8;
