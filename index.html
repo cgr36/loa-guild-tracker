@@ -387,6 +387,8 @@
 .auc-pill-group{display:flex;gap:6px;}
 .auc-pill{background:var(--surface);color:var(--text-dim);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;}
 .auc-pill.active{background:var(--violet);color:var(--btn-primary-text);border-color:var(--violet);}
+.auc-copyable{cursor:pointer;transition:border-color .15s;}
+.auc-copyable:hover{border-color:var(--violet);}
 </style>
 </head>
 <body>
@@ -2407,9 +2409,9 @@ return '<div class="market-card market-card-combo">'
 
   // 경매 쌀산기: 길드 내부 아이템 경매(낙찰 시 낙찰가는 낙찰자를 제외한 나머지
   // 인원에게 균등 분배되고, 낙찰자는 낙찰가 전액을 부담하는 대신 아이템을 가져감)
-  // 손익 계산. 손익분기점은 거래소가격을 수수료(5%) 반영해 팔았을 때 받는 금액에서,
-  // 낙찰가 중 본인 몫(1/인원)을 뺀 실부담액이 같아지는 낙찰가(참고용 기준선이며
-  // 실제 순이익/분배금 계산과는 별도 모델). 입찰 추천가는 그보다 약 9% 낮춰 안전마진을
+  // 손익 계산. "순이익 = 거래소가격×0.95 - 낙찰가"가 0이 되는 지점을 손익분기점으로
+  // 정의하므로, 낙찰자가 환급을 받지 않는 이 모델에서는 손익분기점이 인원수와
+  // 무관하게 거래소가격×0.95로 고정된다. 입찰 추천가는 그보다 약 9% 낮춰 안전마진을
   // 둔 값(필요 시 AUC_BID_SAFETY_MARGIN 값을 조정).
   const AUC_MARKET_FEE = 0.05;
   const AUC_BID_SAFETY_MARGIN = 0.91;
@@ -2425,7 +2427,7 @@ return '<div class="market-card market-card-combo">'
   function renderAuctionCalc(){
     const people = aucGetPeople();
     const price = aucGetPrice();
-    const breakEven = price * (1 - AUC_MARKET_FEE) * (people - 1) / people;
+    const breakEven = price * (1 - AUC_MARKET_FEE);
     const recBid = breakEven * AUC_BID_SAFETY_MARGIN;
     if(!aucBidManuallyEdited){
       $('aucBidInput').value = Math.round(recBid);
@@ -2439,8 +2441,8 @@ return '<div class="market-card market-card-combo">'
         <div class="mrc-v2-top"><div class="mrc-label">손익분기점</div></div>
         <div class="mrc-value">${fmtAbi(Math.round(breakEven))}G</div>
       </div>
-      <div class="munga-result-card mrc-highlight mrc-v2">
-        <div class="mrc-v2-top"><div class="mrc-label">입찰 추천가</div></div>
+      <div class="munga-result-card mrc-highlight mrc-v2 auc-copyable" data-copy-value="${Math.round(recBid)}" title="클릭하여 금액 복사">
+        <div class="mrc-v2-top"><div class="mrc-label">입찰 추천가 (클릭 시 복사)</div></div>
         <div class="mrc-value">${fmtAbi(Math.round(recBid))}G</div>
       </div>
       <div class="munga-result-card ${netCls} mrc-v2">
@@ -2453,6 +2455,24 @@ return '<div class="market-card market-card-combo">'
       </div>
     `;
   }
+  $('aucResultGrid').addEventListener('click', function(e){
+    const card = e.target.closest('.auc-copyable');
+    if(!card) return;
+    const val = card.dataset.copyValue || '';
+    const label = card.querySelector('.mrc-label');
+    const restore = label.textContent;
+    const copyDone = function(){
+      label.textContent = '복사됨!';
+      setTimeout(function(){ label.textContent = restore; }, 1200);
+    };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(val).then(copyDone).catch(function(){
+        window.prompt('아래 값을 복사하세요', val);
+      });
+    } else {
+      window.prompt('아래 값을 복사하세요', val);
+    }
+  });
   document.querySelectorAll('.auc-pill').forEach(function(btn){
     btn.addEventListener('click', function(){
       $('aucPeopleInput').value = btn.dataset.people;
