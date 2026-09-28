@@ -1864,7 +1864,7 @@ return '<div class="market-card market-card-combo">'
       arkAtk += 15;
       arkDetail.push({ name: '깨달음: 초월 (가디언 피어)', atk: 15, move: 0 });
     }
-    if(className0 === '아르카나'){
+    if(className0 === '아르카나' && !arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '황제의 칙령'; })){
       arkAtk += 19.2; arkMove += 30;
       arkDetail.push({ name: '스킬: 스크래치 딜러', atk: 19.2, move: 30 });
     }
