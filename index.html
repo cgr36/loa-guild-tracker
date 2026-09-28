@@ -1294,7 +1294,7 @@ return '<div class="market-card market-card-combo">'
   // "속도 강화"의 공격 속도 20%(투지발산 상태에서만), "관통 필살"의 치명타 적중률
   // 100%(적룡필살 스킬 전용, "스킬"이라는 단어가 없어 일반 파서가 못 걸러냄)는
   // 특정 모드/상태/스킬 조건부 효과라 상시 적용으로 합산하면 과대 계산되므로 자동 파싱에서 제외
-  const MUNGA_CONDITIONAL_NODE_NAMES = ['중력 수련','중력 가속','깨어난 잠재력','영역 강화','막을 수 없는 분노','속도 강화','관통 필살','넘치는 교감'];
+  const MUNGA_CONDITIONAL_NODE_NAMES = ['중력 수련','중력 가속','깨어난 잠재력','영역 강화','막을 수 없는 분노','속도 강화','관통 필살','넘치는 교감','만월의 집행자'];
   // 칭호/문장류 장신구는 전투 스탯이 아니라 실제로는 무관한 텍스트가 섞여
   // 있어서(오탐 방지) 장비 옵션 파싱에서 제외. "OO 용사의 문장" 계열(백금/황금/순은 등)은
   // 전부 PVP 모드에서만 반영되는 효과라 레이드(PVE) 기준 합산에서는 등급 상관없이 제외.
@@ -1663,6 +1663,9 @@ return '<div class="market-card market-card-combo">'
     if(className0 === '데빌헌터'){
       arkPct += 10; arkDetail.push({ name: '스킬: 나선의 추적자', value: 10 });
     }
+    if(className0 === '소울이터' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '만월의 집행자'; })){
+      arkPct += 20; arkDetail.push({ name: '깨달음: 사신화', value: 20 });
+    }
     if(className0 === '데빌헌터' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '정밀 사격 훈련'; })){
       // 노드 원문이 "치명타 적중률이 24.0%, 치명타 피해량이 14.0% 증가한다"처럼
       // 증가 서술어를 뒤에서 공유하는 구조라 일반 파서가 24%를 못 잡아서 하드코딩으로 추가.
@@ -1857,6 +1860,14 @@ return '<div class="market-card market-card-combo">'
     if(className0 === '블레이드' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '버스트 강화'; })){
       arkAtk += 20; arkMove += 10;
       arkDetail.push({ name: '블레이드 아츠', atk: 20, move: 10 });
+    }
+    if(className0 === '소울이터'){
+      arkMove += 19.2;
+      arkDetail.push({ name: '스킬: 루나틱 엣지', atk: 0, move: 19.2 });
+    }
+    if(className0 === '소울이터' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '만월의 집행자'; })){
+      arkAtk += 10; arkMove += 20;
+      arkDetail.push({ name: '깨달음: 사신화', atk: 10, move: 20 });
     }
     if(className0 === '버서커' && arkEffects.some(function(e){ return (mungaArkNodeName(e.Description) || e.Name) === '광전사의 비기'; })){
       const berserkAmp = mungaBerserkAmp(profile);
