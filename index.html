@@ -2409,10 +2409,13 @@ return '<div class="market-card market-card-combo">'
 
   // 경매 쌀산기: 길드 내부 아이템 경매(낙찰 시 낙찰가는 낙찰자를 제외한 나머지
   // 인원에게 균등 분배되고, 낙찰자는 낙찰가 전액을 부담하는 대신 아이템을 가져감)
-  // 손익 계산. "순이익 = 거래소가격×0.95 - 낙찰가"가 0이 되는 지점을 손익분기점으로
-  // 정의하므로, 낙찰자가 환급을 받지 않는 이 모델에서는 손익분기점이 인원수와
-  // 무관하게 거래소가격×0.95로 고정된다. 입찰 추천가는 그보다 약 9% 낮춰 안전마진을
-  // 둔 값(필요 시 AUC_BID_SAFETY_MARGIN 값을 조정).
+  // 손익 계산. 손익분기점(구매 최적가) = 거래소가격×0.95×(인원-1)÷인원으로,
+  // 인원수가 많을수록 기준가가 높아진다. 입찰 추천가는 그보다 약 9% 낮춰 안전마진을
+  // 둔 값(필요 시 AUC_BID_SAFETY_MARGIN 값을 조정). 반면 실제 낙찰 시의 "내가
+  // 가져가는 금액"/"1인당 분배금"은 낙찰자가 환급을 받지 않는 실제 분배 방식
+  // 그대로(거래소가격×0.95 - 낙찰가, 낙찰가÷(인원-1))를 사용하며, 손익분기점과는
+  // 별개의 값이다(손익분기점은 입찰 판단을 위한 참고 기준선일 뿐, 손익분기점
+  // 그대로 낙찰돼도 실제 순이익이 정확히 0이 되지는 않음).
   const AUC_MARKET_FEE = 0.05;
   const AUC_BID_SAFETY_MARGIN = 0.91;
   let aucBidManuallyEdited = false;
@@ -2427,7 +2430,7 @@ return '<div class="market-card market-card-combo">'
   function renderAuctionCalc(){
     const people = aucGetPeople();
     const price = aucGetPrice();
-    const breakEven = price * (1 - AUC_MARKET_FEE);
+    const breakEven = price * (1 - AUC_MARKET_FEE) * (people - 1) / people;
     const recBid = breakEven * AUC_BID_SAFETY_MARGIN;
     if(!aucBidManuallyEdited){
       $('aucBidInput').value = Math.round(recBid);
