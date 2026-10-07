@@ -407,10 +407,11 @@
 .abi-convert-steps{flex:1;display:flex;flex-direction:column;justify-content:center;min-width:0;}
 .abi-convert-result-row{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--text-dim);padding:4px 0;}
 .abi-convert-result-row .abi-convert-leftover{color:var(--text-faint);font-size:11px;}
-.abi-convert-bundle-row{display:grid;grid-template-columns:24px 92px 56px 20px 24px;align-items:center;gap:8px;padding:6px 0;}
-.abi-convert-label{font-size:12.5px;font-weight:400;color:var(--text-dim);}
-.abi-convert-count{font-size:15px;font-weight:700;color:var(--text);}
-.abi-convert-arrow{color:var(--text-faint);font-weight:400;font-size:15px;text-align:center;}
+.abi-convert-bundle-row{display:flex;align-items:center;gap:8px;padding:6px 0;min-width:0;}
+.abi-convert-bundle-row .abi-icon{flex:none;}
+.abi-convert-label{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;font-weight:400;color:var(--text-dim);}
+.abi-convert-count{flex:none;font-size:15px;font-weight:700;color:var(--text);}
+.abi-convert-arrow{flex:none;color:var(--text-faint);font-weight:400;font-size:15px;text-align:center;}
 .abi-convert-final{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-left:1px solid var(--border);padding-left:16px;min-width:150px;text-align:center;}
 .abi-convert-final .abi-icon{width:28px;height:28px;margin-right:0;}
 .abi-convert-final-text{display:flex;flex-direction:column;align-items:center;gap:2px;}
