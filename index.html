@@ -389,6 +389,32 @@
 .auc-pill.active{background:var(--violet);color:var(--btn-primary-text);border-color:var(--violet);}
 .auc-copyable{cursor:pointer;transition:border-color .15s;}
 .auc-copyable:hover{border-color:var(--violet);}
+.abi-convert-grid{display:flex;gap:20px;flex-wrap:wrap;align-items:center;}
+.abi-convert-row{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-dim);}
+.abi-convert-row input{width:110px;margin-left:auto;}
+.abi-convert-2x2{display:grid;grid-template-columns:repeat(2,minmax(140px,1fr));gap:8px 16px;}
+.abi-convert-cell{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-dim);white-space:nowrap;}
+.abi-convert-cell input{width:80px;margin-left:auto;}
+.abi-swatch{display:inline-block;width:16px;height:16px;border-radius:4px;flex:none;}
+.abi-swatch-blue{background:#2d4ea6;}
+.abi-swatch-gray{background:#9a9a9a;}
+.abi-swatch-green{background:#2e7d4f;}
+.abi-swatch-powder{background:#caa227;}
+.abi-icon{display:inline-block;width:22px;height:22px;border-radius:4px;flex:none;object-fit:contain;vertical-align:middle;}
+.abi-convert-final .abi-icon{width:20px;height:20px;margin-right:6px;}
+.abi-section-subtitle{font-size:11px;font-weight:400;color:var(--text-faint);margin-left:8px;}
+.abi-convert-result{flex:1;min-width:260px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;gap:16px;align-items:stretch;}
+.abi-convert-steps{flex:1;display:flex;flex-direction:column;justify-content:center;min-width:0;}
+.abi-convert-result-row{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--text-dim);padding:4px 0;}
+.abi-convert-result-row .abi-convert-leftover{color:var(--text-faint);font-size:11px;}
+.abi-convert-bundle-row{display:grid;grid-template-columns:24px 92px 56px 20px 24px;align-items:center;gap:8px;padding:6px 0;}
+.abi-convert-label{font-size:12.5px;font-weight:400;color:var(--text-dim);}
+.abi-convert-count{font-size:15px;font-weight:700;color:var(--text);}
+.abi-convert-arrow{color:var(--text-faint);font-weight:400;font-size:15px;text-align:center;}
+.abi-convert-final{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-left:1px solid var(--border);padding-left:16px;min-width:150px;text-align:center;}
+.abi-convert-final .abi-icon{width:28px;height:28px;margin-right:0;}
+.abi-convert-final-label{font-size:11px;color:var(--text-faint);}
+.abi-convert-final .abi-convert-final-value{font-size:22px;font-weight:900;color:#6fa8ff;}
 </style>
 </head>
 <body>
@@ -465,6 +491,20 @@
       <span class="abi-select-label">상급 아비도스 융화 재료 거래가 <b id="abiSellPriceLabel" class="abi-sellprice">N/A</b></span>
     </div>
     <div class="abi-meta" id="abiMeta"></div>
+    <div class="abi-section">
+      <div class="abi-section-title">생활 재료 비율 교환 <span class="abi-section-subtitle">상급 아비도스 융화 재료 기준</span></div>
+      <div class="abi-convert-grid">
+        <div class="abi-convert-2x2">
+          <div class="abi-convert-cell"><img class="abi-icon" src="icons/mokjae.png" alt="일반재료">일반재료<input type="number" id="abiConvGray" class="abi-manual-price-input" value="0" min="0" step="1"></div>
+          <div class="abi-convert-cell"><img class="abi-icon" src="icons/soft-mokjae.png" alt="고급재료">고급재료<input type="number" id="abiConvGreen" class="abi-manual-price-input" value="0" min="0" step="1"></div>
+          <div class="abi-convert-cell"><img class="abi-icon" src="icons/abidos-mokjae.png" alt="희귀재료">희귀재료<input type="number" id="abiConvBlue" class="abi-manual-price-input" value="0" min="0" step="1"></div>
+          <div class="abi-convert-cell"><img class="abi-icon" src="icons/powder.png" alt="생활의 가루">생활의 가루<input type="number" id="abiConvPowder" class="abi-manual-price-input" value="0" min="0" step="1"></div>
+        </div>
+        <button class="btn-primary" id="btnAbiConvert">변환</button>
+        <div class="abi-convert-result" id="abiConvResult"><span class="abi-convert-label">보유 재료를 입력하고 변환을 눌러주세요.</span></div>
+      </div>
+      <div class="abi-note">교환비율: 일반재료 100개 → 가루 80개 · 고급재료 50개 → 가루 80개 · 가루 100개 → 희귀재료 10개 (100/50단위 배치 교환이라 나머지는 그대로 남습니다) · 상급 아비도스 융화 재료 10개 제작에 희귀재료 43 · 고급재료 59 · 일반재료 112 소모 · 일반재료/고급재료는 제작에 필요한 만큼 남겨두고 남는 양만 가루로 전환해 희귀재료를 보충, 제작 가능한 최대 개수를 계산합니다.</div>
+    </div>
     <div class="abi-side-by-side">
       <div class="abi-section">
         <div class="abi-section-title">생활 재료 시세 <span id="abiMaterialsLiveBadge"></span></div>
@@ -486,10 +526,6 @@
     <div class="abi-section">
       <div class="abi-section-title">방식별 제작 수수료 감소(12~17%) · 판매가 순수익 매트릭스</div>
       <div class="abi-matrix-grid" id="abiMatrixGrid"></div>
-    </div>
-    <div class="abi-section">
-      <div class="abi-section-title">크리스탈 · 생활의 기운 환전 (크리스탈 시세 <span id="abiCrystalPrice"></span>골드)</div>
-      <div class="abi-table-wrap"><table class="abi-table" id="abiCrystalTable"></table></div>
     </div>
     <div class="abi-note">생활 재료 시세·판매가는 서버가 주기적으로 갱신해 캐싱한 값입니다 (최대 5분 지연, 실패 시 스냅샷 값 표시) · 기준 시각: <span id="abiUpdatedAt"></span> · 원본: 상급 아비도스 쌀산기 ver.3</div>
   </div>
@@ -1138,13 +1174,6 @@ return '<div class="market-card market-card-combo">'
       return data && data.prices ? data : null;
     }catch(e){ return null; }
   }
-  const ABIDOS_CRYSTAL_PRICE = 18000;
-  const ABIDOS_CRYSTAL_ROWS = [
-    { label:'초생기 10개', cost:18948, income:23328, profit:4380 },
-    { label:'중생기 5개', cost:23685, income:34992, profit:11307 },
-    { label:'중생기 10개', cost:43579, income:69984, profit:26405 },
-  ];
-
   let abidosTabLoaded = false;
   let abidosMaterialsLive = null; // { [tierName]: price } once loaded
   function fmtAbi(n){ return typeof n === 'number' ? n.toLocaleString('ko-KR') : n; }
@@ -1288,18 +1317,12 @@ return '<div class="market-card market-card-combo">'
   function renderAbidosTab(){
     renderAbidosMeta();
     $('abiUpdatedAt').textContent = abidosUpdatedAtText();
-    $('abiCrystalPrice').textContent = fmtAbi(ABIDOS_CRYSTAL_PRICE);
 
     renderAbidosMaterialsTable();
     renderAbidosMethodsTable();
     renderAbidosRankTable();
     renderAbidosMatrixGrid();
     loadAbidosLivePrices();
-
-    $('abiCrystalTable').innerHTML = `
-      <tr><th>구성</th><th>크리스탈 비용</th><th>생기 수입</th><th>순수익</th></tr>
-      ${ABIDOS_CRYSTAL_ROWS.map(r=>`<tr><td>${r.label}</td><td>${fmtAbi(r.cost)}</td><td>${fmtAbi(r.income)}</td><td class="abi-pos">${fmtAbi(r.profit)}G</td></tr>`).join('')}
-    `;
   }
 
   // ---------- 캐릭터 계산기: 뭉가(뭉툭한 가시) 효율 계산 ----------
@@ -3591,6 +3614,94 @@ $('btnMarketRefresh').addEventListener('click', ()=>{
 });
 $('btnAbidosRefresh').addEventListener('click', ()=>{
   loadAbidosLivePrices(true);
+});
+
+// 상급 아비도스 생활 재료 비율 교환: 목표는 "최대한 많이 교환"이 아니라
+// "상급 아비도스 융화 재료를 최대 몇 개 만들 수 있는가"이다. 융화 재료 10개
+// 제작에는 희귀재료 43 · 고급재료 59 · 일반재료 112가 직접 소모되므로, 일반재료/
+// 고급재료를 무작정 전부 가루로 바꾸면 제작에 쓸 일반재료/고급재료가 모자라게
+// 된다. 그래서 제작 배치 수(b, 10개 단위)를 하나씩 늘려가며 "제작에 쓸
+// 일반재료/고급재료를 남겨두고, 남는 양만 가루로 바꿔서 희귀재료 부족분을
+// 채울 수 있는지"를 확인해 가능한 최대 배치 수를 찾는다. 교환은 100단위
+// (고급재료는 50단위) 배치로만 가능해서 나머지는 그대로 남는다.
+const ABI_RECIPE_BATCH = 10; // 융화 재료 1회 제작 단위
+const ABI_RECIPE_BLUE = 43, ABI_RECIPE_GREEN = 59, ABI_RECIPE_GRAY = 112;
+
+function abiConversionFeasible(b, gray, green, blue, powder){
+  const grayNeed = ABI_RECIPE_GRAY * b;
+  const greenNeed = ABI_RECIPE_GREEN * b;
+  const blueNeed = ABI_RECIPE_BLUE * b;
+  if(gray < grayNeed || green < greenNeed) return false;
+  const grayExcess = gray - grayNeed;
+  const greenExcess = green - greenNeed;
+  const powderFromGray = Math.floor(grayExcess / 100) * 80;
+  const powderFromGreen = Math.floor(greenExcess / 50) * 80;
+  const powderAvail = powder + powderFromGray + powderFromGreen;
+  const blueFromPowder = Math.floor(powderAvail / 100) * 10;
+  return (blue + blueFromPowder) >= blueNeed;
+}
+
+function abiRunConversion(){
+  const gray = Math.max(0, Math.floor(Number($('abiConvGray').value) || 0));
+  const green = Math.max(0, Math.floor(Number($('abiConvGreen').value) || 0));
+  const blue = Math.max(0, Math.floor(Number($('abiConvBlue').value) || 0));
+  const powder = Math.max(0, Math.floor(Number($('abiConvPowder').value) || 0));
+
+  const upperBound = Math.min(Math.floor(gray / ABI_RECIPE_GRAY), Math.floor(green / ABI_RECIPE_GREEN));
+  let b = 0;
+  for(let i = upperBound; i >= 0; i--){
+    if(abiConversionFeasible(i, gray, green, blue, powder)){ b = i; break; }
+  }
+
+  const grayNeed = ABI_RECIPE_GRAY * b;
+  const greenNeed = ABI_RECIPE_GREEN * b;
+  const blueNeed = ABI_RECIPE_BLUE * b;
+  const grayExcess = gray - grayNeed;
+  const greenExcess = green - greenNeed;
+
+  // 고급재료(50개→가루80개, 효율 1.6)가 일반재료(100개→가루80개, 효율 0.8)보다
+  // 효율이 좋아서 남는 고급재료를 먼저 전부 가루로 바꾸고, 그래도 희귀재료가
+  // 부족할 때만 일반재료를 "필요한 만큼만" 최소로 바꾼다 (다 털어서 바꾸지 않음).
+  const greenConvBatches = Math.floor(greenExcess / 50);
+  const powderFromGreen = greenConvBatches * 80;
+  const basePowder = powder + powderFromGreen;
+  const blueWithoutGray = blue + Math.floor(basePowder / 100) * 10;
+
+  let grayConvBatches = 0;
+  if(blueWithoutGray < blueNeed){
+    const shortfallBlue = blueNeed - blueWithoutGray;
+    const shortfallBlueBatches = Math.ceil(shortfallBlue / 10);
+    const baseRemainder = basePowder % 100;
+    const additionalPowderNeeded = Math.max(0, shortfallBlueBatches * 100 - baseRemainder);
+    grayConvBatches = Math.min(Math.ceil(additionalPowderNeeded / 80), Math.floor(grayExcess / 100));
+  }
+  const powderFromGray = grayConvBatches * 80;
+
+  const powderAvail = powder + powderFromGray + powderFromGreen;
+  const powderBatches = Math.floor(powderAvail / 100);
+  const totalUnits = b * ABI_RECIPE_BATCH;
+
+  $('abiConvResult').innerHTML = `
+    <div class="abi-convert-steps">
+      <div class="abi-convert-bundle-row"><img class="abi-icon" src="icons/mokjae.png" alt="일반재료"><span class="abi-convert-label">일반재료</span><b class="abi-convert-count">x${fmtAbi(grayConvBatches)}</b><span class="abi-convert-arrow">→</span><img class="abi-icon" src="icons/powder.png" alt="가루"></div>
+      <div class="abi-convert-bundle-row"><img class="abi-icon" src="icons/soft-mokjae.png" alt="고급재료"><span class="abi-convert-label">고급재료</span><b class="abi-convert-count">x${fmtAbi(greenConvBatches)}</b><span class="abi-convert-arrow">→</span><img class="abi-icon" src="icons/powder.png" alt="가루"></div>
+      <div class="abi-convert-bundle-row"><img class="abi-icon" src="icons/powder.png" alt="생활의 가루"><span class="abi-convert-label">생활의 가루</span><b class="abi-convert-count">x${fmtAbi(powderBatches)}</b><span class="abi-convert-arrow">→</span><img class="abi-icon" src="icons/abidos-mokjae.png" alt="희귀재료"></div>
+    </div>
+    <div class="abi-convert-final">
+      <img class="abi-icon" src="icons/fusion-material.png" alt="상급 아비도스 융화 재료">
+      <span class="abi-convert-final-label">상급 아비도스 융화 재료</span>
+      <span class="abi-convert-final-value">${fmtAbi(totalUnits)}개</span>
+    </div>
+  `;
+}
+$('btnAbiConvert').addEventListener('click', abiRunConversion);
+['abiConvGray','abiConvGreen','abiConvBlue','abiConvPowder'].forEach(function(id){
+  $(id).addEventListener('focus', function(){
+    if(this.value === '0') this.value = '';
+  });
+  $(id).addEventListener('blur', function(){
+    if(this.value === '') this.value = '0';
+  });
 });
 (function initAbidosSelects(){
   const pctSelect = $('abiPctSelect');
