@@ -450,11 +450,11 @@
   </header>
 
 <div class="tabs">
-  <button type="button" class="tab-btn active" data-tab="raid">레이드 체크</button>
-  <button type="button" class="tab-btn" data-tab="market">거래소 시세</button>
-  <button type="button" class="tab-btn" data-tab="abidos">상비도스 제작 효율</button>
+  <button type="button" class="tab-btn active" data-tab="raid">숙제 현황</button>
+  <button type="button" class="tab-btn" data-tab="market">시세 확인</button>
+  <button type="button" class="tab-btn" data-tab="abidos">생활 효율</button>
   <button type="button" class="tab-btn" data-tab="munga">캐릭터 계산기</button>
-  <button type="button" class="tab-btn" data-tab="auction">경매 쌀산기</button>
+  <button type="button" class="tab-btn" data-tab="auction">경매 계산</button>
 </div>
   
   <div class="tab-panel active" id="tabRaid">
@@ -462,9 +462,9 @@
 
   <div class="toolbar">
     <button class="btn-primary" id="btnAddChar">+ 사용자 등록</button>
-    <button class="btn-ghost" id="btnRaidCatalog">레이드 목록 관리</button>
-    <button class="btn-ghost" id="btnApiKey">API 키 설정</button>
-    <button class="btn-ghost" id="btnRefreshAllLevels">🔄 레벨 전체 갱신</button>
+    <button class="btn-ghost" id="btnRaidCatalog">목록 관리</button>
+    <button class="btn-ghost" id="btnApiKey">API 키</button>
+    <button class="btn-ghost" id="btnRefreshAllLevels">🔄 전체 갱신</button>
     <button class="btn-ghost" id="btnThemeToggle">🌙 화이트 모드</button>
     <button class="btn-ghost" id="btnOwnerOrder">↕ 순서 변경</button>
     <input class="search" id="searchInput" placeholder="등록자 또는 캐릭터명 검색…" style="margin-left:auto;">
@@ -635,7 +635,7 @@
 
   <div class="tab-panel" id="tabAuction">
     <div class="abi-section">
-      <div class="abi-section-title">경매 쌀산기</div>
+      <div class="abi-section-title">경매 계산</div>
       <div class="toolbar">
         <div class="auc-pill-group" id="aucPeopleQuick">
           <button type="button" class="auc-pill" data-people="4">4인</button>
@@ -2298,7 +2298,7 @@ return '<div class="market-card market-card-combo">'
     const name = $('mungaNameInput').value.trim();
     if(!name) return;
     if(!apiKey){
-      $('mungaStatus').textContent = 'API 키가 없어요 — "레이드 체크" 탭의 "API 키 설정"에서 먼저 등록해주세요.';
+      $('mungaStatus').textContent = 'API 키가 없어요 — "숙제 현황" 탭의 "API 키"에서 먼저 등록해주세요.';
       return;
     }
     $('mungaStatus').textContent = '캐릭터 정보를 불러오는 중…';
@@ -2953,7 +2953,7 @@ return `<span class="crow-gold-wrap">${inner}</span>`;
     const metaEl = btn.closest('.crow').querySelector('.crow-stats');
     const originalMeta = metaEl.textContent;
     if(!apiKey){
-      metaEl.textContent = 'API 키가 없어요 — "API 키 설정"에서 등록해주세요.';
+      metaEl.textContent = 'API 키가 없어요 — "API 키"에서 등록해주세요.';
       metaEl.style.color = 'var(--rose)';
       setTimeout(()=>{ metaEl.textContent = originalMeta; metaEl.style.color = ''; }, 2600);
       return;
@@ -3833,7 +3833,7 @@ $('btnAbiConvert').addEventListener('click', abiRunConversion);
     const name = $('charNameInput').value.trim();
     const statusEl = $('lookupStatus');
     if(!name){ statusEl.textContent = '캐릭터명을 입력하세요.'; statusEl.className='lookup-status err'; return; }
-    if(!apiKey){ statusEl.textContent = 'API 키가 없어요. 상단 "API 키 설정"에서 등록해주세요.'; statusEl.className='lookup-status err'; return; }
+    if(!apiKey){ statusEl.textContent = 'API 키가 없어요. 상단 "API 키"에서 등록해주세요.'; statusEl.className='lookup-status err'; return; }
     const names = name.split(',').map(s=>s.trim()).filter(Boolean);
     statusEl.textContent = '조회 중…'; statusEl.className = 'lookup-status';
     const results = await Promise.all(names.map(async (n) => {
