@@ -453,7 +453,7 @@
   <button type="button" class="tab-btn active" data-tab="raid">숙제 현황</button>
   <button type="button" class="tab-btn" data-tab="market">시세 확인</button>
   <button type="button" class="tab-btn" data-tab="abidos">생활 효율</button>
-  <button type="button" class="tab-btn" data-tab="munga">캐릭터 계산기</button>
+  <button type="button" class="tab-btn" data-tab="munga">노드 효율</button>
   <button type="button" class="tab-btn" data-tab="auction">경매 계산</button>
 </div>
   
@@ -2424,6 +2424,12 @@ return '<div class="market-card market-card-combo">'
     $('tabAbidos').classList.toggle('active', tab==='abidos');
     $('tabMunga').classList.toggle('active', tab==='munga');
     $('tabAuction').classList.toggle('active', tab==='auction');
+    if(tab === 'munga' && mungaBreakdown){
+      // 탭이 처음엔 숨겨진 상태(display:none)라 offsetHeight가 0으로 읽혀서
+      // 카드 높이가 잘못 고정되는 문제가 있어, 탭이 실제로 보이게 된 직후
+      // 다시 한번 계산해 바로잡는다.
+      equalizeMungaCardHeights();
+    }
     if(tab === 'market' && !marketTabLoaded){
       marketTabLoaded = true;
       loadMarketTab();
